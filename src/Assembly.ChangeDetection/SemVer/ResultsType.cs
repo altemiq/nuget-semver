@@ -1,0 +1,33 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="ResultsType.cs" company="GeomaticTechnologies">
+// Copyright (c) GeomaticTechnologies. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace Mondo.Assembly.ChangeDetection.SemVer
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
+    /// <summary>
+    /// The results type.
+    /// </summary>
+    public enum ResultsType
+    {
+        /// <summary>
+        /// Patch.
+        /// </summary>
+        Patch,
+
+        /// <summary>
+        /// Minor.
+        /// </summary>
+        Minor,
+
+        /// <summary>
+        /// Major.
+        /// </summary>
+        Major,
+    }
+}

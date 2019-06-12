@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "SemanticVersioning.TeamCity": {
+      "commandName": "Project",
+      "commandLineArgs": "diff file \"C:\\Temp\\diff\\4.1.5\\lib\\netstandard2.0\\GeomaticTechnologies.Math.dll\" \"C:\\Temp\\diff\\5.0.14-develop\\lib\\netstandard2.0\\GeomaticTechnologies.Math.dll\" --previous \"5.0.14-develop\" --build 118"
+    },
+    "Solution": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"C:\\Repos\\projects\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
+    },
+    "Version": {
+      "commandName": "Project",
+      "commandLineArgs": "--version"
+    }
+  }
+}
