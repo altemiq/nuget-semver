@@ -1,0 +1,158 @@
+// -----------------------------------------------------------------------
+// <copyright file="ListExtensions.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace Altemiq.Assembly.ChangeDetection.Infrastructure
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    /// <summary>
+    /// The list extensions.
+    /// </summary>
+    internal static class ListExtensions
+    {
+        /// <summary>
+        /// Gets the search directories.
+        /// </summary>
+        /// <param name="queries">The queries.</param>
+        /// <returns>The sreach directories.</returns>
+        public static string GetSearchDirs(this IEnumerable<FileQuery> queries)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries), "queries was null.");
+            }
+
+            return string.Join(";", queries.Select(q => q.SearchDir));
+        }
+
+        /// <summary>
+        /// Gets the queries.
+        /// </summary>
+        /// <param name="queries">The file queries.</param>
+        /// <returns>The queries.</returns>
+        public static string GetQueries(this IEnumerable<FileQuery> queries)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries), "queries was null.");
+            }
+
+            return string.Join(" ", queries.Select(q => q.Query));
+        }
+
+        /// <summary>
+        /// Gets the files.
+        /// </summary>
+        /// <param name="queries">The queries.</param>
+        /// <returns>The files.</returns>
+        public static IEnumerable<string> GetFiles(this IEnumerable<FileQuery> queries)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries), "queries was null.");
+            }
+
+            return GetFilesIterator();
+
+            IEnumerable<string> GetFilesIterator()
+            {
+                foreach (var q in queries)
+                {
+                    foreach (var file in q.EnumerateFiles)
+                    {
+                        yield return file;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns wether the sequence has any matches.
+        /// </summary>
+        /// <param name="queries">The queries.</param>
+        /// <returns><see langword="true"/> if any items in <paramref name="queries"/> have matches; otherwise <see langword="false"/>.</returns>
+        public static bool HasMatches(this IEnumerable<FileQuery> queries)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries), "queries was null.");
+            }
+
+            return queries.Any(q => q.HasMatches);
+        }
+
+        /// <summary>
+        /// Gets the matching file by name.
+        /// </summary>
+        /// <param name="queries">The queries.</param>
+        /// <param name="fileName">The file name.</param>
+        /// <returns>The file.</returns>
+        public static string GetMatchingFileByName(this IEnumerable<FileQuery> queries, string fileName)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries), "queries was null.");
+            }
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                throw new ArgumentException("fileName to filter for was null or empty", nameof(queries));
+            }
+
+            return queries.Select(query => query.GetMatchingFileByName(fileName)).FirstOrDefault(match => match != null);
+        }
+
+        /// <summary>
+        /// Gets non-existing files in other query.
+        /// </summary>
+        /// <param name="queries">The queries.</param>
+        /// <param name="otherQueries">The other queries.</param>
+        /// <returns>The non-existent files.</returns>
+        public static IEnumerable<string> GetNotExistingFilesInOtherQuery(this IEnumerable<FileQuery> queries, IEnumerable<FileQuery> otherQueries)
+        {
+            if (queries == null)
+            {
+                throw new ArgumentNullException(nameof(queries));
+            }
+
+            if (otherQueries == null)
+            {
+                throw new ArgumentNullException(nameof(otherQueries));
+            }
+
+            var query1 = new HashSet<string>(queries.GetFiles(), new FileNameComparer());
+            var query2 = new HashSet<string>(otherQueries.GetFiles(), new FileNameComparer());
+
+            var removedFiles = new HashSet<string>(query1, new FileNameComparer());
+            removedFiles.ExceptWith(query2);
+
+            return removedFiles.ToArray();
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified collection to the end of the <see cref="IList{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">The type in the collection.</typeparam>
+        /// <param name="source">The source list.</param>
+        /// <param name="collection">The collection.</param>
+        public static void AddRange<T>(this IList<T> source, IEnumerable<T> collection)
+        {
+            if (source is List<T> list)
+            {
+                list.AddRange(collection);
+            }
+            else
+            {
+                foreach (var item in collection)
+                {
+                    source.Add(item);
+                }
+            }
+        }
+    }
+}
