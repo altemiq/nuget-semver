@@ -129,7 +129,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// <summary>
         /// Gets the enumeration of the files.
         /// </summary>
-        public IEnumerable<string> EnumerateFiles => Directory.EnumerateFiles(this.SearchDir, this.FileMask, this.searchOption);
+        public IEnumerable<string> EnumerateFiles => Directory.Exists(this.SearchDir) ? Directory.EnumerateFiles(this.SearchDir, this.FileMask, this.searchOption) : Enumerable.Empty<string>();
 
         private static string GAC_32 => Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "assembly\\GAC_32");
 
