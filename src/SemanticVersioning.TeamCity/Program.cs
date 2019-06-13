@@ -24,10 +24,13 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private static System.Threading.Tasks.Task<int> Main(string[] args) => CommandLineApplication.ExecuteAsync<Program>(args);
 
+        private void OnExecute(CommandLineApplication app) => app.ShowHint();
+
         [Command(Name = "diff", Description = "Calculates the differences")]
         [Subcommand(typeof(FileCommand), typeof(SolutionCommand))]
         private class DiffCommand
         {
+            private void OnExecute(CommandLineApplication app) => app.ShowHint();
         }
 
         [Command(Name = "file", Description = "Calculated the differences between two assemblies")]
@@ -55,17 +58,25 @@ namespace Altemiq.SemanticVersioning.TeamCity
         [Command("solution", Description = "Calculates the version based on a solution file")]
         private class SolutionCommand
         {
-            [Argument(0, Name = "solution", Description = "The solution file")]
-            public string SolutionFile { get; set; }
+            [Argument(0, Name = "PROJECT | SOLUTION", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.")]
+            public string ProjectOrSolutionFile { get; set; }
 
             [Option(ShortName = "p", LongName = "previous", Description = "The previous version", ValueName = "previous_version")]
             public string PreviousVersion { get; set; }
 
-            private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(string solution)
+            private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(string projectOrSolution)
             {
-                var solutionFile = Microsoft.Build.Construction.SolutionFile.Parse(solution);
-                var configuration = solutionFile.GetDefaultConfigurationName();
-                var platform = solutionFile.GetDefaultPlatformName();
+                System.Collections.Generic.IEnumerable<string> projectPaths;
+                var projectOrSolutionPath = GetPath(projectOrSolution ?? System.IO.Directory.GetCurrentDirectory());
+                if (string.Compare(System.IO.Path.GetExtension(projectOrSolutionPath), ".sln", StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    // this is a solution
+                    projectPaths = Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
+                }
+                else
+                {
+                    projectPaths = new string[] { projectOrSolutionPath };
+                }
 
                 var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
 
@@ -103,18 +114,81 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     projectCollection,
                     string.Empty));
 
-                foreach (var projectInSolution in solutionFile.ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat))
+                foreach (var projectPath in projectPaths)
                 {
-                    projectCollection.LoadProject(projectInSolution.AbsolutePath);
+                    projectCollection.LoadProject(projectPath);
                 }
 
                 return projectCollection;
             }
 
+            private static string GetPath(string path)
+            {
+                if (!(System.IO.File.Exists(path) || System.IO.Directory.Exists(path)))
+                {
+                    throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                }
+
+                var fileAttributes = System.IO.File.GetAttributes(path);
+
+                // If a directory was passed in, search for a .sln or .csproj file
+                if ((fileAttributes & System.IO.FileAttributes.Directory) != 0)
+                {
+                    // Search for solution(s)
+                    var solutionFiles = System.IO.Directory.GetFiles(path, "*.sln");
+                    if (solutionFiles.Length == 1)
+                    {
+                        return System.IO.Path.GetFullPath(solutionFiles[0]);
+                    }
+
+                    if (solutionFiles.Length > 1)
+                    {
+                        if (path?.Length == 0)
+                        {
+                            throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
+                        }
+
+                        throw new CommandValidationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                    }
+
+                    // We did not find any solutions, so try and find individual projects
+                    var projectFiles = System.IO.Directory.EnumerateFiles(path, "*.csproj").Concat(System.IO.Directory.EnumerateFiles(path, "*.fsproj")).Concat(System.IO.Directory.EnumerateFiles(path, "*.vbproj")).ToArray();
+                    if (projectFiles.Length == 1)
+                    {
+                        return System.IO.Path.GetFullPath(projectFiles[0]);
+                    }
+
+                    if (projectFiles.Length > 1)
+                    {
+                        if (path?.Length == 0)
+                        {
+                            throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
+                        }
+
+                        throw new CommandValidationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                    }
+
+                    // At this point the path contains no solutions or projects, so throw an exception
+                    throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                }
+
+                // If a .sln or .csproj file was passed, just return that
+                if ((string.Compare(System.IO.Path.GetExtension(path), ".sln", StringComparison.OrdinalIgnoreCase) == 0)
+                    || (string.Compare(System.IO.Path.GetExtension(path), ".csproj", StringComparison.OrdinalIgnoreCase) == 0)
+                    || (string.Compare(System.IO.Path.GetExtension(path), ".vbproj", StringComparison.OrdinalIgnoreCase) == 0)
+                    || (string.Compare(System.IO.Path.GetExtension(path), ".fsproj", StringComparison.OrdinalIgnoreCase) == 0))
+                {
+                    return System.IO.Path.GetFullPath(path);
+                }
+
+                // At this point, we know the file passed in is not a valid project or solution
+                throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+            }
+
             private async System.Threading.Tasks.Task OnExecuteAsync()
             {
                 var version = new Semver.SemVersion(0);
-                foreach (var project in GetProjects(this.SolutionFile).LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
+                foreach (var project in GetProjects(this.ProjectOrSolutionFile).LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
                 {
                     var projectDirectory = project.DirectoryPath;
                     var outputPath = System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath"));
@@ -130,7 +204,11 @@ namespace Altemiq.SemanticVersioning.TeamCity
                         libDir += System.IO.Path.DirectorySeparatorChar;
                     }
 
-                    static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second) => first.CompareTo(second) > 0 ? first : second;
+                    static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second)
+                    {
+                        return first.CompareTo(second) > 0 ? first : second;
+                    }
+
                     var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
 
                     foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))

@@ -11,6 +11,11 @@
     "Version": {
       "commandName": "Project",
       "commandLineArgs": "--version"
+    },
+    "Solution - Path": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution --previous \"5.0.14-develop\"",
+      "workingDirectory": "C:\\Repos\\projects\\MATH\\Math\\src"
     }
   }
 }
