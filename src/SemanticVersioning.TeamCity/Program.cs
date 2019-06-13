@@ -24,12 +24,14 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private static System.Threading.Tasks.Task<int> Main(string[] args) => CommandLineApplication.ExecuteAsync<Program>(args);
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
         private void OnExecute(CommandLineApplication app) => app.ShowHint();
 
         [Command(Name = "diff", Description = "Calculates the differences")]
         [Subcommand(typeof(FileCommand), typeof(SolutionCommand))]
         private class DiffCommand
         {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
             private void OnExecute(CommandLineApplication app) => app.ShowHint();
         }
 
@@ -48,6 +50,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
             [Option(ShortName = "b", LongName = "build", Description = "Ths build label")]
             public string Build { get; set; }
 
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
             private void OnExecute()
             {
                 var result = Altemiq.Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(this.First, this.Second, this.PreviousVersion, this.Build);
@@ -66,17 +69,10 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
             private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(string projectOrSolution)
             {
-                System.Collections.Generic.IEnumerable<string> projectPaths;
                 var projectOrSolutionPath = GetPath(projectOrSolution ?? System.IO.Directory.GetCurrentDirectory());
-                if (string.Compare(System.IO.Path.GetExtension(projectOrSolutionPath), ".sln", StringComparison.OrdinalIgnoreCase) == 0)
-                {
-                    // this is a solution
-                    projectPaths = Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
-                }
-                else
-                {
-                    projectPaths = new string[] { projectOrSolutionPath };
-                }
+                System.Collections.Generic.IEnumerable<string> projectPaths = string.Compare(System.IO.Path.GetExtension(projectOrSolutionPath), ".sln", StringComparison.OrdinalIgnoreCase) == 0
+                    ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
+                    : new string[] { projectOrSolutionPath };
 
                 var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
 
@@ -92,11 +88,11 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     {
                         var rootDirectory = System.IO.Path.Combine(directory, version.ToString());
                         var properties = new System.Collections.Generic.Dictionary<string, string>
-                    {
-                        { "MSBuildSDKsPath", System.IO.Path.Combine(rootDirectory, "Sdks") },
-                        { "RoslynTargetsPath", System.IO.Path.Combine(rootDirectory, "Roslyn") },
-                        { "MSBuildExtensionsPath", rootDirectory },
-                    };
+                        {
+                            { "MSBuildSDKsPath", System.IO.Path.Combine(rootDirectory, "Sdks") },
+                            { "RoslynTargetsPath", System.IO.Path.Combine(rootDirectory, "Roslyn") },
+                            { "MSBuildExtensionsPath", rootDirectory },
+                        };
 
                         projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(version.ToString(), rootDirectory, properties, projectCollection, rootDirectory));
                     }
@@ -185,6 +181,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
             }
 
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
             private async System.Threading.Tasks.Task OnExecuteAsync()
             {
                 var version = new Semver.SemVersion(0);
