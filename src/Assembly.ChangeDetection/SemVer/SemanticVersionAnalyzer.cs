@@ -36,8 +36,10 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
             var featuresAddedChanges = new AddedFunctionalityRule();
             var featuresAdded = featuresAddedChanges.Detect(differences);
 
-            var previousVersion = GetProductVersion(previousAssembly);
             var nextVersion = GetNextPatchVersion(lastVersionNumber);
+            var previousVersion = System.IO.File.Exists(previousAssembly)
+                ? GetProductVersion(previousAssembly)
+                : nextVersion;
 
             SemVersion calculatedVersion;
             if (breakingChange)
