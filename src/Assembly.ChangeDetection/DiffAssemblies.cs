@@ -58,6 +58,9 @@ namespace Altemiq.Assembly.ChangeDetection
                     result.AddedRemovedTypes.AddRange(differences.AddedRemovedTypes);
                     result.ChangedTypes.AddRange(differences.ChangedTypes);
                 }
+
+                assemblyV1?.Dispose();
+                assemblyV2?.Dispose();
             }
 
             return result;
