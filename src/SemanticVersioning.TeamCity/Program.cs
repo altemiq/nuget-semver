@@ -7,139 +7,186 @@
 namespace Mondo.SemanticVersioning.TeamCity
 {
     using System;
+    using System.CommandLine;
+    using System.CommandLine.Invocation;
     using System.Linq;
-    using System.Reflection;
-    using McMaster.Extensions.CommandLineUtils;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// The program class.
     /// </summary>
-    [HelpOption(ShortName = "h", LongName = "help", Inherited = true)]
-    [VersionOptionFromMember(MemberName = nameof(Version))]
-    [Subcommand(typeof(DiffCommand))]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1102:MakeClassStatic", Justification = "This is required for a generic method")]
-    internal class Program
+    internal static class Program
     {
-        private static string Version => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-
-        private static System.Threading.Tasks.Task<int> Main(string[] args) => CommandLineApplication.ExecuteAsync<Program>(args);
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
-        private void OnExecute(CommandLineApplication app) => app.ShowHint();
-
-        [Command(Name = "diff", Description = "Calculates the differences")]
-        [Subcommand(typeof(FileCommand), typeof(SolutionCommand))]
-        private class DiffCommand
+        private static Task<int> Main(string[] args)
         {
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
-            private void OnExecute(CommandLineApplication app) => app.ShowHint();
-        }
+            var previousOption = new Option(new string[] { "-p", "--previous" }, "The previous version", new Argument<Semver.SemVersion>((SymbolResult symbolResult, out Semver.SemVersion value) => Semver.SemVersion.TryParse(symbolResult.Token.Value, out value)));
 
-        [Command(Name = "file", Description = "Calculated the differences between two assemblies")]
-        private class FileCommand
-        {
-            [Argument(0, Name = "first", Description = "The first assembly")]
-            public string First { get; set; }
+            var fileCommand = new Command("file", "Calculated the differences between two assemblies");
+            fileCommand
+                .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
+                .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
+                .AddFluentOption(previousOption)
+                .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"));
 
-            [Argument(1, Name = "second", Description = "The second assembly")]
-            public string Second { get; set; }
-
-            [Option(ShortName = "p", LongName = "previous", Description = "The previous version")]
-            public string PreviousVersion { get; set; }
-
-            [Option(ShortName = "b", LongName = "build", Description = "Ths build label")]
-            public string Build { get; set; }
-
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
-            private void OnExecute()
+            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, Semver.SemVersion, string>((first, second, previous, build) =>
             {
-                var result = Mondo.Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(this.First, this.Second, this.PreviousVersion, this.Build);
+                var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, previous.ToString(), build);
                 Console.WriteLine($"##teamcity[buildNumber '{result.VersionNumber}']");
-            }
+            });
+
+            var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
+            solutionCommand
+                .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
+                .AddFluentOption(previousOption);
+
+            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, Semver.SemVersion>(ProcessProjectOrSolution);
+
+            var diffCommand = new Command("diff", "Calculates the differences")
+                .AddFluentCommand(fileCommand)
+                .AddFluentCommand(solutionCommand);
+
+            var rootCommand = new RootCommand(description: "Semantic Version generator");
+            rootCommand.AddCommand(diffCommand);
+
+            return rootCommand.InvokeAsync(args);
         }
 
-        [Command("solution", Description = "Calculates the version based on a solution file")]
-        private class SolutionCommand
+        private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo value)
         {
-            [Argument(0, Name = "PROJECT | SOLUTION", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.")]
-            public string ProjectOrSolutionFile { get; set; }
-
-            [Option(ShortName = "p", LongName = "previous", Description = "The previous version", ValueName = "previous_version")]
-            public string PreviousVersion { get; set; }
-
-            private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(string projectOrSolution)
+            var path = symbolResult.Token.Value;
+            if (path is null)
             {
-                var projectOrSolutionPath = GetPath(projectOrSolution ?? System.IO.Directory.GetCurrentDirectory());
-                System.Collections.Generic.IEnumerable<string> projectPaths = string.Compare(System.IO.Path.GetExtension(projectOrSolutionPath), ".sln", StringComparison.OrdinalIgnoreCase) == 0
-                    ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
-                    : new string[] { projectOrSolutionPath };
+                value = null;
+                return true;
+            }
 
-                var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
+            if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
+            {
+                value = (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
+                    ? (System.IO.FileSystemInfo)new System.IO.DirectoryInfo(path)
+                    : new System.IO.FileInfo(path);
 
-                // get the highest version
-                var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-                    ? "C:\\Program Files\\dotnet\\sdk"
-                    : "/usr/share/dotnet/sdk";
+                return true;
+            }
 
-                foreach (var path in System.IO.Directory.EnumerateDirectories(directory))
+            symbolResult.ErrorMessage = $"\"{path}\" is not a valid file or directory";
+            value = null;
+            return false;
+        }
+
+        private static async Task<int> ProcessProjectOrSolution(System.IO.FileSystemInfo projectOrSolution, Semver.SemVersion previous)
+        {
+            var version = new Semver.SemVersion(0);
+            using var projectCollection = GetProjects(projectOrSolution);
+            foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
+            {
+                var projectDirectory = project.DirectoryPath;
+                var outputPath = System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath"));
+                var assemblyName = project.GetPropertyValue("AssemblyName");
+
+                // install the NuGet package
+                var packageId = project.GetProperty("PackageId").EvaluatedValue;
+
+                var installDir = await NuGetInstaller.InstallAsync(packageId).ConfigureAwait(false);
+                var libDir = System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder"));
+                if (outputPath.EndsWith(System.IO.Path.DirectorySeparatorChar))
                 {
-                    // set the version
-                    if (Semver.SemVersion.TryParse(System.IO.Path.GetFileName(path), out var version))
-                    {
-                        var rootDirectory = System.IO.Path.Combine(directory, version.ToString());
-                        var properties = new System.Collections.Generic.Dictionary<string, string>
+                    libDir += System.IO.Path.DirectorySeparatorChar;
+                }
+
+                static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second)
+                {
+                    return first.CompareTo(second) > 0 ? first : second;
+                }
+
+                var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
+
+                foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
+                {
+                    var nugetDll = currentDll.Replace(outputPath, libDir, StringComparison.CurrentCulture);
+                    var result = Mondo.Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previous.ToString());
+                    version = Max(version, Semver.SemVersion.Parse(result.VersionNumber));
+                }
+
+                System.IO.Directory.Delete(installDir, true);
+            }
+
+            Console.WriteLine($"##teamcity[buildNumber '{version}']");
+            return 0;
+        }
+
+        private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
+        {
+            var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
+            System.Collections.Generic.IEnumerable<string> projectPaths = string.Compare(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase) == 0
+                ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
+                : new string[] { projectOrSolutionPath.FullName };
+
+            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
+
+            // get the highest version
+            var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
+                ? "C:\\Program Files\\dotnet\\sdk"
+                : "/usr/share/dotnet/sdk";
+
+            foreach (var path in System.IO.Directory.EnumerateDirectories(directory))
+            {
+                // set the version
+                if (Semver.SemVersion.TryParse(System.IO.Path.GetFileName(path), out var version))
+                {
+                    var rootDirectory = System.IO.Path.Combine(directory, version.ToString());
+                    var properties = new System.Collections.Generic.Dictionary<string, string>
                         {
                             { "MSBuildSDKsPath", System.IO.Path.Combine(rootDirectory, "Sdks") },
                             { "RoslynTargetsPath", System.IO.Path.Combine(rootDirectory, "Roslyn") },
                             { "MSBuildExtensionsPath", rootDirectory },
                         };
 
-                        projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(version.ToString(), rootDirectory, properties, projectCollection, rootDirectory));
-                    }
+                    projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(version.ToString(), rootDirectory, properties, projectCollection, rootDirectory));
                 }
-
-                var toolsVersion = projectCollection.Toolsets.Max(toolset => Semver.SemVersion.TryParse(toolset.ToolsVersion, out var tempVersion) ? tempVersion : null);
-                var toolset = projectCollection.GetToolset(toolsVersion.ToString());
-
-                Environment.SetEnvironmentVariable("MSBuildSDKsPath", toolset.GetProperty("MSBuildSDKsPath", null).EvaluatedValue);
-
-                projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(
-                    projectCollection.DefaultToolsVersion,
-                    toolset.ToolsPath,
-                    toolset.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.EvaluatedValue),
-                    projectCollection,
-                    string.Empty));
-
-                foreach (var projectPath in projectPaths)
-                {
-                    projectCollection.LoadProject(projectPath);
-                }
-
-                return projectCollection;
             }
 
-            private static string GetPath(string path)
+            var toolsVersion = projectCollection.Toolsets.Max(toolset => Semver.SemVersion.TryParse(toolset.ToolsVersion, out var tempVersion) ? tempVersion : null);
+            var toolset = projectCollection.GetToolset(toolsVersion.ToString());
+
+            Environment.SetEnvironmentVariable("MSBuildSDKsPath", toolset.GetProperty("MSBuildSDKsPath", null).EvaluatedValue);
+
+            projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(
+                projectCollection.DefaultToolsVersion,
+                toolset.ToolsPath,
+                toolset.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.EvaluatedValue),
+                projectCollection,
+                string.Empty));
+
+            foreach (var projectPath in projectPaths)
             {
-                if (!(System.IO.File.Exists(path) || System.IO.Directory.Exists(path)))
-                {
-                    throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
-                }
+                projectCollection.LoadProject(projectPath);
+            }
 
-                var fileAttributes = System.IO.File.GetAttributes(path);
+            return projectCollection;
+        }
 
-                // If a directory was passed in, search for a .sln or .csproj file
-                if ((fileAttributes & System.IO.FileAttributes.Directory) != 0)
-                {
+        private static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)
+        {
+            if (!path.Exists)
+            {
+                throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+            }
+
+            // If a directory was passed in, search for a .sln or .csproj file
+            switch (path)
+            {
+                case System.IO.DirectoryInfo directoryInfo:
                     // Search for solution(s)
-                    var solutionFiles = System.IO.Directory.GetFiles(path, "*.sln");
+                    var solutionFiles = directoryInfo.GetFiles("*.sln");
                     if (solutionFiles.Length == 1)
                     {
-                        return System.IO.Path.GetFullPath(solutionFiles[0]);
+                        return solutionFiles[0];
                     }
 
                     if (solutionFiles.Length > 1)
                     {
-                        if (path?.Length == 0)
+                        if (currentDirectory)
                         {
                             throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
                         }
@@ -148,15 +195,15 @@ namespace Mondo.SemanticVersioning.TeamCity
                     }
 
                     // We did not find any solutions, so try and find individual projects
-                    var projectFiles = System.IO.Directory.EnumerateFiles(path, "*.csproj").Concat(System.IO.Directory.EnumerateFiles(path, "*.fsproj")).Concat(System.IO.Directory.EnumerateFiles(path, "*.vbproj")).ToArray();
+                    var projectFiles = directoryInfo.EnumerateFiles("*.csproj").Concat(directoryInfo.EnumerateFiles("*.fsproj")).Concat(directoryInfo.EnumerateFiles("*.vbproj")).ToArray();
                     if (projectFiles.Length == 1)
                     {
-                        return System.IO.Path.GetFullPath(projectFiles[0]);
+                        return projectFiles[0];
                     }
 
                     if (projectFiles.Length > 1)
                     {
-                        if (path?.Length == 0)
+                        if (currentDirectory)
                         {
                             throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
                         }
@@ -166,60 +213,21 @@ namespace Mondo.SemanticVersioning.TeamCity
 
                     // At this point the path contains no solutions or projects, so throw an exception
                     throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
-                }
+                case System.IO.FileInfo fileInfo:
+                    // If a .sln or .csproj file was passed, just return that
+                    if ((string.Compare(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase) == 0)
+                        || (string.Compare(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase) == 0)
+                        || (string.Compare(fileInfo.Extension, ".vbproj", StringComparison.OrdinalIgnoreCase) == 0)
+                        || (string.Compare(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase) == 0))
+                    {
+                        return fileInfo;
+                    }
 
-                // If a .sln or .csproj file was passed, just return that
-                if ((string.Compare(System.IO.Path.GetExtension(path), ".sln", StringComparison.OrdinalIgnoreCase) == 0)
-                    || (string.Compare(System.IO.Path.GetExtension(path), ".csproj", StringComparison.OrdinalIgnoreCase) == 0)
-                    || (string.Compare(System.IO.Path.GetExtension(path), ".vbproj", StringComparison.OrdinalIgnoreCase) == 0)
-                    || (string.Compare(System.IO.Path.GetExtension(path), ".fsproj", StringComparison.OrdinalIgnoreCase) == 0))
-                {
-                    return System.IO.Path.GetFullPath(path);
-                }
-
-                // At this point, we know the file passed in is not a valid project or solution
-                throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                    // At this point, we know the file passed in is not a valid project or solution
+                    throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
             }
 
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:RemoveUnusedPrivateMembers", Justification = "This is used via reflection")]
-            private async System.Threading.Tasks.Task OnExecuteAsync()
-            {
-                var version = new Semver.SemVersion(0);
-                foreach (var project in GetProjects(this.ProjectOrSolutionFile).LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
-                {
-                    var projectDirectory = project.DirectoryPath;
-                    var outputPath = System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath"));
-                    var assemblyName = project.GetPropertyValue("AssemblyName");
-
-                    // install the NuGet package
-                    var packageId = project.GetProperty("PackageId").EvaluatedValue;
-
-                    var installDir = await NuGetInstaller.InstallAsync(packageId).ConfigureAwait(false);
-                    var libDir = System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder"));
-                    if (outputPath.EndsWith(System.IO.Path.DirectorySeparatorChar))
-                    {
-                        libDir += System.IO.Path.DirectorySeparatorChar;
-                    }
-
-                    static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second)
-                    {
-                        return first.CompareTo(second) > 0 ? first : second;
-                    }
-
-                    var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
-
-                    foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
-                    {
-                        var nugetDll = currentDll.Replace(outputPath, libDir, StringComparison.CurrentCulture);
-                        var result = Mondo.Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, this.PreviousVersion);
-                        version = Max(version, Semver.SemVersion.Parse(result.VersionNumber));
-                    }
-
-                    System.IO.Directory.Delete(installDir, true);
-                }
-
-                Console.WriteLine($"##teamcity[buildNumber '{version}']");
-            }
+            return null;
         }
     }
 }
