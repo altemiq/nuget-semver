@@ -59,7 +59,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
             // Read package file from remote or cache
             log.LogInformation($"Downloading package {package}");
-            var packageReader = await DownloadPackage(package, sources, settings, log, cancellationToken).ConfigureAwait(false);
+            using var packageReader = await DownloadPackage(package, sources, settings, log, cancellationToken).ConfigureAwait(false);
 
             // Package installation
             log.LogInformation($"Installing package {package} to {localInstallPath}");
@@ -157,7 +157,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
             try
             {
                 var dependencyInfoResource = await source.GetResourceAsync<DependencyInfoResource>(cancellationToken).ConfigureAwait(false);
-                var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true };
+                using var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true };
 
                 var returnValue = await dependencyInfoResource.ResolvePackages(packageId, NuGet.Frameworks.NuGetFramework.AgnosticFramework, sourceCacheContext, log, cancellationToken).ConfigureAwait(false);
 
@@ -199,7 +199,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 foreach (var repository in GetRepositories(settings, sources))
                 {
                     var findPackagesByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
-                    var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, sourceCacheContext, logger, cancellationToken).ConfigureAwait(false);
+                    using var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, sourceCacheContext, logger, cancellationToken).ConfigureAwait(false);
 
                     if (packageDownloder == null)
                     {
@@ -221,7 +221,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     {
                         var downloadCacheContext = new PackageDownloadContext(sourceCacheContext);
                         var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
-                        await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
+                        using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
                     }
 
                     return new PackageArchiveReader(tempFile);
@@ -351,9 +351,12 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 return false;
             }
 
-            using var firstFileStream = first.OpenRead();
-            using var secondFileStream = second.OpenRead();
-            return StreamsContentsAreEqual(firstFileStream, secondFileStream);
+            var firstFileStream = first.OpenRead();
+            var secondFileStream = second.OpenRead();
+            var result = StreamsContentsAreEqual(firstFileStream, secondFileStream);
+            firstFileStream?.Dispose();
+            secondFileStream?.Dispose();
+            return result;
         }
 
         private static bool StreamsContentsAreEqual(System.IO.Stream first, System.IO.Stream second)
