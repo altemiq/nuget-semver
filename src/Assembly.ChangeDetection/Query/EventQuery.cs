@@ -36,7 +36,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         {
             if (string.IsNullOrEmpty(query))
             {
-                throw new ArgumentNullException(nameof(query), "query string was empty");
+                throw new ArgumentNullException(nameof(query));
             }
 
             if (query == "*")
@@ -92,7 +92,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         /// <inheritdoc/>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override IList<MethodDefinition> GetMethods(TypeDefinition type) => throw new NotSupportedException("The event query does not support a method match. Use GetMatchingEvents to get the query result");
+        public override IList<MethodDefinition> GetMethods(TypeDefinition type) => throw new NotSupportedException(Properties.Resources.NoEventQueryMethodMatch);
 
         /// <summary>
         /// Gets the matching events.
@@ -103,7 +103,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         {
             if (type == null)
             {
-                throw new ArgumentException("The type instance to analyze was null. Can`t do that.");
+                throw new ArgumentNullException(nameof(type));
             }
 
             return type.Events.Where(this.IsMatchingEvent).ToArray();

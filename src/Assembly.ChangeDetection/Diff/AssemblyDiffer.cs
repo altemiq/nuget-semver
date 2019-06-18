@@ -73,9 +73,14 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
         /// <returns>The assembly diff collection.</returns>
         public AssemblyDiffCollection GenerateTypeDiff(QueryAggregator queries)
         {
-            if (queries == null || queries.TypeQueries.Count == 0)
+            if (queries == null)
             {
-                throw new ArgumentNullException(nameof(queries), "queries is null or contains no queries");
+                throw new ArgumentNullException(nameof(queries));
+            }
+
+            if (queries.TypeQueries.Count == 0)
+            {
+                throw new ArgumentException(Properties.Resources.QueriesContainsNoTypeQueries, nameof(queries));
             }
 
             var typesV1 = queries.ExeuteAndAggregateTypeQueries(this.myV1);

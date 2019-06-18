@@ -24,13 +24,6 @@ namespace Altemiq.Assembly.ChangeDetection
         /// <returns>The difference colleciton.</returns>
         public static Diff.AssemblyDiffCollection Execute(IEnumerable<FileQuery> oldFiles, IEnumerable<FileQuery> newFiles)
         {
-            var removedFiles = oldFiles.GetNotExistingFilesInOtherQuery(newFiles);
-
-            foreach (var str in removedFiles)
-            {
-                Console.WriteLine("\t{0}", Path.GetFileName(str));
-            }
-
             var oldFilesQuery = new HashSet<string>(oldFiles.GetFiles(), new FileNameComparer());
             var newFilesQuery = new HashSet<string>(newFiles.GetFiles(), new FileNameComparer());
 

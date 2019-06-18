@@ -41,7 +41,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             var trimedQuery = typeQueries.Trim();
             if (trimedQuery?.Length == 0)
             {
-                throw new ArgumentException("typeQueries was an empty string");
+                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.WasAnEmptyString, nameof(typeQueries)), nameof(typeQueries));
             }
 
             var queries = trimedQuery.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -51,7 +51,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 var m = QueryParser.Match(query);
                 if (!m.Success)
                 {
-                    throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "The type query \"{0}\" is not of the form [public|internal|class|interface|struct|enum|nocompiler|api] typename", query));
+                    throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.IncorrectTypeQuery, query));
                 }
 
                 var mode = this.GetQueryMode(m);

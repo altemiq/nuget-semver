@@ -98,7 +98,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
 
             if (diffQueries == null || diffQueries.FieldQueries.Count == 0 || diffQueries.MethodQueries.Count == 0)
             {
-                throw new ArgumentException("diffQueries was null or the method or field query list was emtpy. This will not result in a meaningful diff result");
+                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DiffQueriesWasNull, nameof(diffQueries)), nameof(diffQueries));
             }
 
             var diff = new TypeDiff(typeV1, typeV2);

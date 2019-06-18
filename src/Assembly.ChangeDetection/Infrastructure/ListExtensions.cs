@@ -20,30 +20,14 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         /// </summary>
         /// <param name="queries">The queries.</param>
         /// <returns>The sreach directories.</returns>
-        public static string GetSearchDirs(this IEnumerable<FileQuery> queries)
-        {
-            if (queries == null)
-            {
-                throw new ArgumentNullException(nameof(queries), "queries was null.");
-            }
-
-            return string.Join(";", queries.Select(q => q.SearchDir));
-        }
+        public static string GetSearchDirs(this IEnumerable<FileQuery> queries) => queries != null ? string.Join(";", queries.Select(q => q.SearchDir)) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the queries.
         /// </summary>
         /// <param name="queries">The file queries.</param>
         /// <returns>The queries.</returns>
-        public static string GetQueries(this IEnumerable<FileQuery> queries)
-        {
-            if (queries == null)
-            {
-                throw new ArgumentNullException(nameof(queries), "queries was null.");
-            }
-
-            return string.Join(" ", queries.Select(q => q.Query));
-        }
+        public static string GetQueries(this IEnumerable<FileQuery> queries) => queries != null ? string.Join(" ", queries.Select(q => q.Query)) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the files.
@@ -52,12 +36,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         /// <returns>The files.</returns>
         public static IEnumerable<string> GetFiles(this IEnumerable<FileQuery> queries)
         {
-            if (queries == null)
-            {
-                throw new ArgumentNullException(nameof(queries), "queries was null.");
-            }
-
-            return GetFilesIterator();
+            return queries != null ? GetFilesIterator() : throw new ArgumentNullException(nameof(queries));
 
             IEnumerable<string> GetFilesIterator()
             {
@@ -76,15 +55,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         /// </summary>
         /// <param name="queries">The queries.</param>
         /// <returns><see langword="true"/> if any items in <paramref name="queries"/> have matches; otherwise <see langword="false"/>.</returns>
-        public static bool HasMatches(this IEnumerable<FileQuery> queries)
-        {
-            if (queries == null)
-            {
-                throw new ArgumentNullException(nameof(queries), "queries was null.");
-            }
-
-            return queries.Any(q => q.HasMatches);
-        }
+        public static bool HasMatches(this IEnumerable<FileQuery> queries) => queries != null ? queries.Any(q => q.HasMatches) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the matching file by name.
@@ -96,12 +67,12 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         {
             if (queries == null)
             {
-                throw new ArgumentNullException(nameof(queries), "queries was null.");
+                throw new ArgumentNullException(nameof(queries));
             }
 
             if (string.IsNullOrEmpty(fileName))
             {
-                throw new ArgumentException("fileName to filter for was null or empty", nameof(queries));
+                throw new ArgumentException(Properties.Resources.FileNameWasNullOrEmpty, nameof(fileName));
             }
 
             return queries.Select(query => query.GetMatchingFileByName(fileName)).FirstOrDefault(match => match != null);
