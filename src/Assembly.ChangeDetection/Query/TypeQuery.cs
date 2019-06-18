@@ -221,12 +221,12 @@ namespace Mondo.Assembly.ChangeDetection.Query
         {
             if (!IsEnabled(mode, TypeQueryMode.Internal) && !IsEnabled(mode, TypeQueryMode.Public))
             {
-                throw new ArgumentException("You must set QueryMode.Internal and/or QueryMode.Public find something.", nameof(mode));
+                throw new ArgumentException(Properties.Resources.MustSetInternalPublic, nameof(mode));
             }
 
             if (!IsEnabled(mode, TypeQueryMode.Interface) && !IsEnabled(mode, TypeQueryMode.Class) && !IsEnabled(mode, TypeQueryMode.ValueType))
             {
-                throw new ArgumentException("You must search for a class, interface or value type in your module. See QueryMode enumeration for values", nameof(mode));
+                throw new ArgumentException(Properties.Resources.MustSearchForInterfaceClassStruct, nameof(mode));
             }
 
             return mode;

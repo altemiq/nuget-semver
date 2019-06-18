@@ -36,7 +36,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         {
             if (string.IsNullOrEmpty(query))
             {
-                throw new ArgumentException("The file query was null or empty");
+                throw new ArgumentNullException(nameof(query));
             }
 
             this.searchOption = searchOption;

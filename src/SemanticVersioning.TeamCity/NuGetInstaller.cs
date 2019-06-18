@@ -157,9 +157,11 @@ namespace Mondo.SemanticVersioning.TeamCity
             try
             {
                 var dependencyInfoResource = await source.GetResourceAsync<DependencyInfoResource>(cancellationToken).ConfigureAwait(false);
-                using var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true };
-
-                var returnValue = await dependencyInfoResource.ResolvePackages(packageId, NuGet.Frameworks.NuGetFramework.AgnosticFramework, sourceCacheContext, log, cancellationToken).ConfigureAwait(false);
+                IEnumerable<SourcePackageDependencyInfo> returnValue;
+                using (var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true })
+                {
+                    returnValue = await dependencyInfoResource.ResolvePackages(packageId, NuGet.Frameworks.NuGetFramework.AgnosticFramework, sourceCacheContext, log, cancellationToken).ConfigureAwait(false);
+                }
 
                 return returnValue?.ToList() ?? defaultVersions;
             }

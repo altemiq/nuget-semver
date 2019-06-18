@@ -31,7 +31,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         {
             if (string.IsNullOrEmpty(query))
             {
-                throw new ArgumentNullException(nameof(query), "query string was empty");
+                throw new ArgumentNullException(nameof(query));
             }
         }
 

@@ -81,30 +81,20 @@ namespace Mondo.SemanticVersioning.TeamCity
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
                 var projectDirectory = project.DirectoryPath;
-                var outputPath = System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath"));
+                var outputPath = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath")));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
 
                 // install the NuGet package
-                var packageId = project.GetProperty("PackageId").EvaluatedValue;
+                var installDir = await NuGetInstaller.InstallAsync(project.GetPropertyValue("PackageId")).ConfigureAwait(false);
+                var buildOutputTargetFolder = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
-                var installDir = await NuGetInstaller.InstallAsync(packageId).ConfigureAwait(false);
-                var libDir = System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder"));
-                if (outputPath.EndsWith(System.IO.Path.DirectorySeparatorChar))
-                {
-                    libDir += System.IO.Path.DirectorySeparatorChar;
-                }
-
-                static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second)
-                {
-                    return first.CompareTo(second) > 0 ? first : second;
-                }
+                static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second) => first.CompareByPrecedence(second) > 0 ? first : second;
 
                 var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
-
                 foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
                 {
-                    var nugetDll = currentDll.Replace(outputPath, libDir, StringComparison.CurrentCulture);
-                    var result = Mondo.Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previous.ToString());
+                    var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+                    var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previous.ToString());
                     version = Max(version, Semver.SemVersion.Parse(result.VersionNumber));
                 }
 
