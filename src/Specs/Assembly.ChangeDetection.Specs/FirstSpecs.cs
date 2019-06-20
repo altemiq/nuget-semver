@@ -1,4 +1,4 @@
-﻿namespace Altemiq.Assembly.ChangeDetection.Specs
+﻿namespace Altemiq.Assembly.ChangeDetection
 {
     using System;
     using System.Collections.Generic;
@@ -9,7 +9,7 @@
 
     internal abstract class When_there_are_changes
     {
-        protected static readonly string BaseAssembly = GetPath("First\\Original", "Original.dll");
+        protected static readonly string BaseAssembly = GetPath("Projects\\Original", "Original.dll");
 
         protected static string GetPath(string project, string name)
         {
@@ -35,7 +35,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_breaking_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("First\\BreakingChange", "Original.dll");
+        private static readonly string TestAssembly = GetPath("Projects\\BreakingChange", "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
@@ -51,7 +51,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_non_breaking_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("First\\NonBreakingAdditiveChange", "Original.dll");
+        private static readonly string TestAssembly = GetPath("Projects\\NonBreakingAdditiveChange", "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
@@ -67,7 +67,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_no_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("First\\Original", "Original.dll");
+        private static readonly string TestAssembly = GetPath("Projects\\Original", "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
