@@ -100,9 +100,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
-        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[system.build.number '0.1.0']");
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '0.1.0']");
 
-        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[system.build.suffix '']");
+        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='']");
 
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
@@ -116,9 +116,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
-        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[system.build.number '1.0.2']");
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '1.0.2']");
 
-        private readonly It should_have_returned_a_suffix = () => returnValue.console.Should().Contain("##teamcity[system.build.suffix 'develop']");
+        private readonly It should_have_returned_a_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='develop']");
 
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
@@ -132,9 +132,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
-        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[system.build.number '1.0.1']");
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '1.0.1']");
 
-        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[system.build.suffix '']");
+        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='']");
 
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
@@ -148,9 +148,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
-        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[system.build.number '1.0.2']");
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '1.0.2']");
 
-        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[system.build.suffix 'develop']");
+        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='develop']");
 
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
