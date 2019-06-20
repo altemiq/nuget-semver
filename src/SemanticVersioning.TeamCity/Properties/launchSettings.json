@@ -14,7 +14,7 @@
     },
     "Solution - Path": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \".\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download",
+      "commandLineArgs": "diff solution \".\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false",
       "workingDirectory": "C:\\Repos\\projects\\MATH\\Math\\src\\Math.Geodesy"
     },
     "Help": {

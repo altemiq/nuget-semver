@@ -42,8 +42,8 @@ namespace Mondo.SemanticVersioning.TeamCity
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
             solutionCommand
                 .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE", "http://artifacts.geomatic.com.au/nuget/NuGet") { Arity = ArgumentArity.ZeroOrMore } })
-                .AddFluentOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix"))
+                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.ZeroOrMore } })
+                .AddFluentOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
                 .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
                 .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
                 .AddFluentOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
