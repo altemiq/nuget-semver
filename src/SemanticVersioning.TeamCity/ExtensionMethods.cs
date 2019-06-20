@@ -14,20 +14,6 @@ namespace Altemiq.SemanticVersioning.TeamCity
     internal static class ExtensionMethods
     {
         /// <summary>
-        /// Add the alias fluently.
-        /// </summary>
-        /// <typeparam name="T">The symbol type.</typeparam>
-        /// <param name="symbol">The symbol.</param>
-        /// <param name="alias">The alias.</param>
-        /// <returns>The input symbol.</returns>
-        public static T AddFluentAlias<T>(this T symbol, string alias)
-            where T : Symbol
-        {
-            symbol.AddAlias(alias);
-            return symbol;
-        }
-
-        /// <summary>
         /// Adds the argument fluently.
         /// </summary>
         /// <typeparam name="T">The command type.</typeparam>
