@@ -19,7 +19,10 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static Task<int> Main(string[] args)
         {
-            var previousOption = new Option(new string[] { "-p", "--previous" }, "The previous version", new Argument<Semver.SemVersion>((SymbolResult symbolResult, out Semver.SemVersion value) => Semver.SemVersion.TryParse(symbolResult.Token.Value, out value)));
+            var previousOption = new Option(new string[] { "-p", "--previous" }, "The previous version")
+            {
+                Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)),
+            };
 
             var fileCommand = new Command("file", "Calculated the differences between two assemblies");
             fileCommand
@@ -28,18 +31,22 @@ namespace Mondo.SemanticVersioning.TeamCity
                 .AddFluentOption(previousOption)
                 .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"));
 
-            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, Semver.SemVersion, string>((first, second, previous, build) =>
+            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string>((first, second, previous, build) =>
             {
                 var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, previous.ToString(), build);
-                Console.WriteLine($"##teamcity[buildNumber '{result.VersionNumber}']");
+                var version = NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber);
+                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.number '{0:x.y.z}']", version));
+                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.suffix '{0:R}']", version));
             });
 
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
             solutionCommand
                 .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
+                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE", "http://artifacts.geomatic.com.au/nuget/NuGet") { Arity = ArgumentArity.ZeroOrMore } })
+                .AddFluentOption(new Option(new string[] { "--version-suffix" }, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
                 .AddFluentOption(previousOption);
 
-            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, Semver.SemVersion>(ProcessProjectOrSolution);
+            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, NuGet.Versioning.SemanticVersion, string>(ProcessProjectOrSolution);
 
             var diffCommand = new Command("diff", "Calculates the differences")
                 .AddFluentCommand(fileCommand)
@@ -74,9 +81,20 @@ namespace Mondo.SemanticVersioning.TeamCity
             return false;
         }
 
-        private static async Task<int> ProcessProjectOrSolution(System.IO.FileSystemInfo projectOrSolution, Semver.SemVersion previous)
+        private static async Task<int> ProcessProjectOrSolution(System.IO.FileSystemInfo projectOrSolution, System.Collections.Generic.IEnumerable<string> source, NuGet.Versioning.SemanticVersion previous, string versionSuffix)
         {
-            var version = new Semver.SemVersion(0);
+            var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+            async Task<string> GetPreviousVersionStringAsync(string packageId)
+            {
+                if (previous != null)
+                {
+                    return previous.ToString();
+                }
+
+                var nugetVersion = await NuGetInstaller.GetLatestVersionAsync(packageId, source).ConfigureAwait(false);
+                return nugetVersion.ToString();
+            }
+
             using var projectCollection = GetProjects(projectOrSolution);
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
@@ -85,23 +103,28 @@ namespace Mondo.SemanticVersioning.TeamCity
                 var assemblyName = project.GetPropertyValue("AssemblyName");
 
                 // install the NuGet package
-                var installDir = await NuGetInstaller.InstallAsync(project.GetPropertyValue("PackageId")).ConfigureAwait(false);
+                var packageId = project.GetPropertyValue("PackageId");
+                var installDir = await NuGetInstaller.InstallAsync(packageId, source).ConfigureAwait(false);
                 var buildOutputTargetFolder = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
-                static Semver.SemVersion Max(Semver.SemVersion first, Semver.SemVersion second) => first.CompareByPrecedence(second) > 0 ? first : second;
+                static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second) => first.CompareTo(second, NuGet.Versioning.VersionComparison.VersionRelease) > 0 ? first : second;
 
                 var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
+                var previousString = await GetPreviousVersionStringAsync(packageId).ConfigureAwait(false);
                 foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
                 {
                     var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
-                    var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previous.ToString());
-                    version = Max(version, Semver.SemVersion.Parse(result.VersionNumber));
+                    var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousString, versionSuffix);
+                    version = Max(version, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
                 }
 
                 System.IO.Directory.Delete(installDir, true);
             }
 
-            Console.WriteLine($"##teamcity[buildNumber '{version}']");
+            // write out the version and the suffix
+            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.number '{0:x.y.z}']", version));
+            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.suffix '{0:R}']", version));
+
             return 0;
         }
 
@@ -119,41 +142,96 @@ namespace Mondo.SemanticVersioning.TeamCity
                 ? "C:\\Program Files\\dotnet\\sdk"
                 : "/usr/share/dotnet/sdk";
 
-            foreach (var path in System.IO.Directory.EnumerateDirectories(directory))
-            {
-                // set the version
-                if (Semver.SemVersion.TryParse(System.IO.Path.GetFileName(path), out var version))
+            var parsedToolsets = System.IO.Directory.EnumerateDirectories(directory)
+                .Where(path => NuGet.Versioning.SemanticVersion.TryParse(System.IO.Path.GetFileName(path), out _))
+                .Select(path =>
                 {
-                    var rootDirectory = System.IO.Path.Combine(directory, version.ToString());
+                    var version = NuGet.Versioning.SemanticVersion.Parse(System.IO.Path.GetFileName(path));
                     var properties = new System.Collections.Generic.Dictionary<string, string>
                         {
-                            { "MSBuildSDKsPath", System.IO.Path.Combine(rootDirectory, "Sdks") },
-                            { "RoslynTargetsPath", System.IO.Path.Combine(rootDirectory, "Roslyn") },
-                            { "MSBuildExtensionsPath", rootDirectory },
+                            { "MSBuildSDKsPath", System.IO.Path.Combine(path, "Sdks") },
+                            { "RoslynTargetsPath", System.IO.Path.Combine(path, "Roslyn") },
+                            { "MSBuildExtensionsPath", path },
                         };
 
-                    projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(version.ToString(), rootDirectory, properties, projectCollection, rootDirectory));
+                    var propsFile = System.IO.Directory.EnumerateFiles(path, "Microsoft.Common.props", System.IO.SearchOption.AllDirectories).First();
+                    var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile)) ?? projectCollection.DefaultToolsVersion;
+
+                    return (toolsVersion: version.ToString(), toolset: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, projectCollection, path));
+                }).ToDictionary(value => value.toolsVersion, value => value.toolset);
+
+            NuGet.Versioning.SemanticVersion toolsVersion = default;
+            var versions = parsedToolsets.Keys.Where(value => NuGet.Versioning.SemanticVersion.TryParse(value, out var _)).Select(NuGet.Versioning.SemanticVersion.Parse).ToArray();
+            var globalJson = FindGlobalJson(projectOrSolution);
+            if (globalJson != null)
+            {
+                // get the tool version
+                if (System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(globalJson)).RootElement.TryGetProperty("sdk", out var sdkElement)
+                    && sdkElement.TryGetProperty("version", out var versionElement)
+                    && NuGet.Versioning.SemanticVersion.TryParse(versionElement.GetString(), out var requestedVersion))
+                {
+                    toolsVersion = Array.Find(versions, version => NuGet.Versioning.VersionComparer.VersionRelease.Equals(version, requestedVersion));
+                    if (toolsVersion is null)
+                    {
+                        // find the patch version
+                        var validVersions = versions.Where(version =>
+                            version.Major == requestedVersion.Major
+                            && version.Minor == requestedVersion.Minor
+                            && (version.Patch / 100) == (requestedVersion.Patch / 100)
+                            && (version.Patch % 100) >= (requestedVersion.Patch % 100)).ToArray();
+
+                        if (validVersions.Length > 0)
+                        {
+                            toolsVersion = validVersions.Max();
+                        }
+                        else
+                        {
+                            throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", versions.Select(version => $"{version} [{directory}]"))}");
+                        }
+                    }
                 }
             }
 
-            var toolsVersion = projectCollection.Toolsets.Max(toolset => Semver.SemVersion.TryParse(toolset.ToolsVersion, out var tempVersion) ? tempVersion : null);
-            var toolset = projectCollection.GetToolset(toolsVersion.ToString());
+            if (toolsVersion is null)
+            {
+                toolsVersion = versions.Max(version => version);
+            }
+
+            parsedToolsets.TryGetValue(toolsVersion.ToString(), out var toolset);
 
             Environment.SetEnvironmentVariable("MSBuildSDKsPath", toolset.GetProperty("MSBuildSDKsPath", null).EvaluatedValue);
 
-            projectCollection.AddToolset(new Microsoft.Build.Evaluation.Toolset(
-                projectCollection.DefaultToolsVersion,
-                toolset.ToolsPath,
-                toolset.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.EvaluatedValue),
-                projectCollection,
-                string.Empty));
+            // get the version
+            projectCollection.AddToolset(toolset);
 
             foreach (var projectPath in projectPaths)
             {
-                projectCollection.LoadProject(projectPath);
+                projectCollection.LoadProject(projectPath, toolset.ToolsVersion);
             }
 
             return projectCollection;
+        }
+
+        private static string FindGlobalJson(System.IO.FileSystemInfo path)
+        {
+            string directory = path switch
+            {
+                System.IO.DirectoryInfo directoryInfo => directoryInfo.FullName,
+                System.IO.FileInfo fileInfo => fileInfo.DirectoryName,
+                _ => System.IO.Directory.GetCurrentDirectory(),
+            };
+
+            do
+            {
+                var filePath = System.IO.Path.Combine(directory, "global.json");
+                if (System.IO.File.Exists(filePath))
+                {
+                    return filePath;
+                }
+            }
+            while ((directory = System.IO.Path.GetDirectoryName(directory)) != null);
+
+            return null;
         }
 
         private static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)

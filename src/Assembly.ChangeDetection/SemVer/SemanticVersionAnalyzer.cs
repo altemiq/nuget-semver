@@ -8,7 +8,6 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
 {
     using Mondo.Assembly.ChangeDetection.Infrastructure;
     using Mondo.Assembly.ChangeDetection.Rules;
-    using Semver;
 
     /// <summary>
     /// The semantic version number.
@@ -21,9 +20,10 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
         /// <param name="previousAssembly">The previous assembly.</param>
         /// <param name="currentAssembly">The current assembly.</param>
         /// <param name="lastVersionNumber">The last version number.</param>
+        /// <param name="prerelease">The pre-release label.</param>
         /// <param name="build">The build label.</param>
         /// <returns>The results.</returns>
-        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, string lastVersionNumber, string build = null)
+        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, string lastVersionNumber, string prerelease = null, string build = null)
         {
             var previous = new FileQuery(previousAssembly);
             var current = new FileQuery(currentAssembly);
@@ -41,18 +41,18 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
                 ? GetProductVersion(previousAssembly)
                 : nextVersion;
 
-            SemVersion calculatedVersion;
+            NuGet.Versioning.SemanticVersion calculatedVersion;
             if (breakingChange)
             {
-                calculatedVersion = previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0, prerelease: nextVersion.Prerelease);
+                calculatedVersion = previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0, releaseLabel: prerelease ?? nextVersion.Release);
             }
             else if (featuresAdded)
             {
-                calculatedVersion = previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0, prerelease: nextVersion.Prerelease);
+                calculatedVersion = previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0, releaseLabel: prerelease ?? nextVersion.Release);
             }
             else
             {
-                calculatedVersion = nextVersion;
+                calculatedVersion = nextVersion.Change(releaseLabel: prerelease);
             }
 
             // see if the proposed version has the same major/minor
@@ -63,7 +63,7 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
 
             if (build != null)
             {
-                calculatedVersion = calculatedVersion.Change(build: build);
+                calculatedVersion = calculatedVersion.Change(metadata: build);
             }
 
             return new AnalysisResult
@@ -73,16 +73,16 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
             };
         }
 
-        private static SemVersion GetNextPatchVersion(string lastVersionNumber)
+        private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(string lastVersionNumber)
         {
-            var lastVersion = SemVersion.Parse(lastVersionNumber);
+            var lastVersion = NuGet.Versioning.SemanticVersion.Parse(lastVersionNumber);
             return lastVersion.Change(patch: lastVersion.Patch + 1);
         }
 
-        private static SemVersion GetProductVersion(string assembly)
+        private static NuGet.Versioning.SemanticVersion GetProductVersion(string assembly)
         {
             var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly);
-            return SemVersion.Parse(fileVersionInfo.ProductVersion);
+            return NuGet.Versioning.SemanticVersion.Parse(fileVersionInfo.ProductVersion);
         }
     }
 }
