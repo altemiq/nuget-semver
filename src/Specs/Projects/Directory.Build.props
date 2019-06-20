@@ -4,6 +4,7 @@
     <RootNamespace>Original</RootNamespace>
     <AssemblyName>Original</AssemblyName>
     <PackageId>Original</PackageId>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
 </Project>
