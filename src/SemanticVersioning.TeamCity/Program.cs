@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="Program.cs" company="GeomaticTechnologies">
 // Copyright (c) GeomaticTechnologies. All rights reserved.
 // </copyright>
@@ -36,9 +36,7 @@ namespace Mondo.SemanticVersioning.TeamCity
             fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string>((first, second, previous, build) =>
             {
                 var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, previous.ToString(), build);
-                var version = NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber);
-                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.number '{0:x.y.z}']", version));
-                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.suffix '{0:R}']", version));
+                WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
             });
 
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
@@ -157,10 +155,15 @@ namespace Mondo.SemanticVersioning.TeamCity
             }
 
             // write out the version and the suffix
-            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.number '{0:x.y.z}']", version));
-            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[system.build.suffix '{0:R}']", version));
+            WriteVersion(version);
 
             return 0;
+        }
+
+        private static void WriteVersion(NuGet.Versioning.SemanticVersion version)
+        {
+            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[buildNumber '{0:x.y.z}']", version));
+            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='system.build.suffix' value='{0:R}']", version));
         }
 
         private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
