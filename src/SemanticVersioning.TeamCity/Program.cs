@@ -111,11 +111,13 @@ namespace Mondo.SemanticVersioning.TeamCity
                 }
             }
 
+            static string TrimEndingDirectorySeparator(string path) => path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+
             using var projectCollection = GetProjects(projectOrSolution);
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
                 var projectDirectory = project.DirectoryPath;
-                var outputPath = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath")));
+                var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath")));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
 
                 // install the NuGet package
@@ -138,7 +140,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                 }
                 else
                 {
-                    var buildOutputTargetFolder = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
+                    var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
                     static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second) => NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
 
