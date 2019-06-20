@@ -27,17 +27,19 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <param name="packageName">The package name.</param>
         /// <param name="sources">The sources.</param>
         /// <param name="version">The version.</param>
+        /// <param name="noCache">Set to true to ignore the cache.</param>
+        /// <param name="directDownload">Set to true to directly download.</param>
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public static async Task<string> InstallAsync(string packageName, IEnumerable<string> sources = null, string version = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
+        public static async Task<string> InstallAsync(string packageName, IEnumerable<string> sources = null, string version = null, bool noCache = false, bool directDownload = false, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
         {
             var enumerableSources = sources ?? Enumerable.Empty<string>();
             var settings = Settings.LoadDefaultSettings(null);
             var outputDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), packageName);
             var packageIdentity = await GetPackage(packageName, enumerableSources, version, settings, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
 
-            return await InstallPackage(packageIdentity, enumerableSources, settings, outputDirectory, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            return await InstallPackage(packageIdentity, enumerableSources, settings, outputDirectory, !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -50,7 +52,7 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <returns>The latest NuGet version.</returns>
         public static Task<NuGet.Versioning.NuGetVersion> GetLatestVersionAsync(string packageName, IEnumerable<string> sources = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default) => GetLatestVersion(GetRepositories(Settings.LoadDefaultSettings(null), sources), packageName, true, log ?? NuGet.Common.NullLogger.Instance, cancellationToken);
 
-        private static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        private static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -59,7 +61,7 @@ namespace Mondo.SemanticVersioning.TeamCity
 
             // Read package file from remote or cache
             log.LogInformation($"Downloading package {package}");
-            using var packageReader = await DownloadPackage(package, sources, settings, log, cancellationToken).ConfigureAwait(false);
+            using var packageReader = await DownloadPackage(package, sources, settings, useCache, addToCache, log, cancellationToken).ConfigureAwait(false);
 
             // Package installation
             log.LogInformation($"Installing package {package} to {localInstallPath}");
@@ -97,12 +99,6 @@ namespace Mondo.SemanticVersioning.TeamCity
             if (repositories.Count == 0)
             {
                 repositories = SettingsUtility.GetEnabledSources(settings).Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToList();
-            }
-
-            var cacheRepo = Repository.Factory.GetCoreV3(SettingsUtility.GetGlobalPackagesFolder(settings));
-            if (!repositories.Contains(cacheRepo))
-            {
-                repositories.Add(cacheRepo);
             }
 
             return repositories;
@@ -185,15 +181,18 @@ namespace Mondo.SemanticVersioning.TeamCity
             return repositories.Select(repository => GetVersions(repository, packageIdentity.Id, log, token)).SelectMany(task => task.Result).Any(info => info.Listed && NuGet.Versioning.VersionComparer.Default.Equals(info.Version, packageIdentity.Version));
         }
 
-        private static async Task<PackageReaderBase> DownloadPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+        private static async Task<PackageReaderBase> DownloadPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, bool useCache, bool addToCache, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var globalPackage = GlobalPackagesFolderUtility.GetPackage(package, SettingsUtility.GetGlobalPackagesFolder(settings));
-            if (globalPackage != null)
+            if (useCache)
             {
-                logger.LogInformation($"Found {package} in global package folder");
-                return globalPackage.PackageReader;
+                var globalPackage = GlobalPackagesFolderUtility.GetPackage(package, SettingsUtility.GetGlobalPackagesFolder(settings));
+                if (globalPackage != null)
+                {
+                    logger.LogInformation($"Found {package} in global package folder");
+                    return globalPackage.PackageReader;
+                }
             }
 
             using (var sourceCacheContext = new SourceCacheContext())
@@ -219,8 +218,9 @@ namespace Mondo.SemanticVersioning.TeamCity
                         throw new Exception($"Failed to fetch package {package} from source {repository}");
                     }
 
-                    using (var stream = System.IO.File.OpenRead(tempFile))
+                    if (addToCache)
                     {
+                        using var stream = System.IO.File.OpenRead(tempFile);
                         var downloadCacheContext = new PackageDownloadContext(sourceCacheContext);
                         var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
                         using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);

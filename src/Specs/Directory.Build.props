@@ -1,7 +1,13 @@
 <Project>
 
   <PropertyGroup>
+    <Company>Mondo</Company>
+    <RootNamespace>$(Company).$(MSBuildProjectName.Replace('.Specs', ''))</RootNamespace>
+    <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
+    
     <IsPackable>false</IsPackable>
+
+    <NoWarn>1701;1702;IDE0052</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

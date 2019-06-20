@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Mondo.SemanticVersioning.TeamCity.Specs")]
+
 namespace Mondo.SemanticVersioning.TeamCity
 {
     using System;
@@ -43,10 +45,12 @@ namespace Mondo.SemanticVersioning.TeamCity
             solutionCommand
                 .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
                 .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE", "http://artifacts.geomatic.com.au/nuget/NuGet") { Arity = ArgumentArity.ZeroOrMore } })
-                .AddFluentOption(new Option(new string[] { "--version-suffix" }, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
+                .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
+                .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
+                .AddFluentOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
                 .AddFluentOption(previousOption);
 
-            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, NuGet.Versioning.SemanticVersion, string>(ProcessProjectOrSolution);
+            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, NuGet.Versioning.SemanticVersion, string, bool, bool>(ProcessProjectOrSolution);
 
             var diffCommand = new Command("diff", "Calculates the differences")
                 .AddFluentCommand(fileCommand)
@@ -81,18 +85,30 @@ namespace Mondo.SemanticVersioning.TeamCity
             return false;
         }
 
-        private static async Task<int> ProcessProjectOrSolution(System.IO.FileSystemInfo projectOrSolution, System.Collections.Generic.IEnumerable<string> source, NuGet.Versioning.SemanticVersion previous, string versionSuffix)
+        private static async Task<int> ProcessProjectOrSolution(
+            System.IO.FileSystemInfo projectOrSolution,
+            System.Collections.Generic.IEnumerable<string> source,
+            NuGet.Versioning.SemanticVersion previous,
+            string versionSuffix,
+            bool noCache,
+            bool directDownload)
         {
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
-            async Task<string> GetPreviousVersionStringAsync(string packageId)
+            async Task<NuGet.Versioning.SemanticVersion> GetPreviousVersionAsync(string packageId)
             {
-                if (previous != null)
-                {
-                    return previous.ToString();
-                }
+                return previous ?? await NuGetInstaller.GetLatestVersionAsync(packageId, source).ConfigureAwait(false);
+            }
 
-                var nugetVersion = await NuGetInstaller.GetLatestVersionAsync(packageId, source).ConfigureAwait(false);
-                return nugetVersion.ToString();
+            async Task<string> TryInstallAsync(string packageId)
+            {
+                try
+                {
+                    return await NuGetInstaller.InstallAsync(packageId, source, noCache: noCache, directDownload: directDownload).ConfigureAwait(false);
+                }
+                catch (NuGet.Protocol.PackageNotFoundProtocolException)
+                {
+                    return null;
+                }
             }
 
             using var projectCollection = GetProjects(projectOrSolution);
@@ -104,21 +120,38 @@ namespace Mondo.SemanticVersioning.TeamCity
 
                 // install the NuGet package
                 var packageId = project.GetPropertyValue("PackageId");
-                var installDir = await NuGetInstaller.InstallAsync(packageId, source).ConfigureAwait(false);
-                var buildOutputTargetFolder = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
-
-                static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second) => first.CompareTo(second, NuGet.Versioning.VersionComparison.VersionRelease) > 0 ? first : second;
-
-                var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
-                var previousString = await GetPreviousVersionStringAsync(packageId).ConfigureAwait(false);
-                foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
+                var installDir = await TryInstallAsync(packageId).ConfigureAwait(false);
+                var previousVersion = await GetPreviousVersionAsync(packageId).ConfigureAwait(false);
+                if (installDir is null)
                 {
-                    var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
-                    var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousString, versionSuffix);
-                    version = Max(version, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                    // there is no current released package
+                    if (previousVersion is null)
+                    {
+                        // have this as being a 0.1.0 release
+                        version = new NuGet.Versioning.SemanticVersion(0, 1, 0, versionSuffix);
+                    }
+                    else
+                    {
+                        // increate the patch number
+                        version = new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, versionSuffix ?? previousVersion.Release);
+                    }
                 }
+                else
+                {
+                    var buildOutputTargetFolder = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
-                System.IO.Directory.Delete(installDir, true);
+                    static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second) => NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
+
+                    var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
+                    foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
+                    {
+                        var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+                        var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousVersion?.ToString(), versionSuffix);
+                        version = Max(version, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                    }
+
+                    System.IO.Directory.Delete(installDir, true);
+                }
             }
 
             // write out the version and the suffix
@@ -214,7 +247,7 @@ namespace Mondo.SemanticVersioning.TeamCity
 
         private static string FindGlobalJson(System.IO.FileSystemInfo path)
         {
-            string directory = path switch
+            var directory = path switch
             {
                 System.IO.DirectoryInfo directoryInfo => directoryInfo.FullName,
                 System.IO.FileInfo fileInfo => fileInfo.DirectoryName,

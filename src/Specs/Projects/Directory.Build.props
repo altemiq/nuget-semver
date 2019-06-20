@@ -3,6 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Original</RootNamespace>
     <AssemblyName>Original</AssemblyName>
+    <PackageId>Original</PackageId>
   </PropertyGroup>
 
 </Project>
