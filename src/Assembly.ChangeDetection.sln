@@ -22,11 +22,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specs", "Specs", "{9B8BBDD3
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Assembly.ChangeDetection.Specs", "Specs\Assembly.ChangeDetection.Specs\Assembly.ChangeDetection.Specs.csproj", "{220ED5AA-CD47-4939-9D08-5487D6039636}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D78B0500-809E-471B-933A-C48509B9C57C} = {D78B0500-809E-471B-933A-C48509B9C57C}
-		{85164719-6220-4167-8C52-E0406CDE120F} = {85164719-6220-4167-8C52-E0406CDE120F}
-		{282B8835-B9D0-4F6E-B33D-73E9D8BD0D0D} = {282B8835-B9D0-4F6E-B33D-73E9D8BD0D0D}
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{A39FC7D8-CCFD-41EA-B322-F2883668EB43}"
 	ProjectSection(SolutionItems) = preProject
