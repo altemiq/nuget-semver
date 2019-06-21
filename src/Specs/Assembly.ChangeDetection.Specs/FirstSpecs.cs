@@ -1,9 +1,6 @@
 ﻿namespace Mondo.Assembly.ChangeDetection
 {
-    using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using FluentAssertions;
     using Machine.Specifications;
 
@@ -15,7 +12,6 @@
         {
             var currentPath = System.IO.Path.GetDirectoryName(typeof(When_there_are_changes).Assembly.Location);
 
-            var framework = System.IO.Path.GetFileName(currentPath);
             currentPath = System.IO.Path.GetDirectoryName(currentPath);
 
             var configuration = System.IO.Path.GetFileName(currentPath);
@@ -26,7 +22,7 @@
 
             var projectDirectory = System.IO.Path.Combine(testProjectDirectory, "..", project, type, configuration);
 
-            framework = System.IO.Directory.EnumerateDirectories(projectDirectory).First();
+            var framework = System.IO.Directory.EnumerateDirectories(projectDirectory).First();
 
             return System.IO.Path.GetFullPath(System.IO.Path.Combine(framework, name));
         }
@@ -41,7 +37,7 @@
 
         private readonly Establish context = () => { };
 
-        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, "1.0.1-alpha");
+        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1-alpha" });
 
         private readonly It should_have_a_major_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Major);
 
@@ -57,11 +53,11 @@
 
         private readonly Establish context = () => { };
 
-        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, "1.0.1");
+        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1" });
 
         private readonly It should_have_a_minor_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Minor);
 
-        private readonly It should_have_a_version_of_one_point_one = () => analysisResult.VersionNumber.Should().Be("1.1.0");
+        private readonly It should_have_a_version_of_one_point_one = () => analysisResult.VersionNumber.Should().Be("1.1.0-alpha");
     }
 
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
@@ -73,7 +69,7 @@
 
         private readonly Establish context = () => { };
 
-        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, "1.0.1-beta");
+        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1-beta" });
 
         private readonly It should_have_a_patch_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Patch);
 

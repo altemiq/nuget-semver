@@ -6,6 +6,7 @@
 
 namespace Mondo.Assembly.ChangeDetection.SemVer
 {
+    using System.Linq;
     using Mondo.Assembly.ChangeDetection.Infrastructure;
     using Mondo.Assembly.ChangeDetection.Rules;
 
@@ -15,15 +16,25 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
     public static class SemanticVersionAnalyzer
     {
         /// <summary>
+        /// The default alpha release.
+        /// </summary>
+        public const string DefaultAlphaRelease = "alpha";
+
+        /// <summary>
+        /// The default beta release.
+        /// </summary>
+        public const string DefaultBetaRelease = "beta";
+
+        /// <summary>
         /// Analyses the results.
         /// </summary>
         /// <param name="previousAssembly">The previous assembly.</param>
         /// <param name="currentAssembly">The current assembly.</param>
-        /// <param name="lastVersionNumber">The last version number.</param>
+        /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
         /// <param name="prerelease">The pre-release label.</param>
         /// <param name="build">The build label.</param>
         /// <returns>The results.</returns>
-        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, string lastVersionNumber, string prerelease = null, string build = null)
+        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, System.Collections.Generic.IEnumerable<string> lastVersions, string prerelease = null, string build = null)
         {
             var previous = new FileQuery(previousAssembly);
             var current = new FileQuery(currentAssembly);
@@ -36,29 +47,24 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
             var featuresAddedChanges = new AddedFunctionalityRule();
             var featuresAdded = featuresAddedChanges.Detect(differences);
 
-            var nextVersion = GetNextPatchVersion(lastVersionNumber);
+            var lastSemanticVersions = lastVersions is null ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>() : lastVersions.Select(NuGet.Versioning.SemanticVersion.Parse);
+
             var previousVersion = System.IO.File.Exists(previousAssembly)
                 ? GetProductVersion(previousAssembly)
-                : nextVersion;
+                : lastSemanticVersions.Max();
 
             NuGet.Versioning.SemanticVersion calculatedVersion;
             if (breakingChange)
             {
-                calculatedVersion = previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0, releaseLabel: prerelease ?? nextVersion.Release);
+                calculatedVersion = GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0), prerelease);
             }
             else if (featuresAdded)
             {
-                calculatedVersion = previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0, releaseLabel: prerelease ?? nextVersion.Release);
+                calculatedVersion = GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0), prerelease);
             }
             else
             {
-                calculatedVersion = nextVersion.Change(releaseLabel: prerelease);
-            }
-
-            // see if the proposed version has the same major/minor
-            if (calculatedVersion.Major == nextVersion.Major && calculatedVersion.Minor == nextVersion.Minor)
-            {
-                calculatedVersion = calculatedVersion.Change(patch: nextVersion.Patch);
+                calculatedVersion = GetNextPatchVersion(lastSemanticVersions, previousVersion, prerelease);
             }
 
             if (build != null)
@@ -73,10 +79,20 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
             };
         }
 
-        private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(string lastVersionNumber)
+        private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(
+            System.Collections.Generic.IEnumerable<NuGet.Versioning.SemanticVersion> versions,
+            NuGet.Versioning.SemanticVersion previousVersion,
+            string prerelease)
         {
-            var lastVersion = NuGet.Versioning.SemanticVersion.Parse(lastVersionNumber);
-            return lastVersion.Change(patch: lastVersion.Patch + 1);
+            // find the one with the name major/minor
+            var patchedVersion = versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();
+
+            if (patchedVersion is null)
+            {
+                return previousVersion.Change(releaseLabel: prerelease ?? DefaultAlphaRelease);
+            }
+
+            return patchedVersion.Change(patch: patchedVersion.Patch + 1, releaseLabel: prerelease ?? patchedVersion.Release);
         }
 
         private static NuGet.Versioning.SemanticVersion GetProductVersion(string assembly)

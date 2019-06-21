@@ -43,22 +43,13 @@ namespace Mondo.SemanticVersioning.TeamCity
             return returnValue;
         }
 
-        protected static string GetProjectPath(string project)
-        {
-            var projectDirectory = GetProjectDirectory(project);
-            var projectName = System.IO.Path.GetFileName(projectDirectory);
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(projectDirectory, projectName + ".csproj"));
-        }
+        protected static string GetProjectPath(string project) => System.IO.Path.GetFullPath(System.IO.Path.Combine(GetProjectDirectory(project), System.IO.Path.GetFileName(project) + ".csproj"));
 
         protected static string GetProjectDirectory(string project) => System.IO.Path.GetFullPath(System.IO.Path.Combine(GetTestDirectory(), "..", project));
 
         protected static string GetSource(string source) => System.IO.Path.GetFullPath(System.IO.Path.Combine(GetTestDirectory(), "..", "NuPkg", source));
 
-        private static string GetTestDirectory()
-        {
-            var currentPath = System.IO.Path.GetDirectoryName(typeof(When_running_the_program).Assembly.Location);
-            return System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(currentPath)));
-        }
+        private static string GetTestDirectory() => System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(typeof(When_running_the_program).Assembly.Location))));
 
         private readonly Establish context = () =>
         {
@@ -100,9 +91,9 @@ namespace Mondo.SemanticVersioning.TeamCity
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
-        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '0.1.0']");
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '1.0.0']");
 
-        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='']");
+        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='alpha']");
 
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
