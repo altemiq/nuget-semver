@@ -21,22 +21,19 @@ namespace Altemiq.SemanticVersioning.TeamCity
     {
         private static Task<int> Main(string[] args)
         {
-            var previousOption = new Option(new string[] { "-p", "--previous" }, "The previous version")
-            {
-                Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)),
-            };
-
+            var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", "system.build.suffix") };
             var fileCommand = new Command("file", "Calculated the differences between two assemblies");
             fileCommand
                 .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
                 .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
-                .AddFluentOption(previousOption)
-                .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"));
+                .AddFluentOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)), })
+                .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
+                .AddFluentOption(versionSuffixParameterOption);
 
-            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string>((first, second, previous, build) =>
+            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string, string>((first, second, previous, build, versionSuffixParameter) =>
             {
-                var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, previous.ToString(), build);
-                WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
+                WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), versionSuffixParameter);
             });
 
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
@@ -47,9 +44,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
                 .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
                 .AddFluentOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
-                .AddFluentOption(previousOption);
+                .AddFluentOption(versionSuffixParameterOption);
 
-            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, NuGet.Versioning.SemanticVersion, string, bool, bool, bool>(ProcessProjectOrSolution);
+            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, string, bool, bool, bool, string>(ProcessProjectOrSolution);
 
             var diffCommand = new Command("diff", "Calculates the differences")
                 .AddFluentCommand(fileCommand)
@@ -87,21 +84,17 @@ namespace Altemiq.SemanticVersioning.TeamCity
         private static async Task<int> ProcessProjectOrSolution(
             System.IO.FileSystemInfo projectOrSolution,
             System.Collections.Generic.IEnumerable<string> source,
-            NuGet.Versioning.SemanticVersion previous,
             string versionSuffix,
             bool noVersionSuffix,
             bool noCache,
-            bool directDownload)
+            bool directDownload,
+            string versionSuffixParameter)
         {
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
-            async Task<NuGet.Versioning.SemanticVersion> GetPreviousVersionAsync(string packageId)
-            {
-                return previous ?? await NuGetInstaller.GetLatestVersionAsync(packageId, source).ConfigureAwait(false);
-            }
 
-            string GetVersionSuffix(NuGet.Versioning.SemanticVersion previousVersion = default)
+            string GetVersionSuffix(string previousVersionRelease = default)
             {
-                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersion?.Release);
+                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
             }
 
             async Task<string> TryInstallAsync(string packageId)
@@ -131,12 +124,13 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 // install the NuGet package
                 var packageId = project.GetPropertyValue("PackageId");
                 var installDir = await TryInstallAsync(packageId).ConfigureAwait(false);
-                var previousVersion = await GetPreviousVersionAsync(packageId).ConfigureAwait(false);
+                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(packageId, source);
                 if (installDir is null)
                 {
+                    var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
                     version = previousVersion is null
-                        ? new NuGet.Versioning.SemanticVersion(0, 1, 0, GetVersionSuffix()) // have this as being a 0.1.0 release
-                        : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, GetVersionSuffix(previousVersion));
+                        ? new NuGet.Versioning.SemanticVersion(1, 0, 0, GetVersionSuffix(Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.DefaultAlphaRelease)) // have this as being a 0.1.0 release
+                        : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, GetVersionSuffix(previousVersion.Release));
                 }
                 else
                 {
@@ -148,10 +142,11 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     }
 
                     var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
+                    var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
                     foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
                     {
                         var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
-                        var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousVersion?.ToString(), GetVersionSuffix());
+                        var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousStringVersions, GetVersionSuffix());
                         version = Max(version, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
                     }
 
@@ -160,15 +155,15 @@ namespace Altemiq.SemanticVersioning.TeamCity
             }
 
             // write out the version and the suffix
-            WriteVersion(version);
+            WriteVersion(version, versionSuffixParameter);
 
             return 0;
         }
 
-        private static void WriteVersion(NuGet.Versioning.SemanticVersion version)
+        private static void WriteVersion(NuGet.Versioning.SemanticVersion version, string versionSuffixParameter)
         {
             Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[buildNumber '{0:x.y.z}']", version));
-            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='system.build.suffix' value='{0:R}']", version));
+            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
         }
 
         private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
