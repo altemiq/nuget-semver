@@ -24,22 +24,33 @@ namespace Altemiq.SemanticVersioning.TeamCity
         /// <summary>
         /// Installs the specified package.
         /// </summary>
-        /// <param name="packageName">The package name.</param>
+        /// <param name="packageNames">The package names.</param>
         /// <param name="sources">The sources.</param>
-        /// <param name="version">The version.</param>
         /// <param name="noCache">Set to true to ignore the cache.</param>
         /// <param name="directDownload">Set to true to directly download.</param>
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public static async Task<string> InstallAsync(string packageName, IEnumerable<string> sources = null, string version = null, bool noCache = false, bool directDownload = false, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
+        public static async Task<string> InstallAsync(IEnumerable<string> packageNames, IEnumerable<string> sources = null, bool noCache = false, bool directDownload = false, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
         {
             var enumerableSources = sources ?? Enumerable.Empty<string>();
             var settings = Settings.LoadDefaultSettings(null);
-            var outputDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), packageName);
-            var packageIdentity = await GetPackage(packageName, enumerableSources, version, settings, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            SourcePackageDependencyInfo latest = default;
+            foreach (var packageName in packageNames)
+            {
+                var package = await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+                if (latest is null || package.Version > latest.Version)
+                {
+                    latest = package;
+                }
+            }
 
-            return await InstallPackage(packageIdentity, enumerableSources, settings, outputDirectory, !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            if (latest != default && await IsPackageInSource(latest, GetRepositories(settings, enumerableSources), log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false))
+            {
+                return await InstallPackage(latest, enumerableSources, settings, System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), latest.Id), !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            }
+
+            throw new PackageNotFoundProtocolException(latest);
         }
 
         /// <summary>
@@ -55,14 +66,16 @@ namespace Altemiq.SemanticVersioning.TeamCity
         /// <summary>
         /// Gets the latest versions.
         /// </summary>
-        /// <param name="packageName">The package name.</param>
+        /// <param name="packageNames">The package names.</param>
         /// <param name="sources">The sources.</param>
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet versions.</returns>
-        public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(string packageName, IEnumerable<string> sources = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
+        public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(IEnumerable<string> packageNames, IEnumerable<string> sources = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
         {
-            await foreach (var group in GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, cancellationToken)
+            await foreach (var group in packageNames
+                .ToAsyncEnumerable()
+                .SelectMany(packageName => GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, cancellationToken))
                 .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion)
                 .Select(info => info.Version)
                 .GroupBy(version => (version.Version.Major, version.Version.Minor)))
@@ -91,25 +104,6 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
             log.LogInformation($"Package {package} installation complete");
             return System.IO.Path.GetFullPath(localInstallPath);
-        }
-
-        private static async Task<PackageIdentity> GetPackage(string id, IEnumerable<string> sources, string version, ISettings settings, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
-        {
-            var repositories = GetRepositories(settings, sources);
-
-            if (string.IsNullOrEmpty(version) || !NuGet.Versioning.NuGetVersion.TryParse(version, out var nuGetVersion))
-            {
-                nuGetVersion = await GetLatestVersion(repositories, id, false, log, cancellationToken).ConfigureAwait(false);
-            }
-
-            var packageIdentity = new PackageIdentity(id, nuGetVersion);
-
-            if (await IsPackageInSource(packageIdentity, repositories, log, cancellationToken).ConfigureAwait(false))
-            {
-                return packageIdentity;
-            }
-
-            throw new PackageNotFoundProtocolException(packageIdentity);
         }
 
         private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string> sources)
@@ -145,6 +139,28 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
                     .Select(package => package.Version)
                     .FirstOrDefaultAsync().ConfigureAwait(false);
+
+        private static async Task<SourcePackageDependencyInfo> GetLatestPackage(IEnumerable<string> sources, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        {
+            SourcePackageDependencyInfo latest = default;
+            foreach (var repository in GetRepositories(Settings.LoadDefaultSettings(null), sources))
+            {
+                var package = await GetLatestPackage(repository, packageId, includePrerelease, log, cancellationToken).ConfigureAwait(false);
+                if (latest == null || package.Version > latest.Version)
+                {
+                    latest = package;
+                }
+            }
+
+            return latest;
+        }
+
+        private static async Task<SourcePackageDependencyInfo> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
+            GetVersions(source, packageId, log, cancellationToken)
+            .Where(package => package.Listed && (package.HasVersion && package.Version.IsPrerelease ? includePrerelease : true))
+            .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
 
         private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string> sources, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => GetRepositories(Settings.LoadDefaultSettings(null), sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 

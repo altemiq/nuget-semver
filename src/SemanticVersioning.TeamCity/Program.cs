@@ -44,9 +44,13 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
                 .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
                 .AddFluentOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
+                .AddFluentOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
+                .AddFluentOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
+                .AddFluentOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
                 .AddFluentOption(versionSuffixParameterOption);
 
-            solutionCommand.Handler = CommandHandler.Create<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, string, bool, bool, bool, string>(ProcessProjectOrSolution);
+            Func<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, System.Collections.Generic.IEnumerable<string>, string, string, string, bool, bool, bool, string, Task<int>> func = ProcessProjectOrSolution;
+            solutionCommand.Handler = System.CommandLine.Binding.HandlerDescriptor.FromDelegate(func).GetCommandHandler();
 
             var diffCommand = new Command("diff", "Calculates the differences")
                 .AddFluentCommand(fileCommand)
@@ -84,6 +88,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
         private static async Task<int> ProcessProjectOrSolution(
             System.IO.FileSystemInfo projectOrSolution,
             System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageId,
+            string packageIdRegex,
+            string packageIdReplace,
             string versionSuffix,
             bool noVersionSuffix,
             bool noCache,
@@ -97,11 +104,11 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
             }
 
-            async Task<string> TryInstallAsync(string packageId)
+            async Task<string> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds)
             {
                 try
                 {
-                    return await NuGetInstaller.InstallAsync(packageId, source, noCache: noCache, directDownload: directDownload).ConfigureAwait(false);
+                    return await NuGetInstaller.InstallAsync(packageIds, source, noCache: noCache, directDownload: directDownload).ConfigureAwait(false);
                 }
                 catch (NuGet.Protocol.PackageNotFoundProtocolException)
                 {
@@ -114,6 +121,8 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
             }
 
+            var packageIds = packageId ?? Enumerable.Empty<string>();
+            var regex = string.IsNullOrEmpty(packageIdRegex) ? null : new System.Text.RegularExpressions.Regex(packageIdRegex);
             using var projectCollection = GetProjects(projectOrSolution);
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
@@ -122,9 +131,15 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 var assemblyName = project.GetPropertyValue("AssemblyName");
 
                 // install the NuGet package
-                var packageId = project.GetPropertyValue("PackageId");
-                var installDir = await TryInstallAsync(packageId).ConfigureAwait(false);
-                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(packageId, source);
+                var projectPackageId = project.GetPropertyValue("PackageId");
+                var projectPackageIds = new[] { projectPackageId }.Union(packageIds);
+                if (regex != null)
+                {
+                    projectPackageIds = projectPackageIds.Union(new[] { regex.Replace(projectPackageId, packageIdReplace) });
+                }
+
+                var installDir = await TryInstallAsync(projectPackageIds).ConfigureAwait(false);
+                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source);
                 if (installDir is null)
                 {
                     var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
