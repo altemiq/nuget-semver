@@ -50,7 +50,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                 return await InstallPackage(latest, enumerableSources, settings, System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), latest.Id), !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
             }
 
-            throw new PackageNotFoundProtocolException(latest);
+            throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), null));
         }
 
         /// <summary>
