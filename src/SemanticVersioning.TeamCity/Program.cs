@@ -173,8 +173,6 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
                 : new string[] { projectOrSolutionPath.FullName };
 
-            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-
             // get the highest version
             var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
                 ? "C:\\Program Files\\dotnet\\sdk"
@@ -193,9 +191,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
                         };
 
                     var propsFile = System.IO.Directory.EnumerateFiles(path, "Microsoft.Common.props", System.IO.SearchOption.AllDirectories).First();
-                    var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile)) ?? projectCollection.DefaultToolsVersion;
+                    var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile));
 
-                    return (toolsVersion: version.ToString(), toolset: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, projectCollection, path));
+                    return (toolsVersion: version.ToString(), toolset: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection, path));
                 }).ToDictionary(value => value.toolsVersion, value => value.toolset);
 
             NuGet.Versioning.SemanticVersion toolsVersion = default;
@@ -235,12 +233,13 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 toolsVersion = versions.Max(version => version);
             }
 
-            parsedToolsets.TryGetValue(toolsVersion.ToString(), out var toolset);
+            var toolset = parsedToolsets[toolsVersion.ToString()];
 
             Environment.SetEnvironmentVariable("MSBuildSDKsPath", toolset.GetProperty("MSBuildSDKsPath", null).EvaluatedValue);
 
-            // get the version
+            var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
             projectCollection.AddToolset(toolset);
+            projectCollection.DefaultToolsVersion = toolset.ToolsVersion;
 
             foreach (var projectPath in projectPaths)
             {
