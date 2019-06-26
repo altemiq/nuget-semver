@@ -86,19 +86,11 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
         {
             // find the one with the name major/minor
             var patchedVersion = versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();
-
-            if (patchedVersion is null)
-            {
-                return previousVersion.Change(releaseLabel: prerelease ?? DefaultAlphaRelease);
-            }
-
-            return patchedVersion.Change(patch: patchedVersion.Patch + 1, releaseLabel: prerelease ?? patchedVersion.Release);
+            return patchedVersion is null
+                ? previousVersion.Change(releaseLabel: prerelease ?? DefaultAlphaRelease)
+                : patchedVersion.Change(patch: patchedVersion.Patch + 1, releaseLabel: prerelease ?? patchedVersion.Release);
         }
 
-        private static NuGet.Versioning.SemanticVersion GetProductVersion(string assembly)
-        {
-            var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly);
-            return NuGet.Versioning.SemanticVersion.Parse(fileVersionInfo.ProductVersion);
-        }
+        private static NuGet.Versioning.SemanticVersion GetProductVersion(string assembly) => NuGet.Versioning.SemanticVersion.Parse(System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly).ProductVersion);
     }
 }
