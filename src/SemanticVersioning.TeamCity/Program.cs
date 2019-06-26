@@ -21,6 +21,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static Task<int> Main(string[] args)
         {
+            var buildNumberParameterOption = new Option("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", "buildNumber") };
             var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", "system.build.suffix") };
             var fileCommand = new Command("file", "Calculated the differences between two assemblies");
             fileCommand
@@ -28,18 +29,19 @@ namespace Mondo.SemanticVersioning.TeamCity
                 .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
                 .AddFluentOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)), })
                 .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
+                .AddFluentOption(buildNumberParameterOption)
                 .AddFluentOption(versionSuffixParameterOption);
 
-            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string, string>((first, second, previous, build, versionSuffixParameter) =>
+            fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string, string, string>((first, second, previous, build, buildNumberParameter, versionSuffixParameter) =>
             {
                 var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
-                WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), versionSuffixParameter);
+                WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
             });
 
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
             solutionCommand
                 .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.ZeroOrMore } })
+                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
                 .AddFluentOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
                 .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
                 .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
@@ -47,9 +49,10 @@ namespace Mondo.SemanticVersioning.TeamCity
                 .AddFluentOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
                 .AddFluentOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
                 .AddFluentOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
+                .AddFluentOption(buildNumberParameterOption)
                 .AddFluentOption(versionSuffixParameterOption);
 
-            Func<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, System.Collections.Generic.IEnumerable<string>, string, string, string, bool, bool, bool, string, Task<int>> func = ProcessProjectOrSolution;
+            Func<System.IO.FileSystemInfo, System.Collections.Generic.IEnumerable<string>, System.Collections.Generic.IEnumerable<string>, string, string, string, bool, bool, bool, string, string, Task<int>> func = ProcessProjectOrSolution;
             solutionCommand.Handler = System.CommandLine.Binding.HandlerDescriptor.FromDelegate(func).GetCommandHandler();
 
             var diffCommand = new Command("diff", "Calculates the differences")
@@ -95,6 +98,7 @@ namespace Mondo.SemanticVersioning.TeamCity
             bool noVersionSuffix,
             bool noCache,
             bool directDownload,
+            string buildNumberParameter,
             string versionSuffixParameter)
         {
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
@@ -170,14 +174,22 @@ namespace Mondo.SemanticVersioning.TeamCity
             }
 
             // write out the version and the suffix
-            WriteVersion(version, versionSuffixParameter);
+            WriteVersion(version, buildNumberParameter, versionSuffixParameter);
 
             return 0;
         }
 
-        private static void WriteVersion(NuGet.Versioning.SemanticVersion version, string versionSuffixParameter)
+        private static void WriteVersion(NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
         {
-            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[buildNumber '{0:x.y.z}']", version));
+            if (buildNumberParameter.Contains(".", StringComparison.Ordinal))
+            {
+                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version));
+            }
+            else
+            {
+                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version));
+            }
+
             Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
         }
 
