@@ -1,0 +1,1 @@
+dotnet test src\Assembly.ChangeDetection.sln
