@@ -16,7 +16,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
     internal class FileNameComparer : IEqualityComparer<string>
     {
         /// <inheritdoc/>
-        public bool Equals(string x, string y) => string.Compare(Path.GetFileName(x), Path.GetFileName(y), StringComparison.OrdinalIgnoreCase) == 0;
+        public bool Equals(string x, string y) => string.Equals(Path.GetFileName(x), Path.GetFileName(y), StringComparison.OrdinalIgnoreCase);
 
         /// <inheritdoc/>
         public int GetHashCode(string obj) => Path.GetFileName(obj).ToLower(System.Globalization.CultureInfo.CurrentCulture).GetHashCode();

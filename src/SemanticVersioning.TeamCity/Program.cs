@@ -196,7 +196,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
         private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
         {
             var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
-            System.Collections.Generic.IEnumerable<string> projectPaths = string.Compare(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase) == 0
+            System.Collections.Generic.IEnumerable<string> projectPaths = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
                 ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
                 : new string[] { projectOrSolutionPath.FullName };
 
@@ -347,10 +347,10 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
                 case System.IO.FileInfo fileInfo:
                     // If a .sln or .csproj file was passed, just return that
-                    if ((string.Compare(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase) == 0)
-                        || (string.Compare(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase) == 0)
-                        || (string.Compare(fileInfo.Extension, ".vbproj", StringComparison.OrdinalIgnoreCase) == 0)
-                        || (string.Compare(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase) == 0))
+                    if (string.Equals(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(fileInfo.Extension, ".vbproj", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase))
                     {
                         return fileInfo;
                     }

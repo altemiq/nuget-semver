@@ -166,7 +166,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         /// <param name="fileName">The file name.</param>
         /// <returns>The file.</returns>
         public string GetMatchingFileByName(string fileName) => this.EnumerateFiles
-            .FirstOrDefault(file => string.Compare(Path.GetFileName(file), Path.GetFileName(fileName), StringComparison.OrdinalIgnoreCase) == 0);
+            .FirstOrDefault(file => string.Equals(Path.GetFileName(file), Path.GetFileName(fileName), StringComparison.OrdinalIgnoreCase));
 
         private static string GetFileNameWithOutDllExtension(string file) => file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
             ? file.Substring(0, file.Length - 4)
