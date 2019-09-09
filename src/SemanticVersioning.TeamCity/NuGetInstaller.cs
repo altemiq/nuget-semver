@@ -71,7 +71,11 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet versions.</returns>
-        public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(IEnumerable<string> packageNames, IEnumerable<string> sources = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
+        public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(
+            IEnumerable<string> packageNames,
+            IEnumerable<string> sources = null,
+            NuGet.Common.ILogger log = null,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken = default)
         {
             await foreach (var group in packageNames
                 .ToAsyncEnumerable()
@@ -164,7 +168,11 @@ namespace Mondo.SemanticVersioning.TeamCity
 
         private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string> sources, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => GetRepositories(Settings.LoadDefaultSettings(null), sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 
-        private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(SourceRepository source, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(
+            SourceRepository source,
+            string packageId,
+            NuGet.Common.ILogger log,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -173,10 +181,8 @@ namespace Mondo.SemanticVersioning.TeamCity
             try
             {
                 var dependencyInfoResource = await source.GetResourceAsync<DependencyInfoResource>(cancellationToken).ConfigureAwait(false);
-                using (var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true })
-                {
-                    returnValues = await dependencyInfoResource.ResolvePackages(packageId, NuGet.Frameworks.NuGetFramework.AgnosticFramework, sourceCacheContext, log, cancellationToken).ConfigureAwait(false);
-                }
+                using var sourceCacheContext = new SourceCacheContext() { IgnoreFailedSources = true };
+                returnValues = await dependencyInfoResource.ResolvePackages(packageId, NuGet.Frameworks.NuGetFramework.AgnosticFramework, sourceCacheContext, log, cancellationToken).ConfigureAwait(false);
             }
             catch (FatalProtocolException e)
             {

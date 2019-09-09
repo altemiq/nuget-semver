@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Mondo.SemanticVersioning.TeamCity
 {
@@ -34,7 +33,10 @@ namespace Mondo.SemanticVersioning.TeamCity
                 }
             }
 
-            string MainMethodFullName() => string.IsNullOrWhiteSpace(entryPointFullTypeName) ? "Main" : $"{entryPointFullTypeName}.Main";
+            string MainMethodFullName()
+            {
+                return string.IsNullOrWhiteSpace(entryPointFullTypeName) ? "Main" : $"{entryPointFullTypeName}.Main";
+            }
 
             if (candidates.Count > 1)
             {

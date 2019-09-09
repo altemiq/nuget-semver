@@ -85,7 +85,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 return testString.EndsWith(filterSubstring, compMode);
             }
 
-            return string.Compare(testString, filterSubstring, compMode) == 0;
+            return string.Equals(testString, filterSubstring, compMode);
         }
 
         /// <summary>

@@ -6,10 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.SemVer
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-
     /// <summary>
     /// The results type.
     /// </summary>
