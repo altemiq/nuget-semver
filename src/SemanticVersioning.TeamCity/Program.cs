@@ -34,6 +34,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
             fileCommand.Handler = CommandHandler.Create<System.IO.FileInfo, System.IO.FileInfo, NuGet.Versioning.SemanticVersion, string, string, string>((first, second, previous, build, buildNumberParameter, versionSuffixParameter) =>
             {
+                WriteHeader();
                 var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
                 WriteVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
             });
@@ -101,6 +102,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
             string buildNumberParameter,
             string versionSuffixParameter)
         {
+            WriteHeader();
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
             string GetVersionSuffix(string previousVersionRelease = default)
@@ -114,8 +116,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 {
                     return await NuGetInstaller.InstallAsync(packageIds, source, noCache: noCache, directDownload: directDownload).ConfigureAwait(false);
                 }
-                catch (NuGet.Protocol.PackageNotFoundProtocolException)
+                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {
+                    Console.WriteLine("  {0}", ex.Message);
                     return null;
                 }
             }
@@ -130,6 +133,8 @@ namespace Altemiq.SemanticVersioning.TeamCity
             using var projectCollection = GetProjects(projectOrSolution);
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
+                var projectName = project.GetPropertyValue("MSBuildProjectName");
+                Console.WriteLine("Checking {0}", projectName);
                 var projectDirectory = project.DirectoryPath;
                 var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath")));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
@@ -177,6 +182,12 @@ namespace Altemiq.SemanticVersioning.TeamCity
             WriteVersion(version, buildNumberParameter, versionSuffixParameter);
 
             return 0;
+        }
+
+        private static void WriteHeader()
+        {
+            Console.WriteLine(Properties.Resources.Logo, VersionUtils.GetVersion());
+            Console.WriteLine(Properties.Resources.Copyright);
         }
 
         private static void WriteVersion(NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
