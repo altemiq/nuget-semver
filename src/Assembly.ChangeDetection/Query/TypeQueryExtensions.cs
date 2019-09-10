@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="TypeQueryExtensions.cs" company="GeomaticTechnologies">
-// Copyright (c) GeomaticTechnologies. All rights reserved.
+// <copyright file="TypeQueryExtensions.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

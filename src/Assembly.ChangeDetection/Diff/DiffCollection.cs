@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="DiffCollection.cs" company="GeomaticTechnologies">
-// Copyright (c) GeomaticTechnologies. All rights reserved.
+// <copyright file="DiffCollection.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

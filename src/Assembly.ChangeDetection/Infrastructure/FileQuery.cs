@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="FileQuery.cs" company="GeomaticTechnologies">
-// Copyright (c) GeomaticTechnologies. All rights reserved.
+// <copyright file="FileQuery.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

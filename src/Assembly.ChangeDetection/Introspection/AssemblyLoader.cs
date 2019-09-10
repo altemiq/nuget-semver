@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="AssemblyLoader.cs" company="GeomaticTechnologies">
-// Copyright (c) GeomaticTechnologies. All rights reserved.
+// <copyright file="AssemblyLoader.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
