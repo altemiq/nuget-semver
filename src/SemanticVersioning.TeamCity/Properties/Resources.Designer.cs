@@ -61,6 +61,24 @@ namespace Mondo.SemanticVersioning.TeamCity.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Copyright (C) Mondo Power. All rights reserved..
+        /// </summary>
+        internal static string Copyright {
+            get {
+                return ResourceManager.GetString("Copyright", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mondo (R) Semantic Version Generator {0}.
+        /// </summary>
+        internal static string Logo {
+            get {
+                return ResourceManager.GetString("Logo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specify which project or solution file to use because this folder contains more than one project or solution file..
         /// </summary>
         internal static string MultipleInCurrentFolder {
