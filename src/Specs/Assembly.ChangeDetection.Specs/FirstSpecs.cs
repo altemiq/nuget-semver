@@ -24,7 +24,7 @@
 
             var framework = System.IO.Directory.EnumerateDirectories(projectDirectory).First();
 
-            return System.IO.Path.GetFullPath(System.IO.Path.Combine(framework, name));
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(framework, name)).Replace('\\', System.IO.Path.DirectorySeparatorChar);
         }
     }
 

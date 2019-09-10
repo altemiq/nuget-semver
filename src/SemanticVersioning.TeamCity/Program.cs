@@ -136,7 +136,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                 var projectName = project.GetPropertyValue("MSBuildProjectName");
                 Console.WriteLine("Checking {0}", projectName);
                 var projectDirectory = project.DirectoryPath;
-                var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath")));
+                var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
 
                 // install the NuGet package
