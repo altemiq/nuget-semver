@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teamcity-agent-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-agent-plugin-v1-xml">
+  <info>
+    <name>SemanticVersioning</name>
+	<display-name>Semantic Versioning</display-name>
+	<description>Calculates the differences between two builds/assemblies/nuget packages</description>
+	<vendor>
+	  <name>Mondo</name>
+	  <url>https://repo.geomatic.com.au/projects/DEVOPS/repos/sematicversioning</url>
+	</vendor>
+  </info>
+  <tool-deployment>
+    <layout>
+      <executable-files>
+        <include name='linux-x64/Mondo.SemanticVersioning.TeamCity'/>
+      </executable-files>
+    </layout>
+  </tool-deployment>
+</teamcity-agent-plugin>
