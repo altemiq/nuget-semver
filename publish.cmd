@@ -1,1 +1,2 @@
-dotnet publish src\SemanticVersioning.TeamCity\SemanticVersioning.TeamCity.csproj  --configuration Release --runtime win-x64 /p:Version=1.0.37
+dotnet publish src\SemanticVersioning.TeamCity\SemanticVersioning.TeamCity.csproj --configuration Release --runtime win-x64 /p:Version=%1 /p:PublishSingleFile=true /p:PublishTrimmed=true
+dotnet publish src\SemanticVersioning.TeamCity\SemanticVersioning.TeamCity.csproj --configuration Release --runtime linux-x64 /p:Version=%1 /p:PublishSingleFile=true /p:PublishTrimmed=true

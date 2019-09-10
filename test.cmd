@@ -1,1 +1,1 @@
-dotnet test src\Assembly.ChangeDetection.sln
+dotnet test src\Assembly.ChangeDetection.sln /p:Version=%1

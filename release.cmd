@@ -1,1 +1,1 @@
-dotnet build src\Assembly.ChangeDetection.sln --configuration Release /p:Version=1.0.37
+dotnet build src\Assembly.ChangeDetection.sln --configuration Release /p:Version=%1
