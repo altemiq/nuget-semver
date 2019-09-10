@@ -1,2 +1,3 @@
-docker pull mcr.microsoft.com/dotnet/core/sdk:3.0
-docker run --rm -w %~dp0 -v %~dp0:%~dp0 -v %TEMP%:C:\Temp\buildTmp -v %USERPROFILE%\.nuget:C:\Users\ContainerUser\.nuget --env-file %~dp0\docker.envList --entrypoint cmd mcr.microsoft.com/dotnet/core/sdk:3.0 /c %~dp0\%1.cmd
+call docker.cmd test
+call docker.cmd release
+call docker.cmd publish

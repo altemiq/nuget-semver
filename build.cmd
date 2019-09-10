@@ -1,3 +1,6 @@
-call docker_build.cmd test
-call docker_build.cmd release
-call docker_build.cmd publish
+SET version=1.0.46
+
+CALL test.cmd %version%
+CALL release.cmd %version%
+CALL publish.cmd %version%
+CALL pack.cmd %version%
