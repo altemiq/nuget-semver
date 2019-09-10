@@ -147,12 +147,19 @@ namespace Mondo.SemanticVersioning.TeamCity
                     projectPackageIds = projectPackageIds.Union(new[] { regex.Replace(projectPackageId, packageIdReplace) });
                 }
 
+                static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second)
+                {
+                    return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
+                }
+
                 var installDir = await TryInstallAsync(projectPackageIds).ConfigureAwait(false);
                 var previousVersions = NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source);
+                var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+
                 if (installDir is null)
                 {
                     var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
-                    version = previousVersion is null
+                    calculatedVersion = previousVersion is null
                         ? new NuGet.Versioning.SemanticVersion(1, 0, 0, GetVersionSuffix(Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.DefaultAlphaRelease)) // have this as being a 0.1.0 release
                         : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, GetVersionSuffix(previousVersion.Release));
                 }
@@ -160,22 +167,20 @@ namespace Mondo.SemanticVersioning.TeamCity
                 {
                     var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
-                    static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second)
-                    {
-                        return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
-                    }
-
                     var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
                     var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
                     foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
                     {
                         var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
                         var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousStringVersions, GetVersionSuffix());
-                        version = Max(version, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                        calculatedVersion = Max(calculatedVersion, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
                     }
 
                     System.IO.Directory.Delete(installDir, true);
                 }
+
+                Console.WriteLine("  Calculated {0} to be {1}", projectName, calculatedVersion);
+                version = Max(version, calculatedVersion);
             }
 
             // write out the version and the suffix
