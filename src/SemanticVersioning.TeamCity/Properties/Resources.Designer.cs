@@ -61,6 +61,24 @@ namespace Mondo.SemanticVersioning.TeamCity.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to   Calculated {0} to be {1}.
+        /// </summary>
+        internal static string Calculated {
+            get {
+                return ResourceManager.GetString("Calculated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking {0}.
+        /// </summary>
+        internal static string Checking {
+            get {
+                return ResourceManager.GetString("Checking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Copyright (C) Mondo Power. All rights reserved..
         /// </summary>
         internal static string Copyright {
