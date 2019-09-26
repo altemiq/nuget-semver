@@ -1,27 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Query\UsageQueries\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Introspection\FieldPrintOptions.cs" />
-    <Compile Remove="Introspection\FilterFunctions.cs" />
-    <Compile Remove="Introspection\FilterModes.cs" />
-    <Compile Remove="Introspection\ISymChkExecutor.cs" />
-    <Compile Remove="Introspection\MethodPrintOptions.cs" />
-    <Compile Remove="Introspection\PdbDownLoader.cs" />
-    <Compile Remove="Introspection\PdbInformationReader.cs" />
-    <Compile Remove="Introspection\SymChkExecutor.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Mono.Cecil" Version="0.11.0" />
-    <PackageReference Include="NuGet.Versioning" Version="5.2.0" />
+    <PackageReference Include="NuGet.Versioning" Version="5.3.0" />
   </ItemGroup>
 
   <ItemGroup>
