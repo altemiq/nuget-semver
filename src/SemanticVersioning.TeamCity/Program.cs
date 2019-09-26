@@ -134,7 +134,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
             foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
             {
                 var projectName = project.GetPropertyValue("MSBuildProjectName");
-                Console.WriteLine("Checking {0}", projectName);
+                Console.WriteLine(Properties.Resources.Checking, projectName);
                 var projectDirectory = project.DirectoryPath;
                 var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
@@ -179,7 +179,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
                     System.IO.Directory.Delete(installDir, true);
                 }
 
-                Console.WriteLine("  Calculated {0} to be {1}", projectName, calculatedVersion);
+                Console.WriteLine(Properties.Resources.Calculated, projectName, calculatedVersion);
                 version = Max(version, calculatedVersion);
             }
 
