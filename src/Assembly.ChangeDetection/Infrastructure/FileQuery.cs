@@ -96,7 +96,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
             get
             {
                 // relative directory given use current working directory
-                if (!this.Query.Contains('\\'))
+                if (!this.Query.Contains(System.IO.Path.DirectorySeparatorChar))
                 {
                     return Directory.GetCurrentDirectory();
                 }

@@ -87,7 +87,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
 
-        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\Original"), "--source", GetSource("NoPackages"), "--no-cache");
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath(System.IO.Path.Combine("Projects", "Original")), "--source", GetSource("NoPackages"), "--no-cache");
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
@@ -102,7 +102,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
 
-        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\New"), "--source", GetSource("OnlyRelease"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original");
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath(System.IO.Path.Combine("Projects" ,"New")), "--source", GetSource("OnlyRelease"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original");
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
@@ -118,7 +118,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
 
-        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\Original"), "--source", GetSource("OnlyPrerelease"), "--no-cache");
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath(System.IO.Path.Combine("Projects", "Original")), "--source", GetSource("OnlyPrerelease"), "--no-cache");
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
@@ -134,7 +134,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
 
-        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\Original"), "--source", GetSource("OnlyRelease"), "--direct-download", "--no-cache");
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath(System.IO.Path.Combine("Projects", "Original")), "--source", GetSource("OnlyRelease"), "--direct-download", "--no-cache");
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
@@ -150,7 +150,7 @@ namespace Mondo.SemanticVersioning.TeamCity
     {
         private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
 
-        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\Original"), "--source", GetSource("Full"), "--direct-download", "--no-cache");
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath(System.IO.Path.Combine("Projects", "Original")), "--source", GetSource("Full"), "--direct-download", "--no-cache");
 
         private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
 
