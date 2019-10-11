@@ -49,9 +49,16 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
 
             var lastSemanticVersions = lastVersions is null ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>() : lastVersions.Select(NuGet.Versioning.SemanticVersion.Parse);
 
-            var previousVersion = System.IO.File.Exists(previousAssembly)
-                ? GetProductVersion(previousAssembly)
-                : lastSemanticVersions.Max();
+            NuGet.Versioning.SemanticVersion previousVersion;
+            if (System.IO.File.Exists(previousAssembly))
+            {
+                previousVersion = GetProductVersion(previousAssembly);
+            }
+            else
+            {
+                breakingChange = true;
+                previousVersion = lastSemanticVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? lastSemanticVersions.Max();
+            }
 
             NuGet.Versioning.SemanticVersion calculatedVersion;
             if (breakingChange)

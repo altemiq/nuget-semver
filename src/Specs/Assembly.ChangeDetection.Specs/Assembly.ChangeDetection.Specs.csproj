@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
     <ProjectReference Include="..\Projects\BreakingChange\BreakingChange.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Projects\New\New.csproj" />
     <ProjectReference Include="..\Projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Projects\Original\Original.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
