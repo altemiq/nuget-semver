@@ -138,6 +138,15 @@ namespace Altemiq.SemanticVersioning.TeamCity
                 var projectDirectory = project.DirectoryPath;
                 var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
                 var assemblyName = project.GetPropertyValue("AssemblyName");
+                var isMultiTargeted = !string.IsNullOrEmpty(project.GetPropertyValue("TargetFrameworks"));
+                if (!isMultiTargeted)
+                {
+                    var targetFramework = project.GetPropertyValue("TargetFramework");
+                    if (outputPath.EndsWith(targetFramework, StringComparison.Ordinal))
+                    {
+                        outputPath = outputPath.Substring(0, outputPath.Length - targetFramework.Length).TrimEnd(System.IO.Path.DirectorySeparatorChar);
+                    }
+                }
 
                 // install the NuGet package
                 var projectPackageId = project.GetPropertyValue("PackageId");
