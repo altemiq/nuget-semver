@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <RootNamespace>New</RootNamespace>
+    <AssemblyName>New</AssemblyName>
+    <PackageId>New</PackageId>
+  </PropertyGroup>
+  
+</Project>

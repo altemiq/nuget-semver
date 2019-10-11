@@ -98,6 +98,21 @@ namespace Altemiq.SemanticVersioning.TeamCity
         private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
     }
 
+    internal class When_running_the_program_with_a_name_change : When_running_the_program
+    {
+        private static (int exitValue, System.Collections.Generic.IEnumerable<string> console, System.Collections.Generic.IEnumerable<string> error) returnValue;
+
+        private readonly Because of = () => returnValue = Invoke("diff", "solution", GetProjectPath("Projects\\New"), "--source", GetSource("OnlyRelease"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original");
+
+        private readonly It should_return_a_success_exit_value = () => returnValue.exitValue.Should().Be(0);
+
+        private readonly It should_have_returned_a_version = () => returnValue.console.Should().Contain("##teamcity[buildNumber '2.0.0']");
+
+        private readonly It should_have_returned_a_blank_suffix = () => returnValue.console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='alpha']");
+
+        private readonly It should_not_have_thrown_an_exception = () => returnValue.error.Should().BeEmpty();
+    }
+
     [Subject(typeof(Program))]
     internal class When_running_the_program_with_no_full_release : When_running_the_program
     {

@@ -75,4 +75,20 @@
 
         private readonly It should_have_a_version_of_one_point_zero_point_two = () => analysisResult.VersionNumber.Should().Be("1.0.2-beta");
     }
+
+    [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
+    internal class When_there_is_an_name_change : When_there_are_changes
+    {
+        private static readonly string TestAssembly = GetPath("Projects\\New", "New.dll");
+
+        private static SemVer.AnalysisResult analysisResult;
+
+        private readonly Establish context = () => { };
+
+        private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(BaseAssembly), System.IO.Path.GetFileName(TestAssembly)), TestAssembly, new[] { "1.0.1" });
+
+        private readonly It should_have_a_major_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Major);
+
+        private readonly It should_have_a_version_of_two_point_zero_point_zero_dash_alpha = () => analysisResult.VersionNumber.Should().Be("2.0.0-alpha");
+    }
 }

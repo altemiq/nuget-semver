@@ -12,10 +12,15 @@
       "commandName": "Project",
       "commandLineArgs": "--version"
     },
-    "Solution - Path": {
+    "Solution - Hardware": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \".\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
-      "workingDirectory": "C:\\Repos\\bitbucket\\MATH\\Math\\src\\Math.Geodesy"
+      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "workingDirectory": "C:\\Repos\\bitbucket\\HAR\\Core"
+    },
+    "Solution - Math": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "workingDirectory": "C:\\Repos\\bitbucket\\MATH\\Math"
     },
     "Help": {
       "commandName": "Project",
