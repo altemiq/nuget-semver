@@ -1,3 +1,7 @@
+REM dotnet tool
+dotnet pack .\src\SemanticVersioning.TeamCity\SemanticVersioning.TeamCity.csproj --output .\nupkg
+
+REM TeamCity Tool
 MKDIR pack
 CD pack
 MKDIR win-x64

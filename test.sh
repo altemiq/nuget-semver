@@ -1,0 +1,5 @@
+#!/bin/sh
+
+dotnet test \
+  src/Assembly.ChangeDetection.sln \
+  /p:Version=$1

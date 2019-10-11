@@ -6,7 +6,7 @@
 
     internal abstract class When_there_are_changes
     {
-        protected static readonly string BaseAssembly = GetPath("Projects\\Original", "Original.dll");
+        protected static readonly string BaseAssembly = GetPath(System.IO.Path.Combine("Projects", "Original"), "Original.dll");
 
         protected static string GetPath(string project, string name)
         {
@@ -20,7 +20,7 @@
             var type = System.IO.Path.GetFileName(currentPath);
             var testProjectDirectory = System.IO.Path.GetDirectoryName(currentPath);
 
-            var projectDirectory = System.IO.Path.Combine(testProjectDirectory, "..", project, type, configuration);
+            var projectDirectory = System.IO.Path.GetFullPath(System.IO.Path.Combine(testProjectDirectory, "..", project, type, configuration));
 
             var framework = System.IO.Directory.EnumerateDirectories(projectDirectory).First();
 
@@ -31,7 +31,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_breaking_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("Projects\\BreakingChange", "Original.dll");
+        private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "BreakingChange"), "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
@@ -47,7 +47,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_non_breaking_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("Projects\\NonBreakingAdditiveChange", "Original.dll");
+        private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "NonBreakingAdditiveChange"), "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
@@ -63,7 +63,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_are_no_changes : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("Projects\\Original", "Original.dll");
+        private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "Original"), "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
@@ -79,7 +79,7 @@
     [Subject(typeof(SemVer.SemanticVersionAnalyzer))]
     internal class When_there_is_an_name_change : When_there_are_changes
     {
-        private static readonly string TestAssembly = GetPath("Projects\\New", "New.dll");
+        private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "New"), "New.dll");
 
         private static SemVer.AnalysisResult analysisResult;
 
