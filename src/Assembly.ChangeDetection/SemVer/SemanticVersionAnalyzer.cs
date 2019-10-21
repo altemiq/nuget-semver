@@ -47,7 +47,7 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
             var featuresAddedChanges = new AddedFunctionalityRule();
             var featuresAdded = featuresAddedChanges.Detect(differences);
 
-            var lastSemanticVersions = lastVersions is null ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>() : lastVersions.Select(NuGet.Versioning.SemanticVersion.Parse);
+            var lastSemanticVersions = lastVersions is null ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>() : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).ToArray();
 
             NuGet.Versioning.SemanticVersion previousVersion;
             if (System.IO.File.Exists(previousAssembly))

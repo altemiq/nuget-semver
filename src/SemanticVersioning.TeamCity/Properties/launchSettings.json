@@ -22,6 +22,11 @@
       "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
       "workingDirectory": "C:\\Repos\\bitbucket\\MATH\\Math"
     },
+    "Solution - IO": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"src/IO.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
+      "workingDirectory": "C:\\Repos\\bitbucket\\IO\\IO"
+    },
     "Help": {
       "commandName": "Project",
       "commandLineArgs": "diff solution --help"
