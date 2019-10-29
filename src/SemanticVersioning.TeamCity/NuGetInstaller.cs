@@ -82,7 +82,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                 .SelectMany(packageName => GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, cancellationToken))
                 .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion)
                 .Select(info => info.Version)
-                .GroupBy(version => (version.Version.Major, version.Version.Minor)))
+                .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease)))
             {
                 yield return await group.MaxAsync().ConfigureAwait(false);
             }
