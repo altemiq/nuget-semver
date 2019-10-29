@@ -1,9 +1,5 @@
 {
   "profiles": {
-    "SemanticVersioning.TeamCity": {
-      "commandName": "Project",
-      "commandLineArgs": "diff file \"C:\\Temp\\diff\\4.1.5\\lib\\netstandard2.0\\Altemiq.Math.dll\" \"C:\\Temp\\diff\\5.0.14-develop\\lib\\netstandard2.0\\Altemiq.Math.dll\" --previous \"5.0.14-develop\" --build 118"
-    },
     "Solution": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"C:\\Repos\\bitbucket\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
@@ -26,6 +22,11 @@
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/IO.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "C:\\Repos\\bitbucket\\IO\\IO"
+    },
+    "Solution - Capio.Core.Abstractions": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "workingDirectory": "C:\\Repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
     },
     "Help": {
       "commandName": "Project",
