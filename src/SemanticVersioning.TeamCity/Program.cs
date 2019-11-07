@@ -268,22 +268,14 @@ namespace Altemiq.SemanticVersioning.TeamCity
                             && (version.Patch / 100) == (requestedVersion.Patch / 100)
                             && (version.Patch % 100) >= (requestedVersion.Patch % 100)).ToArray();
 
-                        if (validVersions.Length > 0)
-                        {
-                            toolsVersion = validVersions.Max();
-                        }
-                        else
-                        {
-                            throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", versions.Select(version => $"{version} [{directory}]"))}");
-                        }
+                        toolsVersion = validVersions.Length > 0
+                            ? validVersions.Max()
+                            : throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", versions.Select(version => $"{version} [{directory}]"))}");
                     }
                 }
             }
 
-            if (toolsVersion is null)
-            {
-                toolsVersion = versions.Max(version => version);
-            }
+            toolsVersion ??= versions.Max(version => version);
 
             var toolset = parsedToolsets[toolsVersion.ToString()];
 
