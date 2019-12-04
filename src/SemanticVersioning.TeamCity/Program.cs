@@ -227,7 +227,7 @@ namespace Mondo.SemanticVersioning.TeamCity
 
             // get the highest version
             var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-                ? System.IO.Path.Combine(System.Environment.ExpandEnvironmentVariables("%PROGRAMFILES%"), "dotnet", "sdk")
+                ? System.IO.Path.Combine(Environment.ExpandEnvironmentVariables("%PROGRAMFILES%"), "dotnet", "sdk")
                 : System.IO.Path.Combine(char.ToString(System.IO.Path.DirectorySeparatorChar), "usr", "share", "dotnet", "sdk");
 
             var parsedToolsets = System.IO.Directory.EnumerateDirectories(directory)
