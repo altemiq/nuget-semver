@@ -39,7 +39,13 @@ namespace Mondo.SemanticVersioning.TeamCity
             foreach (var packageName in packageNames)
             {
                 var package = await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
-                if (latest is null || package.Version > latest.Version)
+                if (package is null)
+                {
+                    continue;
+                }
+
+                latest ??= package;
+                if (package.Version > latest.Version)
                 {
                     latest = package;
                 }
