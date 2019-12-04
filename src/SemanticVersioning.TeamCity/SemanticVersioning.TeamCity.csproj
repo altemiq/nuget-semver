@@ -20,7 +20,7 @@
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.3.0" />
     <PackageReference Include="NuGet.Common" Version="5.4.0" />
     <PackageReference Include="NuGet.Protocol" Version="5.4.0" />
-    <PackageReference Include="System.CommandLine.Experimental" Version="0.3.0-alpha.19602.1" />
+    <PackageReference Include="System.CommandLine.Experimental" Version="0.3.0-alpha.19577.1" />
     <PackageReference Include="System.Linq.Async.Queryable" Version="4.0.0" />
   </ItemGroup>
 
