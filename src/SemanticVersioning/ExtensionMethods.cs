@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.TeamCity
+namespace Mondo.SemanticVersioning
 {
     using System.CommandLine;
 

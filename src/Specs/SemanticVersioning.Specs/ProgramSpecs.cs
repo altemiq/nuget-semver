@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Machine.Specifications;
 
-namespace Mondo.SemanticVersioning.TeamCity
+namespace Mondo.SemanticVersioning
 {
     internal abstract class When_running_the_program
     {

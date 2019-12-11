@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.TeamCity
+namespace Mondo.SemanticVersioning
 {
     using System;
     using System.Collections.Generic;

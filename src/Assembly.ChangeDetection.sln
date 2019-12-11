@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29001.49
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.TeamCity", "SemanticVersioning.TeamCity\SemanticVersioning.TeamCity.csproj", "{54171096-52DC-434F-AF1C-82E682C08700}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning", "SemanticVersioning\SemanticVersioning.csproj", "{54171096-52DC-434F-AF1C-82E682C08700}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Assembly.ChangeDetection", "Assembly.ChangeDetection\Assembly.ChangeDetection.csproj", "{E854DFDD-3CD0-47FB-9772-2BBCC275FA74}"
 EndProject
@@ -33,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakingChange", "Specs\Pro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NonBreakingAdditiveChange", "Specs\Projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj", "{85164719-6220-4167-8C52-E0406CDE120F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.TeamCity.Specs", "Specs\SemanticVersioning.TeamCity.Specs\SemanticVersioning.TeamCity.Specs.csproj", "{C6463A1F-A0CD-4F1F-BF5A-0FCEE91EB5C0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.Specs", "Specs\SemanticVersioning.Specs\SemanticVersioning.Specs.csproj", "{C6463A1F-A0CD-4F1F-BF5A-0FCEE91EB5C0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuPkg", "NuPkg", "{028F3616-5A1D-4352-977F-50BF81A728E9}"
 EndProject

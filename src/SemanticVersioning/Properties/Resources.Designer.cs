@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.TeamCity.Properties {
+namespace Mondo.SemanticVersioning.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Mondo.SemanticVersioning.TeamCity.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Mondo.SemanticVersioning.TeamCity.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Mondo.SemanticVersioning.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

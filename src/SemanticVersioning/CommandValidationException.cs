@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.TeamCity
+namespace Mondo.SemanticVersioning
 {
     /// <summary>
     /// The command validation exception.

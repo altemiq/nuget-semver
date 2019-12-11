@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Mondo.SemanticVersioning.TeamCity.Specs")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Mondo.SemanticVersioning.Specs")]
 
-namespace Mondo.SemanticVersioning.TeamCity
+namespace Mondo.SemanticVersioning
 {
     using System;
     using System.CommandLine;
