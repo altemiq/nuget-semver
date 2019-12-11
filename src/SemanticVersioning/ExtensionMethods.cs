@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.SemanticVersioning.TeamCity
+namespace Altemiq.SemanticVersioning
 {
     using System.CommandLine;
 

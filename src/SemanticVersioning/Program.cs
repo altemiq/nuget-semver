@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altemiq.SemanticVersioning.TeamCity.Specs")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altemiq.SemanticVersioning.Specs")]
 
-namespace Altemiq.SemanticVersioning.TeamCity
+namespace Altemiq.SemanticVersioning
 {
     using System;
     using System.CommandLine;

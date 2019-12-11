@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Machine.Specifications;
 
-namespace Altemiq.SemanticVersioning.TeamCity
+namespace Altemiq.SemanticVersioning
 {
     internal abstract class When_running_the_program
     {
