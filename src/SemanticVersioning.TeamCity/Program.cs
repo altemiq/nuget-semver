@@ -110,11 +110,11 @@ namespace Mondo.SemanticVersioning.TeamCity
                 return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
             }
 
-            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds)
+            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
             {
                 try
                 {
-                    return await NuGetInstaller.InstallAsync(packageIds, source, noCache: noCache, directDownload: directDownload).ConfigureAwait(false);
+                    return await NuGetInstaller.InstallAsync(packageIds, source, noCache: noCache, directDownload: directDownload, root: projectDirectory).ConfigureAwait(false);
                 }
                 catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {
@@ -161,8 +161,8 @@ namespace Mondo.SemanticVersioning.TeamCity
                     return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
                 }
 
-                var installDir = await TryInstallAsync(projectPackageIds).ConfigureAwait(false);
-                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source);
+                var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
+                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory);
                 var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 if (installDir is null)
