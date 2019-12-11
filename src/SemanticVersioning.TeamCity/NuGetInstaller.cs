@@ -31,11 +31,11 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public static async Task<string> InstallAsync(IEnumerable<string> packageNames, IEnumerable<string> sources = null, bool noCache = false, bool directDownload = false, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default)
+        public static async Task<string> InstallAsync(IEnumerable<string> packageNames, IEnumerable<string>? sources = default, bool noCache = default, bool directDownload = default, NuGet.Common.ILogger? log = default, System.Threading.CancellationToken cancellationToken = default)
         {
             var enumerableSources = sources ?? Enumerable.Empty<string>();
             var settings = Settings.LoadDefaultSettings(null);
-            SourcePackageDependencyInfo latest = default;
+            SourcePackageDependencyInfo? latest = default;
             foreach (var packageName in packageNames)
             {
                 var package = await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
@@ -67,7 +67,7 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <param name="log">The log.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet version.</returns>
-        public static Task<NuGet.Versioning.NuGetVersion> GetLatestVersionAsync(string packageName, IEnumerable<string> sources = null, NuGet.Common.ILogger log = null, System.Threading.CancellationToken cancellationToken = default) => GetLatestVersion(GetRepositories(Settings.LoadDefaultSettings(null), sources), packageName, true, log ?? NuGet.Common.NullLogger.Instance, cancellationToken);
+        public static Task<NuGet.Versioning.NuGetVersion?> GetLatestVersionAsync(string packageName, IEnumerable<string>? sources = default, NuGet.Common.ILogger? log = default, System.Threading.CancellationToken cancellationToken = default) => GetLatestVersion(GetRepositories(Settings.LoadDefaultSettings(null), sources), packageName, true, log ?? NuGet.Common.NullLogger.Instance, cancellationToken);
 
         /// <summary>
         /// Gets the latest versions.
@@ -79,8 +79,8 @@ namespace Mondo.SemanticVersioning.TeamCity
         /// <returns>The latest NuGet versions.</returns>
         public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(
             IEnumerable<string> packageNames,
-            IEnumerable<string> sources = null,
-            NuGet.Common.ILogger log = null,
+            IEnumerable<string>? sources = default,
+            NuGet.Common.ILogger? log = default,
             [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken = default)
         {
             await foreach (var group in packageNames
@@ -116,20 +116,20 @@ namespace Mondo.SemanticVersioning.TeamCity
             return System.IO.Path.GetFullPath(localInstallPath);
         }
 
-        private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string> sources)
+        private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string>? sources)
         {
-            var repositories = sources.Select(source => Repository.Factory.GetCoreV3(source)).ToList();
-            if (repositories.Count == 0)
+            var repositories = sources?.Select(source => Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
+            if (repositories.Length == 0)
             {
-                repositories = SettingsUtility.GetEnabledSources(settings).Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToList();
+                repositories = SettingsUtility.GetEnabledSources(settings).Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
             }
 
             return repositories;
         }
 
-        private static async Task<NuGet.Versioning.NuGetVersion> GetLatestVersion(IEnumerable<SourceRepository> repositories, string id, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        private static async Task<NuGet.Versioning.NuGetVersion?> GetLatestVersion(IEnumerable<SourceRepository> repositories, string id, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
         {
-            NuGet.Versioning.NuGetVersion latestVersion = null;
+            NuGet.Versioning.NuGetVersion? latestVersion = default;
 
             foreach (var repository in repositories)
             {
@@ -150,13 +150,13 @@ namespace Mondo.SemanticVersioning.TeamCity
                     .Select(package => package.Version)
                     .FirstOrDefaultAsync().ConfigureAwait(false);
 
-        private static async Task<SourcePackageDependencyInfo> GetLatestPackage(IEnumerable<string> sources, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(IEnumerable<string> sources, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
         {
-            SourcePackageDependencyInfo latest = default;
+            SourcePackageDependencyInfo? latest = default;
             foreach (var repository in GetRepositories(Settings.LoadDefaultSettings(null), sources))
             {
                 var package = await GetLatestPackage(repository, packageId, includePrerelease, log, cancellationToken).ConfigureAwait(false);
-                if (latest == null || package.Version > latest.Version)
+                if (latest is null || package.Version > latest.Version)
                 {
                     latest = package;
                 }
@@ -172,7 +172,7 @@ namespace Mondo.SemanticVersioning.TeamCity
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
-        private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string> sources, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => GetRepositories(Settings.LoadDefaultSettings(null), sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
+        private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => GetRepositories(Settings.LoadDefaultSettings(null), sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 
         private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(
             SourceRepository source,
@@ -182,7 +182,7 @@ namespace Mondo.SemanticVersioning.TeamCity
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            IEnumerable<SourcePackageDependencyInfo> returnValues = null;
+            IEnumerable<SourcePackageDependencyInfo>? returnValues = default;
 
             try
             {
@@ -195,12 +195,14 @@ namespace Mondo.SemanticVersioning.TeamCity
                 log.LogError(e.Message);
             }
 
-            if (returnValues != null)
+            if (returnValues is null)
             {
-                foreach (var returnValue in returnValues)
-                {
-                    yield return returnValue;
-                }
+                yield break;
+            }
+
+            foreach (var returnValue in returnValues)
+            {
+                yield return returnValue;
             }
         }
 
@@ -241,7 +243,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                     var findPackagesByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
                     using var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, sourceCacheContext, logger, cancellationToken).ConfigureAwait(false);
 
-                    if (packageDownloder == null)
+                    if (packageDownloder is null)
                     {
                         logger.LogWarning($"Package {package} not found in repository {repository}");
                         continue;

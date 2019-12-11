@@ -41,7 +41,7 @@ namespace Mondo.SemanticVersioning.TeamCity
 
             var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
             solutionCommand
-                .AddFluentArgument(new Argument<System.IO.FileSystemInfo>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
+                .AddFluentArgument(new Argument<System.IO.FileSystemInfo?>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
                 .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
                 .AddFluentOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
                 .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
@@ -66,12 +66,12 @@ namespace Mondo.SemanticVersioning.TeamCity
             return rootCommand.InvokeAsync(args);
         }
 
-        private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo value)
+        private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo? value)
         {
             var path = symbolResult.Token.Value;
             if (path is null)
             {
-                value = null;
+                value = default;
                 return true;
             }
 
@@ -85,7 +85,7 @@ namespace Mondo.SemanticVersioning.TeamCity
             }
 
             symbolResult.ErrorMessage = $"\"{path}\" is not a valid file or directory";
-            value = null;
+            value = default;
             return false;
         }
 
@@ -105,12 +105,12 @@ namespace Mondo.SemanticVersioning.TeamCity
             WriteHeader();
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
-            string GetVersionSuffix(string previousVersionRelease = default)
+            string? GetVersionSuffix(string? previousVersionRelease = default)
             {
                 return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
             }
 
-            async Task<string> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds)
+            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds)
             {
                 try
                 {
@@ -119,7 +119,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                 catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {
                     Console.WriteLine("  {0}", ex.Message);
-                    return null;
+                    return default;
                 }
             }
 
@@ -248,7 +248,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                     return (toolsVersion: version.ToString(), toolset: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection, path));
                 }).ToDictionary(value => value.toolsVersion, value => value.toolset);
 
-            NuGet.Versioning.SemanticVersion toolsVersion = default;
+            NuGet.Versioning.SemanticVersion? toolsVersion = default;
             var versions = parsedToolsets.Keys.Where(value => NuGet.Versioning.SemanticVersion.TryParse(value, out var _)).Select(NuGet.Versioning.SemanticVersion.Parse).ToArray();
             var globalJson = FindGlobalJson(projectOrSolution);
             if (globalJson != null)
@@ -293,7 +293,7 @@ namespace Mondo.SemanticVersioning.TeamCity
             return projectCollection;
         }
 
-        private static string FindGlobalJson(System.IO.FileSystemInfo path)
+        private static string? FindGlobalJson(System.IO.FileSystemInfo? path)
         {
             var directory = path switch
             {
@@ -302,17 +302,22 @@ namespace Mondo.SemanticVersioning.TeamCity
                 _ => System.IO.Directory.GetCurrentDirectory(),
             };
 
-            do
+            while (true)
             {
                 var filePath = System.IO.Path.Combine(directory, "global.json");
                 if (System.IO.File.Exists(filePath))
                 {
                     return filePath;
                 }
-            }
-            while ((directory = System.IO.Path.GetDirectoryName(directory)) != null);
 
-            return null;
+                var directoryName = System.IO.Path.GetDirectoryName(directory);
+                if (directoryName is null)
+                {
+                    return default;
+                }
+
+                directory = directoryName;
+            }
         }
 
         private static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)
@@ -340,7 +345,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                             throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
                         }
 
-                        throw new CommandValidationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                        throw new CommandValidationException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                     }
 
                     // We did not find any solutions, so try and find individual projects
@@ -357,7 +362,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                             throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
                         }
 
-                        throw new CommandValidationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                        throw new CommandValidationException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                     }
 
                     // At this point the path contains no solutions or projects, so throw an exception
@@ -376,7 +381,7 @@ namespace Mondo.SemanticVersioning.TeamCity
                     throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
             }
 
-            return null;
+            throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
         }
     }
 }

@@ -65,7 +65,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// <returns>The file.</returns>
         public static string GetMatchingFileByName(this IEnumerable<FileQuery> queries, string fileName)
         {
-            if (queries == null)
+            if (queries is null)
             {
                 throw new ArgumentNullException(nameof(queries));
             }
@@ -86,12 +86,12 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// <returns>The non-existent files.</returns>
         public static IEnumerable<string> GetNotExistingFilesInOtherQuery(this IEnumerable<FileQuery> queries, IEnumerable<FileQuery> otherQueries)
         {
-            if (queries == null)
+            if (queries is null)
             {
                 throw new ArgumentNullException(nameof(queries));
             }
 
-            if (otherQueries == null)
+            if (otherQueries is null)
             {
                 throw new ArgumentNullException(nameof(otherQueries));
             }

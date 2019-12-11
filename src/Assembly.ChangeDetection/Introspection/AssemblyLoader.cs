@@ -25,7 +25,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns>The assembly definition.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is ensure that the application does not crash")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1075:AvoidEmptyCatchClauseThatCatchesSystemException", Justification = "This is ensure that the application does not crash")]
-        public static AssemblyDefinition LoadCecilAssembly(string fileName, bool immediateLoad = false, bool? readSymbols = null)
+        public static AssemblyDefinition? LoadCecilAssembly(string fileName, bool immediateLoad = default, bool? readSymbols = default)
         {
             var pdbPath = Path.ChangeExtension(fileName, "pdb");
             var tryReadSymbols = readSymbols ?? File.Exists(pdbPath);

@@ -17,12 +17,6 @@ namespace Mondo.Assembly.ChangeDetection.Query
         // Common Regular expression part shared by the different queries
         private const string CommonModifiers = "!?static +|!?public +|!?protected +internal +|!?protected +|!?internal +|!?private +";
 
-        private static Regex eventQueryParser;
-
-        private static Regex fieldQueryParser;
-
-        private static Regex methodDefParser;
-
         /// <summary>
         /// Initialises a new instance of the <see cref="BaseQuery"/> class.
         /// </summary>
@@ -38,17 +32,17 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets the event query parser.
         /// </summary>
-        internal static Regex EventQueryParser => eventQueryParser ?? (eventQueryParser = new Regex("^ *(?<modifiers>!?virtual +|event +|" + CommonModifiers + ")* *(?<eventType>[^ ]+(<.*>)?) +(?<eventName>[^ ]+) *$"));
+        internal static Regex EventQueryParser { get; } = new Regex("^ *(?<modifiers>!?virtual +|event +|" + CommonModifiers + ")* *(?<eventType>[^ ]+(<.*>)?) +(?<eventName>[^ ]+) *$");
 
         /// <summary>
         /// Gets the field query parser.
         /// </summary>
-        internal static Regex FieldQueryParser => fieldQueryParser ?? (fieldQueryParser = new Regex(" *(?<modifiers>!?nocompilergenerated +|!?const +|!?readonlys +|" + CommonModifiers + ")* *(?<fieldType>[^ ]+(<.*>)?) +(?<fieldName>[^ ]+) *$"));
+        internal static Regex FieldQueryParser { get; } = new Regex(" *(?<modifiers>!?nocompilergenerated +|!?const +|!?readonlys +|" + CommonModifiers + ")* *(?<fieldType>[^ ]+(<.*>)?) +(?<fieldName>[^ ]+) *$");
 
         /// <summary>
         /// Gets the method query parser.
         /// </summary>
-        internal static Regex MethodDefParser => methodDefParser ?? (methodDefParser = new Regex(" *(?<modifiers>!?virtual +|" + CommonModifiers + ")*" + @"(?<retType>.*<.*>( *\[\])?|[^ (\)]*( *\[\])?) +(?<funcName>.+)\( *(?<args>.*?) *\) *"));
+        internal static Regex MethodDefParser { get; } = new Regex(" *(?<modifiers>!?virtual +|" + CommonModifiers + ")*" + @"(?<retType>.*<.*>( *\[\])?|[^ (\)]*( *\[\])?) +(?<funcName>.+)\( *(?<args>.*?) *\) *");
 
         /// <summary>
         /// Gets a value indicating whether this instance is internal.
@@ -83,12 +77,12 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets or sets the parser.
         /// </summary>
-        protected internal Regex Parser { get; set; }
+        protected internal Regex? Parser { get; set; }
 
         /// <summary>
         /// Gets or sets the name filter.
         /// </summary>
-        protected internal string NameFilter { get; set; }
+        protected internal string? NameFilter { get; set; }
 
         /// <summary>
         /// Return whether the key is a match.
@@ -152,6 +146,6 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <returns>The result.</returns>
         protected virtual bool MatchName(string name) => string.IsNullOrEmpty(this.NameFilter)
             || this.NameFilter == "*"
-            || Matcher.MatchWithWildcards(this.NameFilter, name, StringComparison.OrdinalIgnoreCase);
+            || Matcher.MatchWithWildcards(this.NameFilter!, name, StringComparison.OrdinalIgnoreCase);
     }
 }

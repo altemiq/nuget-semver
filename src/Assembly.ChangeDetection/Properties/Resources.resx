@@ -117,11 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CannotParseGenericType" xml:space="preserve">
+    <value>Cannot parse generic type</value>
+  </data>
   <data name="DiffQueriesWasNull" xml:space="preserve">
     <value>{0} was null or the method or field query list was emtpy. This will not result in a meaningful diff result.</value>
   </data>
   <data name="FileNameWasNullOrEmpty" xml:space="preserve">
     <value>file name to filter for was null or empty</value>
+  </data>
+  <data name="GotMoreThanOneMatchingMethod" xml:space="preserve">
+    <value>Got more than one matching method: {0}</value>
   </data>
   <data name="IncorrectTypeQuery" xml:space="preserve">
     <value>The type query \"{0}\" is not of the form [public|internal|class|interface|struct|enum|nocompiler|api] typename</value>

@@ -11,6 +11,7 @@
     <Copyright>Copyright © $(Company) Pty Ltd 2019</Copyright>
     <LangVersion>preview</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

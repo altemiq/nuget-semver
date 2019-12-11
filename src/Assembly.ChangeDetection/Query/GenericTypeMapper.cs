@@ -24,7 +24,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <returns>The transformed type name.</returns>
         public static string TransformGenericTypeNames(string typeName, Func<string, string> typeNameTransformer)
         {
-            if (typeNameTransformer == null)
+            if (typeNameTransformer is null)
             {
                 throw new ArgumentNullException(nameof(typeNameTransformer));
             }
@@ -74,13 +74,13 @@ namespace Mondo.Assembly.ChangeDetection.Query
             var root = ParseGenericType(normalizedName);
 
             var sb = new StringBuilder();
-            FormatExpandedGeneric(sb, root);
+            FormatExpandedGeneric(sb, root!);
             return sb.ToString();
         }
 
         private static void TransformGeneric(GenericType type, Func<string, string> typeNameTransformer)
         {
-            if (type == null)
+            if (type is null)
             {
                 return;
             }
@@ -92,11 +92,11 @@ namespace Mondo.Assembly.ChangeDetection.Query
             }
         }
 
-        private static GenericType ParseGenericType(string normalizedName)
+        private static GenericType? ParseGenericType(string normalizedName)
         {
             var curArg = new StringBuilder();
-            GenericType root = null;
-            GenericType curType = null;
+            var root = default(GenericType?);
+            var curType = default(GenericType?);
 
             // Func< Func<Func<int,int>,bool> >
             // Func`1< Func`2< Func`2<System.Int32,System.Int32>, System.Boolean> >
@@ -105,7 +105,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
             {
                 if (normalizedName[i] == '<')
                 {
-                    if (curType == null)
+                    if (curType is null)
                     {
                         curType = new GenericType(curArg.ToString(), null);
                         root = curType;
@@ -121,12 +121,12 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 }
                 else if (normalizedName[i] == '>')
                 {
-                    if (curArg.Length > 0)
+                    if (curArg.Length > 0 && curType != null)
                     {
                         curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), null));
                     }
 
-                    if (curType.Parent != null)
+                    if (curType?.Parent != null)
                     {
                         curType = curType.Parent;
                     }
@@ -135,7 +135,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 }
                 else if (normalizedName[i] == ',')
                 {
-                    if (curArg.Length > 0)
+                    if (curArg.Length > 0 && curType != null)
                     {
                         curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), null));
                     }
@@ -182,7 +182,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
 
         private class GenericType
         {
-            public GenericType(string typeName, GenericType parent)
+            public GenericType(string typeName, GenericType? parent)
             {
                 this.GenericTypeName = typeName;
 
@@ -197,7 +197,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
 
             public IList<GenericType> Arguments { get; } = new List<GenericType>();
 
-            public GenericType Parent { get; }
+            public GenericType? Parent { get; }
 
             public string GenericTypeName { get; set; }
         }

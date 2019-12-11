@@ -33,15 +33,15 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <returns>The type queries.</returns>
         public IList<TypeQuery> GetQueries(string typeQueries, TypeQueryMode additionalFlags)
         {
-            if (typeQueries == null)
+            if (typeQueries is null)
             {
                 throw new ArgumentNullException(nameof(typeQueries));
             }
 
             var trimedQuery = typeQueries.Trim();
-            if (trimedQuery?.Length == 0)
+            if (string.IsNullOrEmpty(trimedQuery))
             {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.WasAnEmptyString, nameof(typeQueries)), nameof(typeQueries));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.WasAnEmptyString, nameof(typeQueries)), nameof(typeQueries));
             }
 
             var queries = trimedQuery.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -51,7 +51,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 var m = QueryParser.Match(query);
                 if (!m.Success)
                 {
-                    throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.IncorrectTypeQuery, query));
+                    throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.IncorrectTypeQuery, query));
                 }
 
                 var mode = this.GetQueryMode(m);
@@ -71,7 +71,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="fullQualifiedTypeName">The fully qualified name.</param>
         /// <returns>The namespace and type.</returns>
-        internal static (string @namespace, string type) SplitNameSpaceAndType(string fullQualifiedTypeName)
+        internal static (string? @namespace, string type) SplitNameSpaceAndType(string fullQualifiedTypeName)
         {
             if (string.IsNullOrEmpty(fullQualifiedTypeName))
             {

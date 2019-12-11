@@ -42,7 +42,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <param name="fieldName">The field name.</param>
         /// <param name="fieldType">The field type.</param>
         /// <returns>The field definition.</returns>
-        public static FieldDefinition GetFieldByNameAndType(this IEnumerable<FieldDefinition> list, string fieldName, string fieldType) => list
+        public static FieldDefinition GetFieldByNameAndType(this IEnumerable<FieldDefinition> list, string fieldName, string? fieldType) => list
             .FirstOrDefault(field => (string.CompareOrdinal(field.Name, fieldName) == 0)
             && (string.IsNullOrEmpty(fieldType) || (field.FieldType != null && field.FieldType.FullName == fieldType)));
 
@@ -52,7 +52,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <param name="list">The list.</param>
         /// <param name="eventName">The event name.</param>
         /// <returns>The event definition.</returns>
-        public static EventDefinition GetEventByName(this IEnumerable<EventDefinition> list, string eventName) => GetEventByNameAndType(list, eventName, null);
+        public static EventDefinition GetEventByName(this IEnumerable<EventDefinition> list, string eventName) => GetEventByNameAndType(list, eventName, default);
 
         /// <summary>
         /// Gets the event by name.
@@ -61,7 +61,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <param name="eventName">The event name.</param>
         /// <param name="type">The type.</param>
         /// <returns>The event definition.</returns>
-        public static EventDefinition GetEventByNameAndType(this IEnumerable<EventDefinition> list, string eventName, string type) => list.FirstOrDefault(ev => ev.Name == eventName && (type == null || (ev.EventType.FullName == type)));
+        public static EventDefinition GetEventByNameAndType(this IEnumerable<EventDefinition> list, string eventName, string? type) => list.FirstOrDefault(ev => ev.Name == eventName && (type is null || (ev.EventType.FullName == type)));
 
         /// <summary>
         /// Compares two TypeReferences by its Full Name and declaring assembly.
@@ -71,12 +71,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this TypeDefinition first, TypeDefinition second)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -151,12 +151,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this MethodReference first, MethodReference second, bool compareGenericParameters)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -189,12 +189,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this Collection<ParameterDefinition> first, Collection<ParameterDefinition> second, bool compareGenericParameters)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -237,12 +237,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this IMetadataScope first, IMetadataScope second)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -266,12 +266,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this GenericInstanceType first, GenericInstanceType second)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -288,12 +288,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this TypeReference first, TypeReference second, bool compareGenericParameters)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -304,7 +304,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
             xDeclaring.IsNotNull(() => xDeclaring = first.DeclaringType.GetElementType());
             yDeclaring.IsNotNull(() => yDeclaring = second.DeclaringType.GetElementType());
 
-            var lret = false;
+            var lret = default(bool);
 
             // Generic parameters are passed as placeholder via method reference
             //  newobj instance void class [BaseLibraryV1]BaseLibrary.ApiChanges.PublicGenericClass`1<string>::.ctor(class [System.Core]System.Func`1<!0>)
@@ -357,12 +357,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this IList<TypeReference> first, IList<TypeReference> second)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -393,12 +393,12 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <returns><see langword="true"/> if <paramref name="first"/> and <paramref name="second"/> are equal; otherwise <see langword="false"/>.</returns>
         public static bool IsEqual(this IList<GenericParameter> first, IList<GenericParameter> second)
         {
-            if (first == null && second == null)
+            if (first is null)
             {
-                return true;
+                return second is null;
             }
 
-            if ((first == null && second != null) || (first != null && second == null))
+            if (second is null)
             {
                 return false;
             }
@@ -442,8 +442,8 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <param name="value">The value.</param>
         /// <param name="func">The func.</param>
         /// <returns>The value from <paramref name="func"/>.</returns>
-        public static T IsNotNull<T>(this object value, Func<T> func)
-            where T : class => value == null ? default : func();
+        public static T? IsNotNull<T>(this object value, Func<T> func)
+            where T : class => value is null ? default : func();
 
         private static string ExractAssemblyNameFromScope(IMetadataScope x) => x switch
         {

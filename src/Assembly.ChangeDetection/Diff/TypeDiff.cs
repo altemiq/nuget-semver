@@ -86,19 +86,19 @@ namespace Mondo.Assembly.ChangeDetection.Diff
         /// <returns>The type difference.</returns>
         public static TypeDiff GenerateDiff(TypeDefinition typeV1, TypeDefinition typeV2, QueryAggregator diffQueries)
         {
-            if (typeV1 == null)
+            if (typeV1 is null)
             {
                 throw new ArgumentNullException(nameof(typeV1));
             }
 
-            if (typeV2 == null)
+            if (typeV2 is null)
             {
                 throw new ArgumentNullException(nameof(typeV2));
             }
 
-            if (diffQueries == null || diffQueries.FieldQueries.Count == 0 || diffQueries.MethodQueries.Count == 0)
+            if (diffQueries is null || diffQueries.FieldQueries.Count == 0 || diffQueries.MethodQueries.Count == 0)
             {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DiffQueriesWasNull, nameof(diffQueries)), nameof(diffQueries));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.DiffQueriesWasNull, nameof(diffQueries)), nameof(diffQueries));
             }
 
             var diff = new TypeDiff(typeV1, typeV2);
@@ -114,32 +114,18 @@ namespace Mondo.Assembly.ChangeDetection.Diff
         }
 
         /// <inheritdoc/>
-        public override string ToString() => string.Format(System.Globalization.CultureInfo.CurrentCulture, "Type: {0}, Changed Methods: {1}, Fields: {2}, Events: {3}, Interfaces: {4}", this.TypeV1, this.Methods.Count, this.Fields.Count, this.Events.Count, this.Interfaces.Count);
+        public override string ToString() => string.Format(Properties.Resources.Culture, "Type: {0}, Changed Methods: {1}, Fields: {2}, Events: {3}, Interfaces: {4}", this.TypeV1, this.Methods.Count, this.Fields.Count, this.Events.Count, this.Interfaces.Count);
 
         private static bool IsSameBaseType(TypeDefinition t1, TypeDefinition t2)
         {
-            if (t1 is null && t2 is null)
+            static bool CompareNull(object o1, object o2)
             {
-                return true;
+                return o1 is null ? o2 is null : !(o2 is null);
             }
 
-            if ((t1 == null && t2 != null) || (t1 != null && t2 == null))
-            {
-                return false;
-            }
-
-            if (t1.BaseType == null && t2.BaseType == null)
-            {
-                return true;
-            }
-
-            // compare base type
-            if ((t1.BaseType != null && t2.BaseType == null) || (t1.BaseType == null && t2.BaseType != null))
-            {
-                return false;
-            }
-
-            return t1.BaseType.FullName == t2.BaseType.FullName;
+            return CompareNull(t1, t2)
+                && CompareNull(t1.BaseType, t2.BaseType)
+                && t1.BaseType.FullName == t2.BaseType.FullName;
         }
 
         private void DoDiff(QueryAggregator diffQueries)

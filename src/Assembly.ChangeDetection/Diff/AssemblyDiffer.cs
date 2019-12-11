@@ -53,17 +53,10 @@ namespace Mondo.Assembly.ChangeDetection.Diff
                 throw new ArgumentNullException(nameof(assemblyFileV2));
             }
 
-            this.myV1 = AssemblyLoader.LoadCecilAssembly(assemblyFileV1);
-            if (this.myV1 == null)
-            {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Could not load assemblyV1 {0}", assemblyFileV1), nameof(assemblyFileV1));
-            }
-
-            this.myV2 = AssemblyLoader.LoadCecilAssembly(assemblyFileV2);
-            if (this.myV2 == null)
-            {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Could not load assemblyV2 {0}", assemblyFileV2), nameof(assemblyFileV2));
-            }
+            this.myV1 = AssemblyLoader.LoadCecilAssembly(assemblyFileV1)
+                ?? throw new ArgumentException(string.Format(Properties.Resources.Culture, "Could not load assemblyV1 {0}", assemblyFileV1), nameof(assemblyFileV1));
+            this.myV2 = AssemblyLoader.LoadCecilAssembly(assemblyFileV2)
+                ?? throw new ArgumentException(string.Format(Properties.Resources.Culture, "Could not load assemblyV2 {0}", assemblyFileV2), nameof(assemblyFileV2));
         }
 
         /// <summary>
@@ -73,7 +66,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
         /// <returns>The assembly diff collection.</returns>
         public AssemblyDiffCollection GenerateTypeDiff(QueryAggregator queries)
         {
-            if (queries == null)
+            if (queries is null)
             {
                 throw new ArgumentNullException(nameof(queries));
             }
