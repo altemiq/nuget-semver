@@ -29,16 +29,17 @@ namespace Altemiq.SemanticVersioning.TeamCity
         /// <param name="noCache">Set to true to ignore the cache.</param>
         /// <param name="directDownload">Set to true to directly download.</param>
         /// <param name="log">The log.</param>
+        /// <param name="root">The root of the settings.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public static async Task<string> InstallAsync(IEnumerable<string> packageNames, IEnumerable<string>? sources = default, bool noCache = default, bool directDownload = default, NuGet.Common.ILogger? log = default, System.Threading.CancellationToken cancellationToken = default)
+        public static async Task<string> InstallAsync(IEnumerable<string> packageNames, IEnumerable<string>? sources = default, bool noCache = default, bool directDownload = default, NuGet.Common.ILogger? log = default, string? root = default, System.Threading.CancellationToken cancellationToken = default)
         {
             var enumerableSources = sources ?? Enumerable.Empty<string>();
-            var settings = Settings.LoadDefaultSettings(null);
+            var settings = Settings.LoadDefaultSettings(root);
             SourcePackageDependencyInfo? latest = default;
             foreach (var packageName in packageNames)
             {
-                var package = await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+                var package = await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken).ConfigureAwait(false);
                 if (package is null)
                 {
                     continue;
@@ -60,32 +61,25 @@ namespace Altemiq.SemanticVersioning.TeamCity
         }
 
         /// <summary>
-        /// Gets the latest vesion.
-        /// </summary>
-        /// <param name="packageName">The package name.</param>
-        /// <param name="sources">The sources.</param>
-        /// <param name="log">The log.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The latest NuGet version.</returns>
-        public static Task<NuGet.Versioning.NuGetVersion?> GetLatestVersionAsync(string packageName, IEnumerable<string>? sources = default, NuGet.Common.ILogger? log = default, System.Threading.CancellationToken cancellationToken = default) => GetLatestVersion(GetRepositories(Settings.LoadDefaultSettings(null), sources), packageName, true, log ?? NuGet.Common.NullLogger.Instance, cancellationToken);
-
-        /// <summary>
         /// Gets the latest versions.
         /// </summary>
         /// <param name="packageNames">The package names.</param>
         /// <param name="sources">The sources.</param>
         /// <param name="log">The log.</param>
+        /// <param name="root">The settings root.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet versions.</returns>
         public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(
             IEnumerable<string> packageNames,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
+            string? root = default,
             [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken = default)
         {
+            var settings = Settings.LoadDefaultSettings(root);
             await foreach (var group in packageNames
                 .ToAsyncEnumerable()
-                .SelectMany(packageName => GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, cancellationToken))
+                .SelectMany(packageName => GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken))
                 .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion)
                 .Select(info => info.Version)
                 .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease)))
@@ -127,36 +121,19 @@ namespace Altemiq.SemanticVersioning.TeamCity
             return repositories;
         }
 
-        private static async Task<NuGet.Versioning.NuGetVersion?> GetLatestVersion(IEnumerable<SourceRepository> repositories, string id, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
-        {
-            NuGet.Versioning.NuGetVersion? latestVersion = default;
-
-            foreach (var repository in repositories)
-            {
-                var repositoryVersion = await GetLatestVersion(repository, id, includePrerelease, log, cancellationToken).ConfigureAwait(false);
-                if (repositoryVersion != default && repositoryVersion > latestVersion)
-                {
-                    latestVersion = repositoryVersion;
-                }
-            }
-
-            return latestVersion;
-        }
-
-        private static async Task<NuGet.Versioning.NuGetVersion> GetLatestVersion(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
-                GetVersions(source, packageId, log, cancellationToken)
-                    .Where(package => package.Listed && (package.HasVersion && package.Version.IsPrerelease ? includePrerelease : true))
-                    .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
-                    .Select(package => package.Version)
-                    .FirstOrDefaultAsync().ConfigureAwait(false);
-
-        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(IEnumerable<string> sources, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(IEnumerable<string> sources, string packageId, bool includePrerelease, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken)
         {
             SourcePackageDependencyInfo? latest = default;
-            foreach (var repository in GetRepositories(Settings.LoadDefaultSettings(null), sources))
+            foreach (var repository in GetRepositories(settings, sources))
             {
                 var package = await GetLatestPackage(repository, packageId, includePrerelease, log, cancellationToken).ConfigureAwait(false);
-                if (latest is null || package.Version > latest.Version)
+                if (package is null)
+                {
+                    continue;
+                }
+
+                latest ??= package;
+                if (package.Version > latest.Version)
                 {
                     latest = package;
                 }
@@ -172,7 +149,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
-        private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => GetRepositories(Settings.LoadDefaultSettings(null), sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
+        private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken) => GetRepositories(settings, sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 
         private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(
             SourceRepository source,
