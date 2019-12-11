@@ -47,7 +47,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
             {
                 if (query.Contains("*"))
                 {
-                    throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Wildcards are not supported in Global Assembly Cache search: {0}", query));
+                    throw new ArgumentException(string.Format(Properties.Resources.Culture, "Wildcards are not supported in Global Assembly Cache search: {0}", query));
                 }
 
                 var fileName = query.Substring(5);
@@ -149,7 +149,7 @@ namespace Altemiq.Assembly.ChangeDetection.Infrastructure
         /// <param name="rootDir">The root directory.</param>
         /// <param name="searchOption">The search options.</param>
         /// <returns>The query list.</returns>
-        public static IList<FileQuery> ParseQueryList(string query, string rootDir, SearchOption searchOption) => query
+        public static IList<FileQuery> ParseQueryList(string query, string? rootDir, SearchOption searchOption) => query
             .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(q => new FileQuery(string.IsNullOrEmpty(rootDir) ? q.Trim() : Path.Combine(rootDir, q.Trim()), searchOption))
             .ToList();

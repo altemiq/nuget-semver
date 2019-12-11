@@ -18,53 +18,17 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     {
         private static readonly TypeQueryFactory QueryFactory = new TypeQueryFactory();
 
-        private TypeQueryMode myQueryMode;
+        private TypeQueryMode typeQueryMode;
 
-        private string myTypeNameFilter;
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="TypeQuery"/> class that searches for all types in the assembly.
-        /// </summary>
-        public TypeQuery()
-            : this(TypeQueryMode.All, null)
-        {
-        }
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="TypeQuery"/> class that searches for all types in a specific namespace which can contain wildcards.
-        /// </summary>
-        /// <param name="namespaceFilter">The namespace filter.</param>
-        public TypeQuery(string namespaceFilter)
-            : this(TypeQueryMode.All, namespaceFilter)
-        {
-        }
+        private string? typeNameFilter;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="TypeQuery"/> class that searches for all types in a specific namespace with a specific name.
         /// </summary>
         /// <param name="namespaceFilter">The namespace filter.</param>
         /// <param name="typeNameFilter">The type name filter.</param>
-        public TypeQuery(string namespaceFilter, string typeNameFilter)
+        public TypeQuery(string? namespaceFilter = default, string? typeNameFilter = default)
             : this(TypeQueryMode.All, namespaceFilter, typeNameFilter)
-        {
-        }
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="TypeQuery"/> class that searches for specific types like interfaces, public classes, ...
-        /// </summary>
-        /// <param name="mode">The mode.</param>
-        public TypeQuery(TypeQueryMode mode)
-            : this(mode, null)
-        {
-        }
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="TypeQuery"/> class that searches for specific types in a namespace.
-        /// </summary>
-        /// <param name="mode">The mode.</param>
-        /// <param name="namespaceFilter">The namespace filter.</param>
-        public TypeQuery(TypeQueryMode mode, string namespaceFilter)
-            : this(mode, namespaceFilter, null)
         {
         }
 
@@ -74,20 +38,20 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <param name="mode">The mode.</param>
         /// <param name="namespaceFilter">The namespace filter.</param>
         /// <param name="typeNameFilter">The type name filter.</param>
-        public TypeQuery(TypeQueryMode mode, string namespaceFilter, string typeNameFilter)
+        public TypeQuery(TypeQueryMode mode, string? namespaceFilter = default, string? typeNameFilter = default)
         {
-            this.myQueryMode = mode;
+            this.typeQueryMode = mode;
 
             // To search for nothing makes no sense. Seearch for types with any visibility
             if (!this.IsEnabled(TypeQueryMode.Public) && !this.IsEnabled(TypeQueryMode.Internal))
             {
-                this.myQueryMode |= TypeQueryMode.Internal | TypeQueryMode.Public;
+                this.typeQueryMode |= TypeQueryMode.Internal | TypeQueryMode.Public;
             }
 
             // If no type interface,struct,class is searched enable all by default
             if (!this.IsEnabled(TypeQueryMode.Class) && !this.IsEnabled(TypeQueryMode.Interface) && !this.IsEnabled(TypeQueryMode.ValueType) && !this.IsEnabled(TypeQueryMode.Enum))
             {
-                this.myQueryMode |= TypeQueryMode.Class | TypeQueryMode.Interface | TypeQueryMode.ValueType | TypeQueryMode.Enum;
+                this.typeQueryMode |= TypeQueryMode.Class | TypeQueryMode.Interface | TypeQueryMode.ValueType | TypeQueryMode.Enum;
             }
 
             this.NamespaceFilter = namespaceFilter;
@@ -100,8 +64,8 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         public TypeQueryMode SearchMode
         {
-            get => this.myQueryMode;
-            set => this.myQueryMode = CheckSearchMode(value);
+            get => this.typeQueryMode;
+            set => this.typeQueryMode = CheckSearchMode(value);
         }
 
         /// <summary>
@@ -112,20 +76,20 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// is treated as no filter.
         /// </summary>
         /// <value>The namespace filter.</value>
-        public string NamespaceFilter { get; set; }
+        public string? NamespaceFilter { get; set; }
 
         /// <summary>
         /// Gets or sets the type name filter.
         /// The filter string can contain wild cards at the start and end of the filter query.
         /// </summary>
-        public string TypeNameFilter
+        public string? TypeNameFilter
         {
-            get => this.myTypeNameFilter;
+            get => this.typeNameFilter;
             set
             {
-                this.myTypeNameFilter = value;
+                this.typeNameFilter = value;
 
-                if (value == null)
+                if (value is null)
                 {
                     return;
                 }
@@ -153,7 +117,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                         }
                     }
 
-                    this.myTypeNameFilter = string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0}`{1}", value.Substring(0, idx), genericParameterCount);
+                    this.typeNameFilter = string.Format(Properties.Resources.Culture, "{0}`{1}", value.Substring(0, idx), genericParameterCount);
                 }
             }
         }
@@ -178,18 +142,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <param name="assembly">The assembly.</param>
         /// <param name="typeName">The type name.</param>
         /// <returns>The type definition.</returns>
-        public static TypeDefinition GetTypeByName(AssemblyDefinition assembly, string typeName)
-        {
-            foreach (var type in new TypeQuery().GetTypes(assembly))
-            {
-                if (type.FullName == typeName)
-                {
-                    return type;
-                }
-            }
-
-            return null;
-        }
+        public static TypeDefinition? GetTypeByName(AssemblyDefinition assembly, string typeName) => new TypeQuery().GetTypes(assembly).FirstOrDefault(type => type.FullName == typeName);
 
         /// <summary>
         /// Filters the type list.
@@ -205,7 +158,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <returns>list of matching types.</returns>
         public IList<TypeDefinition> GetTypes(AssemblyDefinition assembly)
         {
-            if (assembly == null)
+            if (assembly is null)
             {
                 throw new ArgumentNullException(nameof(assembly));
             }
@@ -234,7 +187,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         private bool TypeMatchesFilter(TypeDefinition typeDef)
         {
-            var lret = false;
+            var lret = default(bool);
 
             if (this.CheckVisbility(typeDef))
             {
@@ -243,7 +196,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 {
                     if (typeDef.IsSpecialName || typeDef.Name == "<Module>" || HasCompilerGeneratedAttribute(typeDef))
                     {
-                        goto End;
+                        return false;
                     }
                 }
 
@@ -256,19 +209,19 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                     decl = decl.DeclaringType;
                 }
 
-                if (decl != null)
+                if (decl?.Namespace != null)
                 {
                     typeNS = decl.Namespace;
                 }
 
                 if (!Matcher.MatchWithWildcards(this.NamespaceFilter, typeNS, StringComparison.OrdinalIgnoreCase))
                 {
-                    goto End;
+                    return false;
                 }
 
                 if (!Matcher.MatchWithWildcards(this.TypeNameFilter, typeDef.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    goto End;
+                    return false;
                 }
 
                 if (this.IsEnabled(TypeQueryMode.Interface) && typeDef.IsInterface)
@@ -292,11 +245,10 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 }
             }
 
-        End:
             return lret;
         }
 
-        private bool IsEnabled(TypeQueryMode mode) => IsEnabled(this.myQueryMode, mode);
+        private bool IsEnabled(TypeQueryMode mode) => IsEnabled(this.typeQueryMode, mode);
 
         private bool CheckVisbility(TypeDefinition typedef)
         {

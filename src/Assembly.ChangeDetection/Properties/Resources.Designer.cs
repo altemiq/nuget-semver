@@ -61,6 +61,15 @@ namespace Altemiq.Assembly.ChangeDetection.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot parse generic type.
+        /// </summary>
+        internal static string CannotParseGenericType {
+            get {
+                return ResourceManager.GetString("CannotParseGenericType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} was null or the method or field query list was emtpy. This will not result in a meaningful diff result..
         /// </summary>
         internal static string DiffQueriesWasNull {
@@ -75,6 +84,15 @@ namespace Altemiq.Assembly.ChangeDetection.Properties {
         internal static string FileNameWasNullOrEmpty {
             get {
                 return ResourceManager.GetString("FileNameWasNullOrEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Got more than one matching method: {0}.
+        /// </summary>
+        internal static string GotMoreThanOneMatchingMethod {
+            get {
+                return ResourceManager.GetString("GotMoreThanOneMatchingMethod", resourceCulture);
             }
         }
         

@@ -55,7 +55,7 @@ namespace Altemiq.SemanticVersioning.TeamCity
         {
             lock (lockObject)
             {
-                if (MainMethod == null)
+                if (MainMethod is null)
                 {
                     MainMethod = EntryPointDiscoverer.FindStaticEntryMethod(typeof(Program).Assembly);
                 }

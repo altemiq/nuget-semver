@@ -34,7 +34,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         /// <param name="prerelease">The pre-release label.</param>
         /// <param name="build">The build label.</param>
         /// <returns>The results.</returns>
-        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, System.Collections.Generic.IEnumerable<string> lastVersions, string prerelease = null, string build = null)
+        public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
         {
             var previous = new FileQuery(previousAssembly);
             var current = new FileQuery(currentAssembly);
@@ -47,7 +47,9 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
             var featuresAddedChanges = new AddedFunctionalityRule();
             var featuresAdded = featuresAddedChanges.Detect(differences);
 
-            var lastSemanticVersions = lastVersions is null ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>() : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).ToArray();
+            var lastSemanticVersions = lastVersions is null
+                ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
+                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
 
             NuGet.Versioning.SemanticVersion previousVersion;
             if (System.IO.File.Exists(previousAssembly))
@@ -89,7 +91,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(
             System.Collections.Generic.IEnumerable<NuGet.Versioning.SemanticVersion> versions,
             NuGet.Versioning.SemanticVersion previousVersion,
-            string prerelease)
+            string? prerelease)
         {
             // find the one with the name major/minor
             var patchedVersion = versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();

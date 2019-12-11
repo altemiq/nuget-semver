@@ -19,7 +19,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     {
         private const string All = " * *";
 
-        private readonly string fieldTypeFilter;
+        private readonly string? fieldTypeFilter;
 
         private bool excludeCompilerGeneratedFields;
 
@@ -57,7 +57,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             var match = this.Parser.Match(query);
             if (!match.Success)
             {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "The field query string {0} was not a valid query.", query));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, "The field query string {0} was not a valid query.", query));
             }
 
             this.excludeCompilerGeneratedFields = true;
@@ -71,7 +71,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
             if (this.fieldTypeFilter == "*")
             {
-                this.fieldTypeFilter = null;
+                this.fieldTypeFilter = default;
             }
 
             this.NameFilter = GetValue(match, "fieldName");
@@ -114,7 +114,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <returns>The matching fields.</returns>
         public IList<FieldDefinition> GetMatchingFields(TypeDefinition type)
         {
-            if (type == null)
+            if (type is null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -141,7 +141,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             this.isReadonly = this.Captures(m, "readonly");
             this.isConst = this.Captures(m, "const");
             var excludeCompilerGenerated = this.Captures(m, "nocompilergenerated");
-            this.excludeCompilerGeneratedFields = excludeCompilerGenerated == null || excludeCompilerGenerated.Value;
+            this.excludeCompilerGeneratedFields = excludeCompilerGenerated is null || excludeCompilerGenerated.Value;
         }
 
         private static bool IsEventFieldOrPropertyBackingFieldOrEnumBackingField(FieldDefinition field, TypeDefinition def)
@@ -161,15 +161,9 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             return def.Events.Any(ev => ev.Name == field.Name);
         }
 
-        private bool MatchFieldType(FieldDefinition field)
-        {
-            if (string.IsNullOrEmpty(this.fieldTypeFilter) || this.fieldTypeFilter == "*")
-            {
-                return true;
-            }
-
-            return Matcher.MatchWithWildcards(this.fieldTypeFilter, field.FieldType.FullName, StringComparison.OrdinalIgnoreCase);
-        }
+        private bool MatchFieldType(FieldDefinition field) => string.IsNullOrEmpty(this.fieldTypeFilter)
+            || this.fieldTypeFilter == "*"
+            || Matcher.MatchWithWildcards(this.fieldTypeFilter!, field.FieldType.FullName, StringComparison.OrdinalIgnoreCase);
 
         private bool MatchFieldModifiers(FieldDefinition field)
         {

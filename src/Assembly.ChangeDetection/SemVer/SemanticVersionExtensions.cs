@@ -21,6 +21,6 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         /// <param name="releaseLabel">The release label changes.</param>
         /// <param name="metadata">The metadata changes.</param>
         /// <returns>A new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.</returns>
-        public static NuGet.Versioning.SemanticVersion Change(this NuGet.Versioning.SemanticVersion version, int? major = default, int? minor = default, int? patch = default, string releaseLabel = default, string metadata = default) => new NuGet.Versioning.SemanticVersion(major ?? version.Major, minor ?? version.Minor, patch ?? version.Patch, releaseLabel ?? version.Release, metadata ?? version.Metadata);
+        public static NuGet.Versioning.SemanticVersion Change(this NuGet.Versioning.SemanticVersion version, int? major = default, int? minor = default, int? patch = default, string? releaseLabel = default, string? metadata = default) => new NuGet.Versioning.SemanticVersion(major ?? version.Major, minor ?? version.Minor, patch ?? version.Patch, releaseLabel ?? version.Release, metadata ?? version.Metadata);
     }
 }

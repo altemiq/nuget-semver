@@ -30,6 +30,6 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
         public T ObjectV1 { get; }
 
         /// <inheritdoc/>
-        public override string ToString() => string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0}, {1}", this.ObjectV1, this.Operation.IsAdded ? "added" : "removed");
+        public override string ToString() => string.Format(Properties.Resources.Culture, "{0}, {1}", this.ObjectV1, this.Operation.IsAdded ? "added" : "removed");
     }
 }

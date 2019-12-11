@@ -37,14 +37,14 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <param name="testString">String to check.</param>
         /// <param name="compMode">String Comparision mode.</param>
         /// <returns>true if the teststring does match, false otherwise.</returns>
-        public static bool MatchWithWildcards(string filterString, string testString, StringComparison compMode)
+        public static bool MatchWithWildcards(string? filterString, string? testString, StringComparison compMode)
         {
-            if (filterString == null || filterString == "*")
+            if (filterString is null || filterString == "*")
             {
                 return true;
             }
 
-            if (testString == null)
+            if (testString is null)
             {
                 return false;
             }

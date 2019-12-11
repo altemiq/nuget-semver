@@ -14,7 +14,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         /// <summary>
         /// Gets or sets the version number.
         /// </summary>
-        public string VersionNumber { get; set; }
+        public string? VersionNumber { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether breaking changes were detected.

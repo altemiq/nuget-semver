@@ -58,7 +58,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
             if (!m.Success)
             {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Invalid method query: \"{0}\". The method query must be of the form <modifier> <return type> <function name>(<arguments>) e.g. public void F(*) match all public methods with name F with 0 or more arguments, or public * *(*) match any public method.", methodQuery));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, "Invalid method query: \"{0}\". The method query must be of the form <modifier> <return type> <function name>(<arguments>) e.g. public void F(*) match all public methods with name F with 0 or more arguments, or public * *(*) match any public method.", methodQuery));
             }
 
             this.CreateReturnTypeFilter(m);
@@ -72,7 +72,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
             if (string.IsNullOrEmpty(this.NameFilter))
             {
-                this.NameFilter = null;
+                this.NameFilter = default;
             }
 
             this.ArgumentFilters = this.InitArgumentFilter(m.Groups["args"].Value);
@@ -108,12 +108,12 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets the return type filter.
         /// </summary>
-        internal Regex ReturnTypeFilter { get; private set; }
+        internal Regex? ReturnTypeFilter { get; private set; }
 
         /// <summary>
         /// Gets the argument filters.
         /// </summary>
-        internal IList<(Regex, string)> ArgumentFilters { get; }
+        internal IList<(Regex, string)> ArgumentFilters { get; } = Array.Empty<(Regex, string)>();
 
         /// <summary>
         /// Gets or sets a value indicating whether this is virtual.
@@ -125,21 +125,13 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>The method.</returns>
-        public MethodDefinition GetSingleMethod(TypeDefinition type)
+        public MethodDefinition? GetSingleMethod(TypeDefinition type) => this.GetMethods(type) switch
         {
-            var matches = this.GetMethods(type);
-            if (matches.Count > 1)
-            {
-                throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Got more than one matching method: {0}", matches.Count));
-            }
-
-            if (matches.Count == 0)
-            {
-                return null;
-            }
-
-            return matches[0];
-        }
+            IList<MethodDefinition> matches when matches.Count > 1 => throw new InvalidOperationException(string.Format(Properties.Resources.Culture, Properties.Resources.GotMoreThanOneMatchingMethod, matches.Count)),
+            IList<MethodDefinition> matches when matches.Count == 0 => default,
+            IList<MethodDefinition> matches => matches[0],
+            _ => default,
+        };
 
         /// <summary>
         /// Gets the methods.
@@ -155,13 +147,13 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <returns>The filters.</returns>
         internal IList<(Regex, string)> InitArgumentFilter(string argFilter)
         {
-            if (argFilter == null || argFilter == "*")
+            if (argFilter is null || argFilter == "*")
             {
-                return null;
+                return Array.Empty<(Regex, string)>();
             }
 
             // To query for void methods
-            if (argFilter?.Length == 0)
+            if (argFilter.Length == 0)
             {
                 return new List<(Regex, string)>();
             }
@@ -171,7 +163,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             var bIsType = true;
             var list = new List<(Regex, string)>();
             var curThing = new StringBuilder();
-            string curType = null;
+            var curType = default(string?);
 
             var prev = '\0';
             char current;
@@ -216,13 +208,13 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                     var curArgName = curThing.ToString().Trim();
                     curThing.Length = 0;
 
-                    if (curType == null || curArgName == null)
+                    if (curType is null || curArgName is null)
                     {
-                        throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Method argument filter is of wrong format: {0}", argFilter), nameof(argFilter));
+                        throw new ArgumentException(string.Format(Properties.Resources.Culture, "Method argument filter is of wrong format: {0}", argFilter), nameof(argFilter));
                     }
 
                     list.Add(AssignArrayBracketsToTypeName(curType, curArgName));
-                    curType = null;
+                    curType = default;
                     bIsType = true;
                 }
 
@@ -257,7 +249,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         internal bool MatchArguments(MethodDefinition method)
         {
             // Query all methods regardless number of parameters
-            if (this.ArgumentFilters == null)
+            if (this.ArgumentFilters is null)
             {
                 return true;
             }

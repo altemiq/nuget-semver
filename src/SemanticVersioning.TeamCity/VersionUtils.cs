@@ -19,14 +19,9 @@ namespace Altemiq.SemanticVersioning.TeamCity
             {
                 var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
                 var assemblyVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-                if (assemblyVersionAttribute == null)
-                {
-                    return assembly.GetName().Version.ToString();
-                }
-                else
-                {
-                    return assemblyVersionAttribute.InformationalVersion;
-                }
+                return assemblyVersionAttribute is null
+                    ? assembly.GetName().Version?.ToString() ?? string.Empty
+                    : assemblyVersionAttribute.InformationalVersion;
             });
 
         /// <summary>

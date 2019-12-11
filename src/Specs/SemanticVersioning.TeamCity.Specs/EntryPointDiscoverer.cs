@@ -8,14 +8,14 @@ namespace Altemiq.SemanticVersioning.TeamCity
 
     public class EntryPointDiscoverer
     {
-        public static MethodInfo FindStaticEntryMethod(System.Reflection.Assembly assembly, string entryPointFullTypeName = null)
+        public static MethodInfo FindStaticEntryMethod(System.Reflection.Assembly assembly, string entryPointFullTypeName = default)
         {
             var candidates = new List<MethodInfo>();
 
             if (!string.IsNullOrWhiteSpace(entryPointFullTypeName))
             {
                 var typeInfo = assembly.GetType(entryPointFullTypeName, false, false)?.GetTypeInfo();
-                if (typeInfo == null)
+                if (typeInfo is null)
                 {
                     throw new InvalidProgramException($"Could not find '{entryPointFullTypeName}' specified for Main method. See <StartupObject> project property.");
                 }

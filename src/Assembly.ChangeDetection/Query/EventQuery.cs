@@ -17,7 +17,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     /// </summary>
     internal class EventQuery : MethodQuery
     {
-        private readonly string eventTypeFilter;
+        private readonly string? eventTypeFilter;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="EventQuery"/> class.
@@ -50,7 +50,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             var match = this.Parser.Match(query);
             if (!match.Success)
             {
-                throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, "The event query string {0} was not a valid query.", query), nameof(query));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, "The event query string {0} was not a valid query.", query), nameof(query));
             }
 
             this.SetModifierFilter(match);
@@ -64,7 +64,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
             if (this.eventTypeFilter == "*")
             {
-                this.eventTypeFilter = null;
+                this.eventTypeFilter = default;
             }
 
             this.NameFilter = GetValue(match, "eventName");
@@ -101,7 +101,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <returns>The matching events.</returns>
         public IList<EventDefinition> GetMatchingEvents(TypeDefinition type)
         {
-            if (type == null)
+            if (type is null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -113,14 +113,8 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         private bool IsMatchingEvent(EventDefinition ev) => this.MatchMethodModifiers(ev.AddMethod) && this.MatchName(ev.Name) && this.MatchEventType(ev.EventType);
 
-        private bool MatchEventType(TypeReference eventType)
-        {
-            if (string.IsNullOrEmpty(this.eventTypeFilter) || this.eventTypeFilter == "*")
-            {
-                return true;
-            }
-
-            return Matcher.MatchWithWildcards(this.eventTypeFilter, eventType.FullName, StringComparison.OrdinalIgnoreCase);
-        }
+        private bool MatchEventType(TypeReference eventType) => string.IsNullOrEmpty(this.eventTypeFilter)
+            || this.eventTypeFilter == "*"
+            || Matcher.MatchWithWildcards(this.eventTypeFilter!, eventType.FullName, StringComparison.OrdinalIgnoreCase);
     }
 }
