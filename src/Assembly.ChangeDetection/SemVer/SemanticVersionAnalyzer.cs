@@ -81,11 +81,10 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
                 calculatedVersion = calculatedVersion.Change(metadata: build);
             }
 
-            return new AnalysisResult
-            {
-                ResultsType = breakingChange ? ResultsType.Major : featuresAdded ? ResultsType.Minor : ResultsType.Patch,
-                VersionNumber = calculatedVersion.ToString(),
-            };
+            return new AnalysisResult(
+                calculatedVersion.ToString(),
+                breakingChange ? ResultsType.Major : featuresAdded ? ResultsType.Minor : ResultsType.Patch,
+                differences);
         }
 
         private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(

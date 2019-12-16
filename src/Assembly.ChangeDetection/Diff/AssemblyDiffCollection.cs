@@ -14,7 +14,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
     /// The assembly diff collection.
     /// </summary>
     [DebuggerDisplay("Add {AddedRemovedTypes.AddedCount} Remove {AddedRemovedTypes.RemovedCount} Changed {ChangedTypes.Count}")]
-    internal class AssemblyDiffCollection
+    public class AssemblyDiffCollection
     {
         /// <summary>
         /// Gets the added or removed types.

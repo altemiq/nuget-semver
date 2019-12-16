@@ -9,7 +9,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
     /// <summary>
     /// The diff operation.
     /// </summary>
-    internal class DiffOperation
+    public class DiffOperation
     {
         /// <summary>
         /// Initialises a new instance of the <see cref="DiffOperation"/> class.

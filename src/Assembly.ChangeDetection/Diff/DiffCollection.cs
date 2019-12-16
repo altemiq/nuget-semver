@@ -13,7 +13,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
     /// The difference collection.
     /// </summary>
     /// <typeparam name="T">The type in the collection.</typeparam>
-    internal class DiffCollection<T> : List<DiffResult<T>>
+    public class DiffCollection<T> : List<DiffResult<T>>
     {
         /// <summary>
         /// Gets the added count.
