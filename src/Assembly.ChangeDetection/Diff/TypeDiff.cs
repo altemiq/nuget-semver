@@ -15,7 +15,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
     /// <summary>
     /// The type diff.
     /// </summary>
-    internal sealed class TypeDiff
+    public sealed class TypeDiff
     {
         private static readonly TypeDefinition NoType = new TypeDefinition("noType", null, TypeAttributes.Class, null);
 
@@ -70,6 +70,9 @@ namespace Mondo.Assembly.ChangeDetection.Diff
         /// </summary>
         public bool HasChangedBaseType { get; private set; }
 
+        /// <inheritdoc/>
+        public override string ToString() => string.Format(Properties.Resources.Culture, "Type: {0}, Changed Methods: {1}, Fields: {2}, Events: {3}, Interfaces: {4}", this.TypeV1, this.Methods.Count, this.Fields.Count, this.Events.Count, this.Interfaces.Count);
+
         /// <summary>Checks if the type has changes.
         /// <list type="bullet">
         ///   <item><description>On type level</description>.</item>
@@ -84,7 +87,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
         /// <param name="typeV2">The type v2.</param>
         /// <param name="diffQueries">The diff queries.</param>
         /// <returns>The type difference.</returns>
-        public static TypeDiff GenerateDiff(TypeDefinition typeV1, TypeDefinition typeV2, QueryAggregator diffQueries)
+        internal static TypeDiff GenerateDiff(TypeDefinition typeV1, TypeDefinition typeV2, QueryAggregator diffQueries)
         {
             if (typeV1 is null)
             {
@@ -112,9 +115,6 @@ namespace Mondo.Assembly.ChangeDetection.Diff
 
             return None;
         }
-
-        /// <inheritdoc/>
-        public override string ToString() => string.Format(Properties.Resources.Culture, "Type: {0}, Changed Methods: {1}, Fields: {2}, Events: {3}, Interfaces: {4}", this.TypeV1, this.Methods.Count, this.Fields.Count, this.Events.Count, this.Interfaces.Count);
 
         private static bool IsSameBaseType(TypeDefinition t1, TypeDefinition t2)
         {

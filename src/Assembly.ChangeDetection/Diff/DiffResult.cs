@@ -10,7 +10,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
     /// The diff result.
     /// </summary>
     /// <typeparam name="T">The type of object.</typeparam>
-    internal class DiffResult<T>
+    public class DiffResult<T>
     {
         /// <summary>
         /// Initialises a new instance of the <see cref="DiffResult{T}"/> class.

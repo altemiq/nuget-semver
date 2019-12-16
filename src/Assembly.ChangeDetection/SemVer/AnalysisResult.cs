@@ -12,13 +12,34 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
     public class AnalysisResult
     {
         /// <summary>
-        /// Gets or sets the version number.
+        /// Initialises a new instance of the <see cref="AnalysisResult"/> class.
         /// </summary>
-        public string? VersionNumber { get; set; }
+        /// <param name="versionNumber">The version number.</param>
+        /// <param name="resultsType">The results type.</param>
+        /// <param name="differences">The differences.</param>
+        internal AnalysisResult(
+            string? versionNumber,
+            ResultsType resultsType,
+            Diff.AssemblyDiffCollection differences)
+        {
+            this.VersionNumber = versionNumber;
+            this.ResultsType = resultsType;
+            this.Differences = differences;
+        }
 
         /// <summary>
-        /// Gets or sets a value indicating whether breaking changes were detected.
+        /// Gets the version number.
         /// </summary>
-        public ResultsType ResultsType { get; set; }
+        public string? VersionNumber { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether breaking changes were detected.
+        /// </summary>
+        public ResultsType ResultsType { get; }
+
+        /// <summary>
+        /// Gets the differences.
+        /// </summary>
+        public Diff.AssemblyDiffCollection Differences { get; }
     }
 }

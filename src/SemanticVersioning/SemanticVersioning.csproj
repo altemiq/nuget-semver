@@ -3,9 +3,10 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;netcoreapp3.0;netcoreapp2.2;netcoreapp2.1</TargetFrameworks>
-    <NoWarn>$(NoWarn);CA1801;CA1812</NoWarn>
+    <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 
+    <PackageId>$(MSProjectName).TeamCity</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-semver</ToolCommandName>
   </PropertyGroup>
@@ -16,8 +17,8 @@
   </PropertyGroup>    
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build" Version="16.3.0" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.3.0" />
+    <PackageReference Include="Microsoft.Build" Version="16.4.0" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.4.0" />
     <PackageReference Include="NuGet.Common" Version="5.4.0" />
     <PackageReference Include="NuGet.Protocol" Version="5.4.0" />
     <PackageReference Include="System.CommandLine.Experimental" Version="0.3.0-alpha.19577.1" />
