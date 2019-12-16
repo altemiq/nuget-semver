@@ -15,7 +15,7 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output BreakingChanges,FunctionalChanges,TeamCity --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output All --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "C:\\Repos\\bitbucket\\MATH\\Math"
     },
     "Solution - IO": {
