@@ -31,5 +31,10 @@ namespace Mondo.SemanticVersioning
         /// Output TeamCity version.
         /// </summary>
         TeamCity = 4,
+
+        /// <summary>
+        /// All outputs.
+        /// </summary>
+        All = BreakingChanges | FunctionalChanges | TeamCity,
     }
 }
