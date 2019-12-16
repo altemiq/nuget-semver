@@ -23,6 +23,10 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         private static readonly char[] ArgTrimChars = new char[] { '[', ']', ',' };
 
+        private readonly IList<(Regex, string)>? argumentFilters;
+
+        private Regex? returnTypeFilter;
+
         /// <summary>
         /// Initialises a new instance of the <see cref="MethodQuery"/> class which matches every method.
         /// </summary>
@@ -75,7 +79,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 this.NameFilter = default;
             }
 
-            this.ArgumentFilters = this.InitArgumentFilter(m.Groups["args"].Value);
+            this.argumentFilters = this.InitArgumentFilter(m.Groups["args"].Value);
 
             this.SetModifierFilter(m);
         }
@@ -104,16 +108,6 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// Gets the query for private methods.
         /// </summary>
         public static MethodQuery PrivateMethods => new MethodQuery("private " + All);
-
-        /// <summary>
-        /// Gets the return type filter.
-        /// </summary>
-        internal Regex? ReturnTypeFilter { get; private set; }
-
-        /// <summary>
-        /// Gets the argument filters.
-        /// </summary>
-        internal IList<(Regex, string)> ArgumentFilters { get; } = Array.Empty<(Regex, string)>();
 
         /// <summary>
         /// Gets or sets a value indicating whether this is virtual.
@@ -145,11 +139,11 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="argFilter">The input filter.</param>
         /// <returns>The filters.</returns>
-        internal IList<(Regex, string)> InitArgumentFilter(string argFilter)
+        internal IList<(Regex, string)>? InitArgumentFilter(string argFilter)
         {
             if (argFilter is null || argFilter == "*")
             {
-                return Array.Empty<(Regex, string)>();
+                return null;
             }
 
             // To query for void methods
@@ -239,7 +233,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="method">The method.</param>
         /// <returns>The result.</returns>
-        internal bool MatchReturnType(MethodDefinition method) => this.ReturnTypeFilter?.IsMatch(method.ReturnType.FullName) != false;
+        internal bool MatchReturnType(MethodDefinition method) => this.returnTypeFilter?.IsMatch(method.ReturnType.FullName) != false;
 
         /// <summary>
         /// Does the method match the argument.
@@ -249,20 +243,20 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         internal bool MatchArguments(MethodDefinition method)
         {
             // Query all methods regardless number of parameters
-            if (this.ArgumentFilters is null)
+            if (this.argumentFilters is null)
             {
                 return true;
             }
 
-            if (this.ArgumentFilters.Count != method.Parameters.Count)
+            if (this.argumentFilters.Count != method.Parameters.Count)
             {
                 return false;
             }
 
-            for (var i = 0; i < this.ArgumentFilters.Count; i++)
+            for (var i = 0; i < this.argumentFilters.Count; i++)
             {
                 var curDef = method.Parameters[i];
-                var curFilters = this.ArgumentFilters[i];
+                var curFilters = this.argumentFilters[i];
 
                 if (!IsArgumentMatch(curFilters.Item1, curFilters.Item2, curDef.ParameterType.FullName, curDef.Name))
                 {
@@ -416,7 +410,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
             if (!string.IsNullOrEmpty(filter))
             {
-                this.ReturnTypeFilter = CreateRegularExpressionFromTypeString(filter);
+                this.returnTypeFilter = CreateRegularExpressionFromTypeString(filter);
             }
         }
     }
