@@ -32,6 +32,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Update="Program.*.cs" DependentUpon="Program.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
