@@ -10,6 +10,7 @@ namespace Altemiq.SemanticVersioning
 {
     using System;
     using System.CommandLine;
+    using System.CommandLine.Builder;
     using System.CommandLine.Invocation;
     using System.Linq;
     using System.Threading.Tasks;
@@ -24,15 +25,15 @@ namespace Altemiq.SemanticVersioning
             var buildNumberParameterOption = new Option("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", "buildNumber") };
             var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", "system.build.suffix") };
             var outputTypeOption = new Option("--output", "The output type") { Argument = new Argument<OutputTypes>("OUTPUT_TYPE", OutputTypes.TeamCity) };
-            var fileCommand = new Command("file", "Calculated the differences between two assemblies");
-            fileCommand
-                .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
-                .AddFluentArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
-                .AddFluentOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)), })
-                .AddFluentOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
-                .AddFluentOption(outputTypeOption)
-                .AddFluentOption(buildNumberParameterOption)
-                .AddFluentOption(versionSuffixParameterOption);
+            var fileCommand = new CommandBuilder(new Command("file", "Calculated the differences between two assemblies"))
+                .AddArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
+                .AddArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
+                .AddOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)), })
+                .AddOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
+                .AddOption(outputTypeOption)
+                .AddOption(buildNumberParameterOption)
+                .AddOption(versionSuffixParameterOption)
+                .Command;
 
             fileCommand.Handler = CommandHandler.Create<
                 System.IO.FileInfo,
@@ -53,20 +54,20 @@ namespace Altemiq.SemanticVersioning
                 }
             });
 
-            var solutionCommand = new Command("solution", "Calculates the version based on a solution file");
-            solutionCommand
-                .AddFluentArgument(new Argument<System.IO.FileSystemInfo?>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-                .AddFluentOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
-                .AddFluentOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
-                .AddFluentOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
-                .AddFluentOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
-                .AddFluentOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
-                .AddFluentOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
-                .AddFluentOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
-                .AddFluentOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
-                .AddFluentOption(outputTypeOption)
-                .AddFluentOption(buildNumberParameterOption)
-                .AddFluentOption(versionSuffixParameterOption);
+            var solutionCommand = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file"))
+                .AddArgument(new Argument<System.IO.FileSystemInfo?>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
+                .AddOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
+                .AddOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
+                .AddOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
+                .AddOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
+                .AddOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
+                .AddOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
+                .AddOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(outputTypeOption)
+                .AddOption(buildNumberParameterOption)
+                .AddOption(versionSuffixParameterOption)
+                .Command;
 
             Func<
                 System.IO.FileSystemInfo,
@@ -84,14 +85,15 @@ namespace Altemiq.SemanticVersioning
                 Task<int>> func = ProcessProjectOrSolution;
             solutionCommand.Handler = System.CommandLine.Binding.HandlerDescriptor.FromDelegate(func).GetCommandHandler();
 
-            var diffCommand = new Command("diff", "Calculates the differences")
-                .AddFluentCommand(fileCommand)
-                .AddFluentCommand(solutionCommand);
+            var diffCommand = new CommandBuilder(new Command("diff", "Calculates the differences"))
+                .AddCommand(fileCommand)
+                .AddCommand(solutionCommand)
+                .Command;
 
-            var rootCommand = new RootCommand(description: "Semantic Version generator");
-            rootCommand.AddCommand(diffCommand);
-
-            return rootCommand.InvokeAsync(args);
+            return new CommandLineBuilder(new RootCommand(description: "Semantic Version generator"))
+                .AddCommand(diffCommand)
+                .Build()
+                .InvokeAsync(args);
         }
 
         private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo? value)
