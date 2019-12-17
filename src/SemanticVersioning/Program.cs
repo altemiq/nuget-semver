@@ -17,7 +17,7 @@ namespace Mondo.SemanticVersioning
     /// <summary>
     /// The program class.
     /// </summary>
-    internal static class Program
+    internal static partial class Program
     {
         private static Task<int> Main(string[] args)
         {
@@ -235,116 +235,6 @@ namespace Mondo.SemanticVersioning
         {
             Console.WriteLine(Properties.Resources.Logo, VersionUtils.GetVersion());
             Console.WriteLine(Properties.Resources.Copyright);
-        }
-
-        private static void WriteTeamCityVersion(NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
-        {
-            if (buildNumberParameter.Contains(".", StringComparison.Ordinal))
-            {
-                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version));
-            }
-            else
-            {
-                Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version));
-            }
-
-            Console.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
-        }
-
-        private static void WriteChanges(OutputTypes outputTypes, Assembly.ChangeDetection.Diff.AssemblyDiffCollection differences)
-        {
-            var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
-            var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);
-            if (!breakingChanges
-                && !functionalChanges)
-            {
-                return;
-            }
-
-            void PrintBreakingChange(Assembly.ChangeDetection.Diff.DiffOperation operation, string message, int tabs = 0)
-            {
-                if (breakingChanges && operation.IsRemoved)
-                {
-                    WriteLine(ConsoleColor.Red, message, tabs);
-                }
-            }
-
-            void PrintFunctionalChange(Assembly.ChangeDetection.Diff.DiffOperation operation, string message, int tabs = 0)
-            {
-                if (functionalChanges && operation.IsAdded)
-                {
-                    WriteLine(ConsoleColor.Blue, message, tabs);
-                }
-            }
-
-            void PrintDiff<T>(Assembly.ChangeDetection.Diff.DiffResult<T> diffResult, int tabs = 0)
-            {
-                var message = $"{diffResult}";
-                PrintFunctionalChange(diffResult.Operation, message, tabs);
-                PrintBreakingChange(diffResult.Operation, message, tabs);
-            }
-
-            var originalColour = Console.ForegroundColor;
-            void WriteLine(ConsoleColor consoleColor, string value, int tabs = 0)
-            {
-                Console.ForegroundColor = consoleColor;
-                Console.WriteLine(string.Concat(new string('\t', tabs), value));
-                Console.ForegroundColor = originalColour;
-            }
-
-            foreach (var addedRemovedType in differences.AddedRemovedTypes)
-            {
-                PrintDiff(addedRemovedType, 1);
-            }
-
-            if (differences.ChangedTypes.Count != 0)
-            {
-                WriteLine(originalColour, Properties.Resources.ChangedTypes, 1);
-                foreach (var changedType in differences.ChangedTypes)
-                {
-                    WriteLine(originalColour, $"{changedType.TypeV1}", 2);
-                    if (breakingChanges && changedType.HasChangedBaseType)
-                    {
-                        WriteLine(ConsoleColor.Red, Properties.Resources.ChangedBaseType, 3);
-                    }
-
-                    if (changedType.Methods.Any())
-                    {
-                        WriteLine(originalColour, Properties.Resources.Methods, 3);
-                        foreach (var method in changedType.Methods)
-                        {
-                            PrintDiff(method, 4);
-                        }
-                    }
-
-                    if (changedType.Fields.Any())
-                    {
-                        WriteLine(originalColour, Properties.Resources.Fields, 3);
-                        foreach (var field in changedType.Fields)
-                        {
-                            PrintDiff(field, 4);
-                        }
-                    }
-
-                    if (changedType.Events.Any())
-                    {
-                        WriteLine(originalColour, Properties.Resources.Events, 3);
-                        foreach (var @event in changedType.Events)
-                        {
-                            PrintDiff(@event, 4);
-                        }
-                    }
-
-                    if (changedType.Interfaces.Any())
-                    {
-                        WriteLine(originalColour, Properties.Resources.Interfaces, 3);
-                        foreach (var @interface in changedType.Interfaces)
-                        {
-                            PrintDiff(@interface, 4);
-                        }
-                    }
-                }
-            }
         }
 
         private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
