@@ -12,6 +12,7 @@ namespace Mondo.SemanticVersioning
     using System.CommandLine;
     using System.CommandLine.Builder;
     using System.CommandLine.Invocation;
+    using System.CommandLine.Parsing;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -20,15 +21,31 @@ namespace Mondo.SemanticVersioning
     /// </summary>
     internal static partial class Program
     {
+        private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
+
+        private const string TargetFrameworkPropertyName = "TargetFramework";
+
+        private const string TargetFrameworksPropertyName = TargetFrameworkPropertyName + "s";
+
+        private const string IsPackablePropertyName = "IsPackable";
+
+        private const string MSBuildProjectNamePropertyName = "MSBuildProjectName";
+
+        private const string AssemblyNamePropertyName = "AssemblyName";
+
+        private const string PackageIdPropertyName = "PackageId";
+
+        private const string TargetExtPropertyName = "TargetExt";
+
         private static Task<int> Main(string[] args)
         {
-            var buildNumberParameterOption = new Option("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", "buildNumber") };
-            var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", "system.build.suffix") };
-            var outputTypeOption = new Option("--output", "The output type") { Argument = new Argument<OutputTypes>("OUTPUT_TYPE", OutputTypes.TeamCity) };
+            var buildNumberParameterOption = new Option("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", () => "buildNumber") };
+            var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", () => "system.build.suffix") };
+            var outputTypeOption = new Option("--output", "The output type") { Argument = new Argument<OutputTypes>("OUTPUT_TYPE", () => OutputTypes.TeamCity) };
             var fileCommand = new CommandBuilder(new Command("file", "Calculated the differences between two assemblies"))
                 .AddArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
                 .AddArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
-                .AddOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((SymbolResult symbolResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(symbolResult.Token.Value, out value)), })
+                .AddOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((ArgumentResult argumentResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(argumentResult.Tokens.Single().Value, out value)) })
                 .AddOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
                 .AddOption(outputTypeOption)
                 .AddOption(buildNumberParameterOption)
@@ -64,6 +81,7 @@ namespace Mondo.SemanticVersioning
                 .AddOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
                 .AddOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
                 .AddOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(new Option("--exclude", "A package ID to check exclude from analysis") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
                 .AddOption(outputTypeOption)
                 .AddOption(buildNumberParameterOption)
                 .AddOption(versionSuffixParameterOption)
@@ -71,6 +89,7 @@ namespace Mondo.SemanticVersioning
 
             Func<
                 System.IO.FileSystemInfo,
+                System.Collections.Generic.IEnumerable<string>,
                 System.Collections.Generic.IEnumerable<string>,
                 System.Collections.Generic.IEnumerable<string>,
                 string,
@@ -98,13 +117,14 @@ namespace Mondo.SemanticVersioning
 
         private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo? value)
         {
-            var path = symbolResult.Token.Value;
-            if (path is null)
+            var pathToken = symbolResult.Tokens.SingleOrDefault();
+            if (pathToken is null || pathToken.Value is null)
             {
                 value = default;
                 return true;
             }
 
+            var path = pathToken.Value;
             if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
             {
                 value = (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
@@ -114,7 +134,7 @@ namespace Mondo.SemanticVersioning
                 return true;
             }
 
-            symbolResult.ErrorMessage = $"\"{path}\" is not a valid file or directory";
+            symbolResult.ErrorMessage = $"\"{pathToken}\" is not a valid file or directory";
             value = default;
             return false;
         }
@@ -123,6 +143,7 @@ namespace Mondo.SemanticVersioning
             System.IO.FileSystemInfo projectOrSolution,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
+            System.Collections.Generic.IEnumerable<string> exclude,
             string packageIdRegex,
             string packageIdReplace,
             string versionSuffix,
@@ -162,25 +183,32 @@ namespace Mondo.SemanticVersioning
             var packageIds = packageId ?? Enumerable.Empty<string>();
             var regex = string.IsNullOrEmpty(packageIdRegex) ? null : new System.Text.RegularExpressions.Regex(packageIdRegex);
             using var projectCollection = GetProjects(projectOrSolution);
-            foreach (var project in projectCollection.LoadedProjects.Where(project => bool.TryParse(project.GetPropertyValue("IsPackable"), out var value) && value))
+            foreach (var project in projectCollection.LoadedProjects.Where(project =>
+                bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
+                && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
             {
-                var projectName = project.GetPropertyValue("MSBuildProjectName");
+                var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
                 Console.WriteLine(Properties.Resources.Checking, projectName);
                 var projectDirectory = project.DirectoryPath;
                 var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
-                var assemblyName = project.GetPropertyValue("AssemblyName");
-                var isMultiTargeted = !string.IsNullOrEmpty(project.GetPropertyValue("TargetFrameworks"));
+                var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
+                var isMultiTargeted = !string.IsNullOrEmpty(project.GetPropertyValue(TargetFrameworksPropertyName));
                 if (!isMultiTargeted)
                 {
-                    var targetFramework = project.GetPropertyValue("TargetFramework");
+                    var targetFramework = project.GetPropertyValue(TargetFrameworkPropertyName);
                     if (outputPath.EndsWith(targetFramework, StringComparison.Ordinal))
                     {
                         outputPath = outputPath.Substring(0, outputPath.Length - targetFramework.Length).TrimEnd(System.IO.Path.DirectorySeparatorChar);
                     }
                 }
 
+                var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
+                if (exclude?.Contains(projectPackageId) == true)
+                {
+                    continue;
+                }
+
                 // install the NuGet package
-                var projectPackageId = project.GetPropertyValue("PackageId");
                 var projectPackageIds = new[] { projectPackageId }.Union(packageIds);
                 if (regex != null)
                 {
@@ -207,7 +235,7 @@ namespace Mondo.SemanticVersioning
                 {
                     var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
 
-                    var targetExt = project.GetProperty("TargetExt")?.EvaluatedValue ?? ".dll";
+                    var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
                     var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
                     foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
                     {
