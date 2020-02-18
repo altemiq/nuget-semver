@@ -87,12 +87,44 @@ namespace Mondo.Assembly.ChangeDetection.SemVer
                 differences);
         }
 
+        /// <summary>
+        /// Creates a breaking change.
+        /// </summary>
+        /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
+        /// <param name="prerelease">The pre-release label.</param>
+        /// <returns>The breaking change version.</returns>
+        public static NuGet.Versioning.SemanticVersion CreateBreakingChange(System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease)
+        {
+            var lastSemanticVersions = lastVersions is null
+                ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
+                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
+
+            var previousVersion = lastSemanticVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? lastSemanticVersions.Max();
+            return GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0), prerelease);
+        }
+
+        /// <summary>
+        /// Creates a feature change.
+        /// </summary>
+        /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
+        /// <param name="prerelease">The pre-release label.</param>
+        /// <returns>The breaking change version.</returns>
+        public static NuGet.Versioning.SemanticVersion CreateFeatureChange(System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease)
+        {
+            var lastSemanticVersions = lastVersions is null
+                ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
+                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
+
+            var previousVersion = lastSemanticVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? lastSemanticVersions.Max();
+            return GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0), prerelease);
+        }
+
         private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(
             System.Collections.Generic.IEnumerable<NuGet.Versioning.SemanticVersion> versions,
             NuGet.Versioning.SemanticVersion previousVersion,
             string? prerelease)
         {
-            // find the one with the name major/minor
+            // find the one with the same major/minor
             var patchedVersion = versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();
             return patchedVersion is null
                 ? previousVersion.Change(releaseLabel: prerelease ?? DefaultAlphaRelease)

@@ -237,12 +237,31 @@ namespace Mondo.SemanticVersioning
 
                     var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
                     var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
-                    foreach (var currentDll in System.IO.Directory.EnumerateFiles(outputPath, assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = true }))
+
+                    // check the frameworks
+                    var currentFrameworks = System.IO.Directory.EnumerateDirectories(outputPath).Select(System.IO.Path.GetFileName).ToArray();
+                    var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
+                    var frameworks = currentFrameworks.Intersect(previousFrameworks);
+                    if (previousFrameworks.Except(currentFrameworks).Any())
                     {
-                        var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
-                        var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousStringVersions, GetVersionSuffix());
-                        calculatedVersion = Max(calculatedVersion, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
-                        WriteChanges(output, result.Differences);
+                        // we have removed frameworks, this is a breaking change
+                        calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateBreakingChange(previousStringVersions, GetVersionSuffix());
+                    }
+                    else if (currentFrameworks.Except(previousFrameworks).Any())
+                    {
+                        // we have added frameworks, this is a feature change
+                        calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateFeatureChange(previousStringVersions, GetVersionSuffix());
+                    }
+
+                    foreach (var framework in frameworks)
+                    {
+                        foreach (var currentDll in System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(outputPath, framework ?? string.Empty), assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = false }))
+                        {
+                            var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+                            var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousStringVersions, GetVersionSuffix());
+                            calculatedVersion = Max(calculatedVersion, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                            WriteChanges(output, result.Differences);
+                        }
                     }
 
                     System.IO.Directory.Delete(installDir, true);
