@@ -11,7 +11,6 @@ namespace Mondo.SemanticVersioning
     using System;
     using System.CommandLine;
     using System.CommandLine.Builder;
-    using System.CommandLine.Invocation;
     using System.CommandLine.Parsing;
     using System.Linq;
     using System.Threading.Tasks;
@@ -39,53 +38,71 @@ namespace Mondo.SemanticVersioning
 
         private static Task<int> Main(string[] args)
         {
-            var buildNumberParameterOption = new Option("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", () => "buildNumber") };
-            var versionSuffixParameterOption = new Option("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", () => "system.build.suffix") };
-            var outputTypeOption = new Option("--output", "The output type") { Argument = new Argument<OutputTypes>("OUTPUT_TYPE", () => OutputTypes.TeamCity) };
+            var buildNumberParameterOption = new Option<string>("--build-number-parameter", "The parameter name for the build number") { Argument = new Argument<string>("PARAMETER", () => "buildNumber") };
+            var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter", "The parameter name for the version suffix") { Argument = new Argument<string>("PARAMETER", () => "system.build.suffix") };
+            var outputTypeOption = new Option<OutputTypes>("--output", "The output type") { Argument = new Argument<OutputTypes>("OUTPUT_TYPE", () => OutputTypes.TeamCity | OutputTypes.Diagnostic) };
+            var noLogoOption = new Option<bool>(new string[] { "/nologo", "--nologo" }, "Do not display the startup banner or the copyright message.");
             var fileCommand = new CommandBuilder(new Command("file", "Calculated the differences between two assemblies"))
                 .AddArgument(new Argument<System.IO.FileInfo>() { Name = "first", Description = "The first assembly" })
                 .AddArgument(new Argument<System.IO.FileInfo>() { Name = "second", Description = "The second assembly" })
-                .AddOption(new Option(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((ArgumentResult argumentResult, out NuGet.Versioning.SemanticVersion value) => NuGet.Versioning.SemanticVersion.TryParse(argumentResult.Tokens.Single().Value, out value)) })
-                .AddOption(new Option(new string[] { "-b", "--build" }, "Ths build label"))
+                .AddOption(new Option<NuGet.Versioning.SemanticVersion>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((argumentResult) => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) })
+                .AddOption(new Option<string>(new string[] { "-b", "--build" }, "Ths build label"))
                 .AddOption(outputTypeOption)
                 .AddOption(buildNumberParameterOption)
                 .AddOption(versionSuffixParameterOption)
+                .AddOption(noLogoOption)
                 .Command;
 
-            fileCommand.Handler = CommandHandler.Create<
+            static void FileFunction(
+                System.IO.FileInfo first,
+                System.IO.FileInfo second,
+                NuGet.Versioning.SemanticVersion previous,
+                string build,
+                OutputTypes output,
+                string buildNumberParameter,
+                string versionSuffixParameter,
+                bool noLogo)
+            {
+                if (!noLogo)
+                {
+                    WriteHeader();
+                }
+
+                var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
+                WriteChanges(output, result.Differences);
+                if (output.HasFlag(OutputTypes.TeamCity))
+                {
+                    WriteTeamCityVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
+                }
+            }
+
+            Action<
                 System.IO.FileInfo,
                 System.IO.FileInfo,
                 NuGet.Versioning.SemanticVersion,
                 string,
                 OutputTypes,
                 string,
-                string>((first, second, previous, build, output, buildNumberParameter, versionSuffixParameter) =>
-            {
-                WriteHeader();
-                var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
-                WriteChanges(output, result.Differences);
-
-                if (output.HasFlag(OutputTypes.TeamCity))
-                {
-                    WriteTeamCityVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
-                }
-            });
+                string,
+                bool> action = FileFunction;
+            fileCommand.Handler = System.CommandLine.Binding.HandlerDescriptor.FromDelegate(action).GetCommandHandler();
 
             var solutionCommand = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file"))
                 .AddArgument(new Argument<System.IO.FileSystemInfo?>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-                .AddOption(new Option(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
-                .AddOption(new Option("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix") { Argument = new Argument<bool> { Arity = ArgumentArity.ZeroOrOne } })
-                .AddOption(new Option("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
-                .AddOption(new Option("--no-cache", "Disable using the machine cache as the first package source."))
-                .AddOption(new Option("--direct-download", "Download directly without populating any caches with metadata or binaries."))
-                .AddOption(new Option("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
-                .AddOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
-                .AddOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
-                .AddOption(new Option("--exclude", "A package ID to check exclude from analysis") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(new Option<string>(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(new Option<bool>("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix"))
+                .AddOption(new Option<string>("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
+                .AddOption(new Option<bool>("--no-cache", "Disable using the machine cache as the first package source."))
+                .AddOption(new Option<bool>("--direct-download", "Download directly without populating any caches with metadata or binaries."))
+                .AddOption(new Option<string>("--package-id-regex", "The regular expression to match in the package id.") { Argument = new Argument<string>("REGEX") })
+                .AddOption(new Option<string>("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
+                .AddOption(new Option<string>("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
                 .AddOption(new Option<NuGet.Versioning.SemanticVersion>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((argumentResult) => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) })
+                .AddOption(new Option<string>("--exclude", "A package ID to check exclude from analysis") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
                 .AddOption(outputTypeOption)
                 .AddOption(buildNumberParameterOption)
                 .AddOption(versionSuffixParameterOption)
+                .AddOption(noLogoOption)
                 .Command;
 
             Func<
@@ -97,6 +114,7 @@ namespace Mondo.SemanticVersioning
                 string,
                 string,
                 NuGet.Versioning.SemanticVersion?,
+                bool,
                 bool,
                 bool,
                 bool,
@@ -113,32 +131,29 @@ namespace Mondo.SemanticVersioning
 
             return new CommandLineBuilder(new RootCommand(description: "Semantic Version generator"))
                 .AddCommand(diffCommand)
+                .UseDefaults()
                 .Build()
                 .InvokeAsync(args);
         }
 
-        private static bool GetFileSystemInformation(SymbolResult symbolResult, out System.IO.FileSystemInfo? value)
+        private static System.IO.FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
         {
-            var pathToken = symbolResult.Tokens.SingleOrDefault();
+            var pathToken = argumentResult.Tokens.SingleOrDefault();
             if (pathToken is null || pathToken.Value is null)
             {
-                value = default;
-                return true;
+                return default;
             }
 
             var path = pathToken.Value;
             if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
             {
-                value = (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
+                return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
                     ? (System.IO.FileSystemInfo)new System.IO.DirectoryInfo(path)
                     : new System.IO.FileInfo(path);
-
-                return true;
             }
 
-            symbolResult.ErrorMessage = $"\"{pathToken}\" is not a valid file or directory";
-            value = default;
-            return false;
+            argumentResult.ErrorMessage = $"\"{pathToken}\" is not a valid file or directory";
+            return default;
         }
 
         private static async Task<int> ProcessProjectOrSolution(
@@ -153,11 +168,16 @@ namespace Mondo.SemanticVersioning
             bool noVersionSuffix,
             bool noCache,
             bool directDownload,
+            bool noLogo,
             OutputTypes output,
             string buildNumberParameter,
             string versionSuffixParameter)
         {
-            WriteHeader();
+            if (!noLogo)
+            {
+                WriteHeader();
+            }
+
             var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
             string? GetVersionSuffix(string? previousVersionRelease = default)
