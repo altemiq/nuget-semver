@@ -74,6 +74,11 @@ namespace Altemiq.SemanticVersioning
                 {
                     WriteTeamCityVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
                 }
+
+                if (output.HasFlag(OutputTypes.Json))
+                {
+                    WriteJsonVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                }
             }
 
             Action<
@@ -211,7 +216,11 @@ namespace Altemiq.SemanticVersioning
                 && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
             {
                 var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
-                Console.WriteLine(Properties.Resources.Checking, projectName);
+                if (output.HasFlag(OutputTypes.Diagnostic))
+                {
+                    Console.WriteLine(Properties.Resources.Checking, projectName);
+                }
+
                 var projectDirectory = project.DirectoryPath;
                 var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
                 var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
@@ -298,7 +307,11 @@ namespace Altemiq.SemanticVersioning
                     System.IO.Directory.Delete(installDir, true);
                 }
 
-                Console.WriteLine(Properties.Resources.Calculated, projectName, calculatedVersion);
+                if (output.HasFlag(OutputTypes.Diagnostic))
+                {
+                    Console.WriteLine(Properties.Resources.Calculated, projectName, calculatedVersion);
+                }
+
                 version = Max(version, calculatedVersion);
             }
 
@@ -306,6 +319,11 @@ namespace Altemiq.SemanticVersioning
             if (output.HasFlag(OutputTypes.TeamCity))
             {
                 WriteTeamCityVersion(version, buildNumberParameter, versionSuffixParameter);
+            }
+
+            if (output.HasFlag(OutputTypes.Json))
+            {
+                WriteJsonVersion(version);
             }
 
             return 0;

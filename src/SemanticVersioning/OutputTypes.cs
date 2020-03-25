@@ -33,8 +33,18 @@ namespace Altemiq.SemanticVersioning
         TeamCity = 4,
 
         /// <summary>
+        /// Output Json version.
+        /// </summary>
+        Json = 8,
+
+        /// <summary>
+        /// Diagnostic output.
+        /// </summary>
+        Diagnostic = 16,
+
+        /// <summary>
         /// All outputs.
         /// </summary>
-        All = BreakingChanges | FunctionalChanges | TeamCity,
+        All = BreakingChanges | FunctionalChanges | TeamCity | Json | Diagnostic,
     }
 }
