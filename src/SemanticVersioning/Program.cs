@@ -82,6 +82,7 @@ namespace Mondo.SemanticVersioning
                 .AddOption(new Option("--package-id-replace", "The text used to replace the match from --package-id-regex") { Argument = new Argument<string>("VALUE") })
                 .AddOption(new Option("--package-id", "The package ID to check for previous versions") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
                 .AddOption(new Option("--exclude", "A package ID to check exclude from analysis") { Argument = new Argument<string>("PACKAGE_ID") { Arity = ArgumentArity.OneOrMore } })
+                .AddOption(new Option<NuGet.Versioning.SemanticVersion>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>((argumentResult) => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) })
                 .AddOption(outputTypeOption)
                 .AddOption(buildNumberParameterOption)
                 .AddOption(versionSuffixParameterOption)
@@ -95,6 +96,7 @@ namespace Mondo.SemanticVersioning
                 string,
                 string,
                 string,
+                NuGet.Versioning.SemanticVersion?,
                 bool,
                 bool,
                 bool,
@@ -147,6 +149,7 @@ namespace Mondo.SemanticVersioning
             string packageIdRegex,
             string packageIdReplace,
             string versionSuffix,
+            NuGet.Versioning.SemanticVersion? previous,
             bool noVersionSuffix,
             bool noCache,
             bool directDownload,
@@ -166,7 +169,7 @@ namespace Mondo.SemanticVersioning
             {
                 try
                 {
-                    return await NuGetInstaller.InstallAsync(packageIds, source, noCache: noCache, directDownload: directDownload, root: projectDirectory).ConfigureAwait(false);
+                    return await NuGetInstaller.InstallAsync(packageIds, source, version: previous, noCache: noCache, directDownload: directDownload, root: projectDirectory).ConfigureAwait(false);
                 }
                 catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {
@@ -220,8 +223,16 @@ namespace Mondo.SemanticVersioning
                     return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
                 }
 
+                static async System.Collections.Generic.IAsyncEnumerable<T> Create<T>(T value)
+                {
+                    await Task.CompletedTask.ConfigureAwait(false);
+                    yield return value;
+                }
+
                 var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
-                var previousVersions = NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory);
+                var previousVersions = previous is null
+                    ? NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory)
+                    : Create(previous);
                 var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 if (installDir is null)
