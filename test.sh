@@ -2,4 +2,4 @@
 
 dotnet test \
   src/Assembly.ChangeDetection.sln \
-  /p:Version=$1
+  -property:Version=$1
