@@ -2,7 +2,7 @@
   "profiles": {
     "Solution": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"C:\\Repos\\bitbucket\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
+      "commandLineArgs": "diff solution \"C:\\Users\\rsking\\source\\repos\\bitbucket\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
     },
     "Version": {
       "commandName": "Project",
@@ -11,22 +11,22 @@
     "Solution - Hardware": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
-      "workingDirectory": "C:\\Repos\\bitbucket\\HAR\\Core"
+      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\HAR\\Core"
     },
     "Solution - Math": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output All --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
-      "workingDirectory": "C:\\Repos\\bitbucket\\MATH\\Math"
+      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\MATH\\Math"
     },
     "Solution - IO": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/IO.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
-      "workingDirectory": "C:\\Repos\\bitbucket\\IO\\IO"
+      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\IO\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
-      "workingDirectory": "C:\\Repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
+      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
     },
     "Help": {
       "commandName": "Project",
