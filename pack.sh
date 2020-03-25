@@ -2,7 +2,7 @@
 
 # dotnet tool
 dotnet pack \
-  src/SemanticVersioning.TeamCity/SemanticVersioning.TeamCity.csproj \
+  src/SemanticVersioning/SemanticVersioning.csproj \
   --output nupkg \
-  /p:Version=$1
+  -property:Version=$1
   
