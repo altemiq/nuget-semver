@@ -9,6 +9,10 @@
     <PackageId>$(AssemblyName).TeamCity</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-semver</ToolCommandName>
+    
+    <PackageProjectUrl>https://github.com/altemiq/nuget-semver</PackageProjectUrl>
+    <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(PublishDir)' != '' ">
