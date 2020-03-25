@@ -15,7 +15,7 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output All --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output Json,Diagnostic --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
       "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\MATH\\Math"
     },
     "Solution - IO": {
