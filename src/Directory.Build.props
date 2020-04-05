@@ -8,8 +8,8 @@
     <Authors>Ross King</Authors>
     <Deterministic>true</Deterministic>
     <NeutralLanguage>en-AU</NeutralLanguage>
-    <Copyright>Copyright © $(Company) Pty Ltd 2019</Copyright>
-    <LangVersion>preview</LangVersion>
+    <Copyright>Copyright © $(Company) Pty Ltd 2020</Copyright>
+    <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
     <Nullable>enable</Nullable>
   </PropertyGroup>
