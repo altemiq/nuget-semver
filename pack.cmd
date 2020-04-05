@@ -1,6 +1,7 @@
 REM dotnet tool
 dotnet pack ^
  .\src\SemanticVersioning\SemanticVersioning.csproj ^
+ --configuration Release ^
  --output .\nupkg ^
  -property:Version=%1 ^
  -property:ContinuousIntegration=true
