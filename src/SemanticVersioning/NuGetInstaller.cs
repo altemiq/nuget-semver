@@ -123,10 +123,28 @@ namespace Altemiq.SemanticVersioning
 
         private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string>? sources)
         {
-            var repositories = sources?.Select(source => Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
+            static PackageSource ResolveSource(IEnumerable<PackageSource> availableSources, string source)
+            {
+                var resolvedSource = availableSources.FirstOrDefault(
+                        f => f.Source.Equals(source, StringComparison.OrdinalIgnoreCase) ||
+                            f.Name.Equals(source, StringComparison.OrdinalIgnoreCase));
+
+                return resolvedSource is null ? new PackageSource(source) : resolvedSource;
+            }
+
+            static SourceRepository? GetFromMachineSources(string source, IEnumerable<PackageSource> enabledSources)
+            {
+                var resolvedSource = ResolveSource(enabledSources, source);
+                return resolvedSource.ProtocolVersion == 2
+                    ? Repository.Factory.GetCoreV2(resolvedSource)
+                    : Repository.Factory.GetCoreV3(resolvedSource.Source);
+            }
+
+            var enabledSources = SettingsUtility.GetEnabledSources(settings);
+            var repositories = sources?.Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
             if (repositories.Length == 0)
             {
-                repositories = SettingsUtility.GetEnabledSources(settings).Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
+                repositories = enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
             }
 
             return repositories;
