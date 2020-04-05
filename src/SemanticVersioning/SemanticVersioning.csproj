@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 
-    <PackageId>$(AssemblyName).TeamCity</PackageId>
+    <PackageId>$(AssemblyName)</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-semver</ToolCommandName>
 
