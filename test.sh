@@ -2,4 +2,5 @@
 
 dotnet test \
   src/Assembly.ChangeDetection.sln \
-  -property:Version=$1
+  -property:Version=$1 \
+  -property:ContinuousIntegration=true
