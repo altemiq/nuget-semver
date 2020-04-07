@@ -18,7 +18,7 @@ namespace Altemiq.SemanticVersioning
             {
                 Version = version,
                 VersionPrefix = version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance),
-                VersinSuffix = version.ToString("R", NuGet.Versioning.VersionFormatter.Instance),
+                VersionSuffix = version.ToString("R", NuGet.Versioning.VersionFormatter.Instance),
             };
 
             var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
@@ -31,7 +31,7 @@ namespace Altemiq.SemanticVersioning
 
             public string? VersionPrefix { get; set; }
 
-            public string? VersinSuffix { get; set; }
+            public string? VersionSuffix { get; set; }
         }
 
         private class SemanticVersionConverter : System.Text.Json.Serialization.JsonConverter<NuGet.Versioning.SemanticVersion>
