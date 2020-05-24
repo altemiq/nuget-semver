@@ -92,6 +92,8 @@ namespace Altemiq.SemanticVersioning
 
             var solutionCommand = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file"))
                 .AddArgument(new Argument<System.IO.FileSystemInfo?>(GetFileSystemInformation) { Name = "projectOrSolution", Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
+                .AddOption(new Option<string>(new string[] { "-c", "--configuration" }, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
+                .AddOption(new Option<string>("--platform", "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
                 .AddOption(new Option<string>(new string[] { "-s", "--source" }, "Specifies the server URL.") { Argument = new Argument<string>("SOURCE") { Arity = ArgumentArity.OneOrMore } })
                 .AddOption(new Option<bool>("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix"))
                 .AddOption(new Option<string>("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { Argument = new Argument<string>("VERSION_SUFFIX") })
@@ -108,24 +110,9 @@ namespace Altemiq.SemanticVersioning
                 .AddOption(noLogoOption)
                 .Command;
 
-            Func<
-                System.IO.FileSystemInfo,
-                System.Collections.Generic.IEnumerable<string>,
-                System.Collections.Generic.IEnumerable<string>,
-                System.Collections.Generic.IEnumerable<string>,
-                string,
-                string,
-                string,
-                NuGet.Versioning.SemanticVersion?,
-                bool,
-                bool,
-                bool,
-                bool,
-                OutputTypes,
-                string,
-                string,
-                Task<int>> func = ProcessProjectOrSolution;
-            solutionCommand.Handler = System.CommandLine.Binding.HandlerDescriptor.FromDelegate(func).GetCommandHandler();
+            solutionCommand.Handler = System.CommandLine.Binding.HandlerDescriptor
+                .FromMethodInfo(typeof(Program).GetMethod(nameof(ProcessProjectOrSolution), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static))
+                .GetCommandHandler();
 
             var diffCommand = new CommandBuilder(new Command("diff", "Calculates the differences"))
                 .AddCommand(fileCommand)
@@ -161,6 +148,8 @@ namespace Altemiq.SemanticVersioning
 
         private static async Task<int> ProcessProjectOrSolution(
             System.IO.FileSystemInfo projectOrSolution,
+            string configuration,
+            string platform,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
             System.Collections.Generic.IEnumerable<string> exclude,
@@ -208,7 +197,7 @@ namespace Altemiq.SemanticVersioning
 
             var packageIds = packageId ?? Enumerable.Empty<string>();
             var regex = string.IsNullOrEmpty(packageIdRegex) ? null : new System.Text.RegularExpressions.Regex(packageIdRegex);
-            using var projectCollection = GetProjects(projectOrSolution);
+            using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
             foreach (var project in projectCollection.LoadedProjects.Where(project =>
                 bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
                 && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
@@ -326,7 +315,7 @@ namespace Altemiq.SemanticVersioning
             Console.WriteLine(Properties.Resources.Copyright);
         }
 
-        private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
+        private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, string? configuration, string? platform)
         {
             // get the highest version
             var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
@@ -393,23 +382,23 @@ namespace Altemiq.SemanticVersioning
                 ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
                 : default;
 
-            (string ConfigurationName, string PlatformName, string FullName, bool IncludeInBuild) GetBuildConfiguration(string path)
+            (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
             {
                 if (solution is null)
                 {
-                    return ("Debug", "AnyCPU", "Debug|AnyCPU", true);
+                    return (configuration, platform, true);
                 }
 
                 // get the project in solution
-                var projectInSolution = solution.ProjectsInOrder.FirstOrDefault(p => p.AbsolutePath == path);
-                var defaultConfigurationName = solution.GetDefaultConfigurationName();
-                var defaultPlatformName = solution.GetDefaultPlatformName();
+                var projectInSolution = solution.ProjectsInOrder.First(p => p.AbsolutePath == path);
+                var configurationName = configuration ?? solution.GetDefaultConfigurationName();
+                var platformName = platform ?? solution.GetDefaultPlatformName();
 
-                var defaultSolutionConfiguration = solution.SolutionConfigurations.First(c => c.ConfigurationName == defaultConfigurationName && c.PlatformName == defaultPlatformName);
+                var solutionConfiguration = solution.SolutionConfigurations.First(c => c.ConfigurationName == configurationName && c.PlatformName == platformName);
 
-                var projectConfiguration = projectInSolution.ProjectConfigurations[defaultSolutionConfiguration.FullName];
+                var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
 
-                return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.FullName, projectConfiguration.IncludeInBuild);
+                return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
             }
 
             System.Collections.Generic.IEnumerable<string> projectPaths = solution is null
@@ -418,18 +407,15 @@ namespace Altemiq.SemanticVersioning
 
             foreach (var projectPath in projectPaths)
             {
-                var (configurationName, platformName, _, includeInBuild) = GetBuildConfiguration(projectPath);
+                var (configurationName, platformName, includeInBuild) = GetBuildConfiguration(projectPath);
                 if (!includeInBuild)
                 {
                     continue;
                 }
 
-                // set the configuration and platform
-                var globalProperties = new System.Collections.Generic.Dictionary<string, string>
-                {
-                    { "Configuration", configurationName },
-                    { "Platform", platformName },
-                };
+                var globalProperties = default(System.Collections.Generic.IDictionary<string, string>?)
+                    .AddProperty("Configuration", configurationName)
+                    .AddProperty("Platform", platformName);
 
                 projectCollection.LoadProject(projectPath, globalProperties, toolset.ToolsVersion);
             }
@@ -524,6 +510,21 @@ namespace Altemiq.SemanticVersioning
 
             // At this point, we know the file passed in is not a valid project or solution
             throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+        }
+
+        private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
+            this System.Collections.Generic.IDictionary<string, string>? properties,
+            string name,
+            string? value)
+        {
+            if (value is null)
+            {
+                return properties;
+            }
+
+            properties ??= new System.Collections.Generic.Dictionary<string, string>();
+            properties.Add(name, value);
+            return properties;
         }
     }
 }
