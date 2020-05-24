@@ -24,8 +24,6 @@ namespace Altemiq.SemanticVersioning
 
         private const string TargetFrameworkPropertyName = "TargetFramework";
 
-        private const string TargetFrameworksPropertyName = TargetFrameworkPropertyName + "s";
-
         private const string IsPackablePropertyName = "IsPackable";
 
         private const string MSBuildProjectNamePropertyName = "MSBuildProjectName";
@@ -221,24 +219,14 @@ namespace Altemiq.SemanticVersioning
                     Console.WriteLine(Properties.Resources.Checking, projectName);
                 }
 
-                var projectDirectory = project.DirectoryPath;
-                var outputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("OutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
-                var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
-                var isMultiTargeted = !string.IsNullOrEmpty(project.GetPropertyValue(TargetFrameworksPropertyName));
-                if (!isMultiTargeted)
-                {
-                    var targetFramework = project.GetPropertyValue(TargetFrameworkPropertyName);
-                    if (outputPath.EndsWith(targetFramework, StringComparison.Ordinal))
-                    {
-                        outputPath = outputPath.Substring(0, outputPath.Length - targetFramework.Length).TrimEnd(System.IO.Path.DirectorySeparatorChar);
-                    }
-                }
-
                 var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
                 if (exclude?.Contains(projectPackageId) == true)
                 {
                     continue;
                 }
+
+                var projectDirectory = project.DirectoryPath;
+                var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
 
                 // install the NuGet package
                 var projectPackageIds = new[] { projectPackageId }.Union(packageIds);
@@ -278,8 +266,11 @@ namespace Altemiq.SemanticVersioning
                     var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
                     var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
 
+                    // Get the package output path
+                    var packageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("PackageOutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
+
                     // check the frameworks
-                    var currentFrameworks = System.IO.Directory.EnumerateDirectories(outputPath).Select(System.IO.Path.GetFileName).ToArray();
+                    var currentFrameworks = System.IO.Directory.EnumerateDirectories(packageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
                     var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
                     var frameworks = currentFrameworks.Intersect(previousFrameworks);
                     if (previousFrameworks.Except(currentFrameworks).Any())
@@ -295,9 +286,9 @@ namespace Altemiq.SemanticVersioning
 
                     foreach (var framework in frameworks)
                     {
-                        foreach (var currentDll in System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(outputPath, framework ?? string.Empty), assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = false }))
+                        foreach (var currentDll in System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = false }))
                         {
-                            var nugetDll = currentDll.Replace(outputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+                            var nugetDll = currentDll.Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
                             var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(nugetDll, currentDll, previousStringVersions, GetVersionSuffix());
                             calculatedVersion = Max(calculatedVersion, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
                             WriteChanges(output, result.Differences);
@@ -337,11 +328,6 @@ namespace Altemiq.SemanticVersioning
 
         private static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution)
         {
-            var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
-            System.Collections.Generic.IEnumerable<string> projectPaths = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
-                ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName).ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray()
-                : new string[] { projectOrSolutionPath.FullName };
-
             // get the highest version
             var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
                 ? System.IO.Path.Combine(Environment.ExpandEnvironmentVariables("%PROGRAMFILES%"), "dotnet", "sdk")
@@ -402,9 +388,50 @@ namespace Altemiq.SemanticVersioning
             projectCollection.AddToolset(toolset);
             projectCollection.DefaultToolsVersion = toolset.ToolsVersion;
 
+            var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
+            var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
+                ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
+                : default;
+
+            (string ConfigurationName, string PlatformName, string FullName, bool IncludeInBuild) GetBuildConfiguration(string path)
+            {
+                if (solution is null)
+                {
+                    return ("Debug", "AnyCPU", "Debug|AnyCPU", true);
+                }
+
+                // get the project in solution
+                var projectInSolution = solution.ProjectsInOrder.FirstOrDefault(p => p.AbsolutePath == path);
+                var defaultConfigurationName = solution.GetDefaultConfigurationName();
+                var defaultPlatformName = solution.GetDefaultPlatformName();
+
+                var defaultSolutionConfiguration = solution.SolutionConfigurations.First(c => c.ConfigurationName == defaultConfigurationName && c.PlatformName == defaultPlatformName);
+
+                var projectConfiguration = projectInSolution.ProjectConfigurations[defaultSolutionConfiguration.FullName];
+
+                return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.FullName, projectConfiguration.IncludeInBuild);
+            }
+
+            System.Collections.Generic.IEnumerable<string> projectPaths = solution is null
+                ? new string[] { projectOrSolutionPath.FullName }
+                : solution.ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
+
             foreach (var projectPath in projectPaths)
             {
-                projectCollection.LoadProject(projectPath, toolset.ToolsVersion);
+                var (configurationName, platformName, _, includeInBuild) = GetBuildConfiguration(projectPath);
+                if (!includeInBuild)
+                {
+                    continue;
+                }
+
+                // set the configuration and platform
+                var globalProperties = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "Configuration", configurationName },
+                    { "Platform", platformName },
+                };
+
+                projectCollection.LoadProject(projectPath, globalProperties, toolset.ToolsVersion);
             }
 
             return projectCollection;
@@ -466,7 +493,10 @@ namespace Altemiq.SemanticVersioning
                     }
 
                     // We did not find any solutions, so try and find individual projects
-                    var projectFiles = directoryInfo.EnumerateFiles("*.csproj").Concat(directoryInfo.EnumerateFiles("*.fsproj")).Concat(directoryInfo.EnumerateFiles("*.vbproj")).ToArray();
+                    var projectFiles = directoryInfo.EnumerateFiles("*.csproj")
+                        .Concat(directoryInfo.EnumerateFiles("*.fsproj"))
+                        .Concat(directoryInfo.EnumerateFiles("*.vbproj"))
+                        .ToArray();
                     if (projectFiles.Length == 1)
                     {
                         return projectFiles[0];
@@ -484,20 +514,15 @@ namespace Altemiq.SemanticVersioning
 
                     // At this point the path contains no solutions or projects, so throw an exception
                     throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
-                case System.IO.FileInfo fileInfo:
-                    // If a .sln or .csproj file was passed, just return that
-                    if (string.Equals(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
+                case System.IO.FileInfo fileInfo when
+                    string.Equals(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(fileInfo.Extension, ".vbproj", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return fileInfo;
-                    }
-
-                    // At this point, we know the file passed in is not a valid project or solution
-                    throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                        || string.Equals(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase):
+                    return fileInfo;
             }
 
+            // At this point, we know the file passed in is not a valid project or solution
             throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
         }
     }
