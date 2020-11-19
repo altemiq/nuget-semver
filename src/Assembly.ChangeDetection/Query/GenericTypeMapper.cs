@@ -156,8 +156,8 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             sb.Append(type.GenericTypeName);
             if (type.Arguments.Count > 0)
             {
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "`{0}", type.Arguments.Count);
-                sb.Append("<");
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "`{0}", type.Arguments.Count)
+                    .Append('<');
                 for (var i = 0; i < type.Arguments.Count; i++)
                 {
                     var curGen = type.Arguments[i];
@@ -176,7 +176,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                     }
                 }
 
-                sb.Append(">");
+                sb.Append('>');
             }
         }
 

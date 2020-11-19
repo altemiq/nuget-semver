@@ -54,8 +54,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             }
 
             this.SetModifierFilter(match);
-            this.eventTypeFilter = GenericTypeMapper.ConvertClrTypeName(GetValue(match, "eventType"));
-            this.eventTypeFilter = this.PrependStarBeforeGenericTypes(this.eventTypeFilter);
+            this.eventTypeFilter = PrependStarBeforeGenericTypes(GenericTypeMapper.ConvertClrTypeName(GetValue(match, "eventType")));
 
             if (!this.eventTypeFilter.StartsWith("*", StringComparison.Ordinal))
             {
@@ -109,7 +108,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             return type.Events.Where(this.IsMatchingEvent).ToArray();
         }
 
-        private string PrependStarBeforeGenericTypes(string eventTypeFilter) => eventTypeFilter.Replace("<", "<*").Replace("**", "*");
+        private static string PrependStarBeforeGenericTypes(string eventTypeFilter) => eventTypeFilter.Replace("<", "<*").Replace("**", "*");
 
         private bool IsMatchingEvent(EventDefinition ev) => this.MatchMethodModifiers(ev.AddMethod) && this.MatchName(ev.Name) && this.MatchEventType(ev.EventType);
 

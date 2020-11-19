@@ -79,7 +79,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 this.NameFilter = default;
             }
 
-            this.argumentFilters = this.InitArgumentFilter(m.Groups["args"].Value);
+            this.argumentFilters = InitArgumentFilter(m.Groups["args"].Value);
 
             this.SetModifierFilter(m);
         }
@@ -139,7 +139,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="argFilter">The input filter.</param>
         /// <returns>The filters.</returns>
-        internal IList<(Regex, string)>? InitArgumentFilter(string argFilter)
+        internal static IList<(Regex, string)>? InitArgumentFilter(string argFilter)
         {
             if (argFilter is null || argFilter == "*")
             {

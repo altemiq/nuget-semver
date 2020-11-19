@@ -95,7 +95,7 @@ namespace Altemiq.SemanticVersioning
                 .Select(info => info.Version)
                 .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease)))
             {
-                yield return await group.MaxAsync().ConfigureAwait(false);
+                yield return await group.MaxAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -123,13 +123,22 @@ namespace Altemiq.SemanticVersioning
 
         private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string>? sources)
         {
+            var enabledSources = SettingsUtility.GetEnabledSources(settings);
+            var repositories = sources?.Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
+            if (repositories.Length == 0)
+            {
+                repositories = enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
+            }
+
+            return repositories;
+
             static PackageSource ResolveSource(IEnumerable<PackageSource> availableSources, string source)
             {
                 var resolvedSource = availableSources.FirstOrDefault(
                         f => f.Source.Equals(source, StringComparison.OrdinalIgnoreCase) ||
                             f.Name.Equals(source, StringComparison.OrdinalIgnoreCase));
 
-                return resolvedSource is null ? new PackageSource(source) : resolvedSource;
+                return resolvedSource ?? new PackageSource(source);
             }
 
             static SourceRepository? GetFromMachineSources(string source, IEnumerable<PackageSource> enabledSources)
@@ -139,15 +148,6 @@ namespace Altemiq.SemanticVersioning
                     ? Repository.Factory.GetCoreV2(resolvedSource)
                     : Repository.Factory.GetCoreV3(resolvedSource.Source);
             }
-
-            var enabledSources = SettingsUtility.GetEnabledSources(settings);
-            var repositories = sources?.Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
-            if (repositories.Length == 0)
-            {
-                repositories = enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
-            }
-
-            return repositories;
         }
 
         private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(
@@ -199,17 +199,17 @@ namespace Altemiq.SemanticVersioning
             return default;
         }
 
-        private static async Task<SourcePackageDependencyInfo> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
+        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
             GetVersions(source, packageId, log, cancellationToken)
-            .Where(package => package.Listed && (package.HasVersion && package.Version.IsPrerelease ? includePrerelease : true))
-            .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
-            .FirstOrDefaultAsync()
-            .ConfigureAwait(false);
+                .Where(package => package.Listed && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
+                .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-        private static async Task<SourcePackageDependencyInfo> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
+        private static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
             GetVersions(source, packageId, log, cancellationToken)
-            .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0)
-            .ConfigureAwait(false);
+                .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
+                .ConfigureAwait(false);
 
         private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken) => GetRepositories(settings, sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 
@@ -245,9 +245,9 @@ namespace Altemiq.SemanticVersioning
             }
         }
 
-        private static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, System.Threading.CancellationToken token)
+        private static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
         {
-            token.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!packageIdentity.HasVersion)
             {
@@ -256,8 +256,8 @@ namespace Altemiq.SemanticVersioning
 
             return await repositories
                 .ToAsyncEnumerable()
-                .SelectMany(repository => GetVersions(repository, packageIdentity.Id, log, token))
-                .AnyAsync(info => info.Listed && NuGet.Versioning.VersionComparer.Default.Equals(info.Version, packageIdentity.Version))
+                .SelectMany(repository => GetVersions(repository, packageIdentity.Id, log, cancellationToken))
+                .AnyAsync(info => info.Listed && NuGet.Versioning.VersionComparer.Default.Equals(info.Version, packageIdentity.Version), cancellationToken)
                 .ConfigureAwait(false);
         }
 
