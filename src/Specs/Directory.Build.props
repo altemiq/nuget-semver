@@ -13,9 +13,8 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="Machine.Specifications" Version="1.0.0" />
-    <PackageReference Include="Machine.Specifications.Runner.VisualStudio" Version="2.10.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.2" NoWarn="NU1608" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.20" />
+    <PackageReference Include="Machine.Specifications.Runner.VisualStudio" Version="2.10.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.3" NoWarn="NU1608" />
   </ItemGroup>
 
 </Project>
