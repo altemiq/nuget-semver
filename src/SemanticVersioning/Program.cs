@@ -32,7 +32,26 @@ namespace Altemiq.SemanticVersioning
 
         private const string TargetExtPropertyName = "TargetExt";
 
-        private delegate Task<int> ProcessProjectOrSolutionDelegate(System.IO.FileSystemInfo projectOrSolution, string configuration, string platform, System.Collections.Generic.IEnumerable<string> source, System.Collections.Generic.IEnumerable<string> packageId, System.Collections.Generic.IEnumerable<string> exclude, string packageIdRegex, string packageIdReplace, string versionSuffix, NuGet.Versioning.SemanticVersion? previous, bool noVersionSuffix, bool noCache, bool directDownload, bool noLogo, OutputTypes output, string buildNumberParameter, string versionSuffixParameter);
+        private static readonly NuGet.Versioning.SemanticVersion Empty = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+
+        private delegate Task<int> ProcessProjectOrSolutionDelegate(
+            System.IO.FileSystemInfo projectOrSolution,
+            string? configuration,
+            string? platform,
+            System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageId,
+            System.Collections.Generic.IEnumerable<string> exclude,
+            string? packageIdRegex,
+            string packageIdReplace,
+            string? versionSuffix,
+            NuGet.Versioning.SemanticVersion? previous,
+            bool noVersionSuffix,
+            bool noCache,
+            bool directDownload,
+            bool noLogo,
+            OutputTypes output,
+            string buildNumberParameter,
+            string versionSuffixParameter);
 
         private static Task<int> Main(string[] args)
         {
@@ -43,22 +62,22 @@ namespace Altemiq.SemanticVersioning
 
             var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new ProcessProjectOrSolutionDelegate(ProcessProjectOrSolution)) })
                 .AddArgument(new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-                .AddOption(new Option<string>(new string[] { "-c", "--configuration" }, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
-                .AddOption(new Option<string>("--platform", "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
-                .AddOption(new Option<string>(new string[] { "-s", "--source" }, "Specifies the server URL.").WithArgumentName("SOURCE").WithArity(ArgumentArity.OneOrMore))
+                .AddOption(new Option<string?>(new string[] { "-c", "--configuration" }, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
+                .AddOption(new Option<string?>("--platform", "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
+                .AddOption(new Option<string?>(new string[] { "-s", "--source" }, "Specifies the server URL.").WithArgumentName("SOURCE").WithArity(ArgumentArity.OneOrMore))
                 .AddOption(new Option<bool>("--no-version-suffix", "Forces there to be no version suffix. This overrides --version-suffix"))
-                .AddOption(new Option<string>("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.").WithArgumentName("VERSION_SUFFIX"))
+                .AddOption(new Option<string?>("--version-suffix", "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.").WithArgumentName("VERSION_SUFFIX"))
                 .AddOption(new Option<bool>("--no-cache", "Disable using the machine cache as the first package source."))
                 .AddOption(new Option<bool>("--direct-download", "Download directly without populating any caches with metadata or binaries."))
-                .AddOption(new Option<string>("--package-id-regex", "The regular expression to match in the package id.").WithArgumentName("REGEX"))
+                .AddOption(new Option<string?>("--package-id-regex", "The regular expression to match in the package id.").WithArgumentName("REGEX"))
                 .AddOption(new Option<string>("--package-id-replace", "The text used to replace the match from --package-id-regex").WithArgumentName("VALUE"))
-                .AddOption(new Option<string>("--package-id", "The package ID to check for previous versions").WithArgumentName("PACKAGE_ID").WithArity(ArgumentArity.OneOrMore))
-                .AddOption(new Option<string>("--exclude", "A package ID to check exclude from analysis").WithArgumentName("PACKAGE_ID").WithArity(ArgumentArity.OneOrMore));
+                .AddOption(new Option<string?>("--package-id", "The package ID to check for previous versions").WithArgumentName("PACKAGE_ID").WithArity(ArgumentArity.OneOrMore))
+                .AddOption(new Option<string?>("--exclude", "A package ID to check exclude from analysis").WithArgumentName("PACKAGE_ID").WithArity(ArgumentArity.OneOrMore));
 
             var diffCommandBuilder = new CommandBuilder(new Command("diff", "Calculates the differences"))
                 .AddCommand(fileCommandBuilder.Command)
                 .AddCommand(solutionCommandBuilder.Command)
-                .AddGlobalOption(new Option<NuGet.Versioning.SemanticVersion>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>(argumentResult => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) })
+                .AddGlobalOption(new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>(argumentResult => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) }.WithDefaultValue(null))
                 .AddGlobalOption(new Option<string>("--build-number-parameter", "The parameter name for the build number").WithArgumentName("PARAMETER").WithDefaultValue("buildNumber"))
                 .AddGlobalOption(new Option<string>("--version-suffix-parameter", "The parameter name for the version suffix").WithArgumentName("PARAMETER").WithDefaultValue("system.build.suffix"))
                 .AddGlobalOption(new Option<OutputTypes>("--output", "The output type").WithArgumentName("OUTPUT_TYPE").WithDefaultValue(OutputTypes.TeamCity | OutputTypes.Diagnostic))
@@ -122,14 +141,14 @@ namespace Altemiq.SemanticVersioning
 
             static async Task<int> ProcessProjectOrSolution(
                 System.IO.FileSystemInfo projectOrSolution,
-                string configuration,
-                string platform,
+                string? configuration,
+                string? platform,
                 System.Collections.Generic.IEnumerable<string> source,
                 System.Collections.Generic.IEnumerable<string> packageId,
                 System.Collections.Generic.IEnumerable<string> exclude,
-                string packageIdRegex,
+                string? packageIdRegex,
                 string packageIdReplace,
-                string versionSuffix,
+                string? versionSuffix,
                 NuGet.Versioning.SemanticVersion? previous,
                 bool noVersionSuffix,
                 bool noCache,
@@ -176,7 +195,7 @@ namespace Altemiq.SemanticVersioning
                     }
 
                     var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
-                    var previousVersions = previous is null
+                    var previousVersions = IsNullOrEmpty(previous)
                         ? NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory)
                         : CreateAsyncEnumerable(previous);
                     var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
@@ -244,6 +263,11 @@ namespace Altemiq.SemanticVersioning
 
                 return 0;
 
+                bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
+                {
+                    return version?.Equals(Empty) != false;
+                }
+
                 string? GetVersionSuffix(string? previousVersionRelease = default)
                 {
                     return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
@@ -251,15 +275,20 @@ namespace Altemiq.SemanticVersioning
 
                 async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
                 {
+                    var previousVersion = IsNullOrEmpty(previous)
+                        ? default
+                        : previous;
+                    NuGet.Common.ILogger? logger = default;
                     try
                     {
-                        return await NuGetInstaller.InstallAsync(packageIds, source, version: previous, noCache: noCache, directDownload: directDownload, root: projectDirectory).ConfigureAwait(false);
+                        return await NuGetInstaller.InstallAsync(packageIds, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
                     }
                     catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                     {
-                        Console.WriteLine("  {0}", ex.Message);
-                        return default;
+                        logger?.LogError(ex.Message);
                     }
+
+                    return default;
                 }
 
                 static string TrimEndingDirectorySeparator(string path)
@@ -311,7 +340,10 @@ namespace Altemiq.SemanticVersioning
                     }).ToDictionary(value => value.toolsVersion, value => value.toolset);
 
                 NuGet.Versioning.SemanticVersion? toolsVersion = default;
-                var versions = parsedToolsets.Keys.Where(value => NuGet.Versioning.SemanticVersion.TryParse(value, out var _)).Select(NuGet.Versioning.SemanticVersion.Parse).ToArray();
+                var versions = parsedToolsets.Keys
+                    .Where(value => NuGet.Versioning.SemanticVersion.TryParse(value, out var _))
+                    .Select(NuGet.Versioning.SemanticVersion.Parse)
+                    .ToArray();
                 var globalJson = FindGlobalJson(projectOrSolution);
                 var allowPrerelease = false;
                 if (globalJson != null)
@@ -388,6 +420,7 @@ namespace Altemiq.SemanticVersioning
 
                 foreach (var projectPath in projectPaths)
                 {
+                    System.Diagnostics.Debug.WriteLine(projectPath);
                     var (configurationName, platformName, includeInBuild) = GetBuildConfiguration(projectPath);
                     if (!includeInBuild)
                     {
@@ -413,12 +446,7 @@ namespace Altemiq.SemanticVersioning
                     _ => System.IO.Directory.GetCurrentDirectory(),
                 };
 
-                if (directory is null)
-                {
-                    throw new System.IO.DirectoryNotFoundException();
-                }
-
-                while (true)
+                while (directory is not null)
                 {
                     var filePath = System.IO.Path.Combine(directory, "global.json");
                     if (System.IO.File.Exists(filePath))
@@ -426,14 +454,10 @@ namespace Altemiq.SemanticVersioning
                         return filePath;
                     }
 
-                    var directoryName = System.IO.Path.GetDirectoryName(directory);
-                    if (directoryName is null)
-                    {
-                        return default;
-                    }
-
-                    directory = directoryName;
+                    directory = System.IO.Path.GetDirectoryName(directory);
                 }
+
+                return default;
             }
 
             static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)

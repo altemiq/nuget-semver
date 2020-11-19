@@ -2,7 +2,7 @@
   "profiles": {
     "Solution": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"C:\\Users\\rsking\\source\\repos\\bitbucket\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
+      "commandLineArgs": "diff solution \"$(UserProfile)\\source\\repos\\bitbucket\\MATH\\Math\\src\\Math.sln\" --previous \"5.0.14-develop\""
     },
     "Version": {
       "commandName": "Project",
@@ -10,23 +10,23 @@
     },
     "Solution - Hardware": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
-      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\HAR\\Core"
+      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/AltemiqPower/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\AltemiqPower\\IO.Devices"
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --output Json,Diagnostic --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
-      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\MATH\\Math"
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/AltemiqPower/index.json\" --output Json,Diagnostic --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\AltemiqPower\\Math"
     },
     "Solution - IO": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/IO.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
-      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\IO\\IO"
+      "commandLineArgs": "diff solution \"src/IO.sln\" --version-suffix develop --source https://nuget.pkg.github.com/AltemiqPower/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\AltemiqPower\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"http://artifacts.geomatic.com.au/nuget/NuGet\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
-      "workingDirectory": "C:\\Users\\rsking\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
+      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/AltemiqPower/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
     },
     "Help": {
       "commandName": "Project",
