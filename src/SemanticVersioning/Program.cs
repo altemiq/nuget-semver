@@ -87,6 +87,9 @@ namespace Mondo.SemanticVersioning
                 .UseDefaults()
                 .AddCommand(diffCommandBuilder.Command);
 
+            // register MSBuild
+            Microsoft.Build.Locator.MSBuildLocator.RegisterDefaults();
+
             return commandLineBuilder
                 .Build()
                 .InvokeAsync(args);
