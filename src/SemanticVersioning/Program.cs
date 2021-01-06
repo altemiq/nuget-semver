@@ -87,9 +87,6 @@ namespace Altemiq.SemanticVersioning
                 .UseDefaults()
                 .AddCommand(diffCommandBuilder.Command);
 
-            // register MSBuild
-            Microsoft.Build.Locator.MSBuildLocator.RegisterDefaults();
-
             return commandLineBuilder
                 .Build()
                 .InvokeAsync(args);
@@ -142,7 +139,7 @@ namespace Altemiq.SemanticVersioning
                 return default;
             }
 
-            static async Task<int> ProcessProjectOrSolution(
+            static Task<int> ProcessProjectOrSolution(
                 System.IO.FileSystemInfo projectOrSolution,
                 string? configuration,
                 string? platform,
@@ -166,11 +163,50 @@ namespace Altemiq.SemanticVersioning
                     WriteHeader();
                 }
 
+                return ProcessProjectOrSolutionWithInstance(
+                    projectOrSolution,
+                    RegisterMSBuild(projectOrSolution),
+                    configuration,
+                    platform,
+                    source,
+                    packageId,
+                    exclude,
+                    packageIdRegex,
+                    packageIdReplace,
+                    versionSuffix,
+                    previous,
+                    noVersionSuffix,
+                    noCache,
+                    directDownload,
+                    output,
+                    buildNumberParameter,
+                    versionSuffixParameter);
+            }
+
+            static async Task<int> ProcessProjectOrSolutionWithInstance(
+                System.IO.FileSystemInfo projectOrSolution,
+                Microsoft.Build.Locator.VisualStudioInstance instance,
+                string? configuration,
+                string? platform,
+                System.Collections.Generic.IEnumerable<string> source,
+                System.Collections.Generic.IEnumerable<string> packageId,
+                System.Collections.Generic.IEnumerable<string> exclude,
+                string? packageIdRegex,
+                string packageIdReplace,
+                string? versionSuffix,
+                NuGet.Versioning.SemanticVersion? previous,
+                bool noVersionSuffix,
+                bool noCache,
+                bool directDownload,
+                OutputTypes output,
+                string buildNumberParameter,
+                string versionSuffixParameter)
+            {
                 var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 var packageIds = packageId ?? Enumerable.Empty<string>();
                 var regex = string.IsNullOrEmpty(packageIdRegex) ? null : new System.Text.RegularExpressions.Regex(packageIdRegex);
-                using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
+                using var projectCollection = GetProjects(projectOrSolution, instance, configuration, platform);
                 foreach (var project in projectCollection.LoadedProjects.Where(project =>
                     bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
                     && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
@@ -317,41 +353,19 @@ namespace Altemiq.SemanticVersioning
                 Console.WriteLine(Properties.Resources.Copyright);
             }
 
-            static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, string? configuration, string? platform)
+            static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(System.IO.FileSystemInfo projectOrSolution)
             {
-                // get the highest version
-                var directory = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-                    ? System.IO.Path.Combine(Environment.ExpandEnvironmentVariables("%PROGRAMFILES%"), "dotnet", "sdk")
-                    : System.IO.Path.Combine(char.ToString(System.IO.Path.DirectorySeparatorChar), "usr", "share", "dotnet", "sdk");
-
-                var parsedToolsets = System.IO.Directory.EnumerateDirectories(directory)
-                    .Where(path => NuGet.Versioning.SemanticVersion.TryParse(System.IO.Path.GetFileName(path), out _))
-                    .Select(path =>
-                    {
-                        var version = NuGet.Versioning.SemanticVersion.Parse(System.IO.Path.GetFileName(path));
-                        var properties = new System.Collections.Generic.Dictionary<string, string>
-                        {
-                            { "MSBuildSDKsPath", System.IO.Path.Combine(path, "Sdks") },
-                            { "RoslynTargetsPath", System.IO.Path.Combine(path, "Roslyn") },
-                            { "MSBuildExtensionsPath", path },
-                        };
-
-                        var propsFile = System.IO.Directory.EnumerateFiles(path, "Microsoft.Common.props", System.IO.SearchOption.AllDirectories).First();
-                        var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile));
-
-                        return (toolsVersion: version.ToString(), toolset: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection, path));
-                    }).ToDictionary(value => value.toolsVersion, value => value.toolset);
-
-                NuGet.Versioning.SemanticVersion? toolsVersion = default;
-                var versions = parsedToolsets.Keys
-                    .Where(value => NuGet.Versioning.SemanticVersion.TryParse(value, out var _))
-                    .Select(NuGet.Versioning.SemanticVersion.Parse)
-                    .ToArray();
+                (Microsoft.Build.Locator.VisualStudioInstance Instance, NuGet.Versioning.SemanticVersion Version) instance = default;
                 var globalJson = FindGlobalJson(projectOrSolution);
-                var allowPrerelease = false;
-                if (globalJson != null)
+                if (globalJson is not null)
                 {
                     // get the tool version
+                    var instances = Microsoft.Build.Locator.MSBuildLocator
+                        .QueryVisualStudioInstances()
+                        .Select(instance => (Instance: instance, Version: new SemanticVersion(instance.Version)))
+                        .ToArray();
+
+                    var allowPrerelease = false;
                     var jsonDocument = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(globalJson));
                     if (jsonDocument.RootElement.TryGetProperty("sdk", out var sdkElement))
                     {
@@ -361,34 +375,56 @@ namespace Altemiq.SemanticVersioning
                         allowPrerelease = sdkElement.TryGetProperty("allowPrerelease", out var tempAllowPrerelease) && tempAllowPrerelease.GetBoolean();
                         if (requestedVersion != null)
                         {
-                            toolsVersion = Array.Find(versions, version => NuGet.Versioning.VersionComparer.VersionRelease.Equals(version, requestedVersion));
-                            if (toolsVersion is null)
+                            instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, requestedVersion));
+                            if (instance.Instance is null)
                             {
                                 // find the patch version
-                                var validVersions = versions.Where(version =>
-                                    version.Major == requestedVersion.Major
-                                    && version.Minor == requestedVersion.Minor
-                                    && (version.Patch / 100) == (requestedVersion.Patch / 100)
-                                    && (version.Patch % 100) >= (requestedVersion.Patch % 100)).ToArray();
+                                var validInstances = instances
+                                    .Where(instance => instance.Version.Major == requestedVersion.Major
+                                        && instance.Version.Minor == requestedVersion.Minor
+                                        && (instance.Version.Patch / 100) == (requestedVersion.Patch / 100)
+                                        && (instance.Version.Patch % 100) >= (requestedVersion.Patch % 100))
+                                    .ToArray();
 
-                                toolsVersion = validVersions.Length > 0
-                                    ? validVersions.Max()
-                                    : throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", versions.Select(version => $"{version} [{directory}]"))}");
+                                var maxVersion = validInstances.Length > 0
+                                    ? validInstances.Max(instance => instance.Version)
+                                    : throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", instances.Select(instance => $"{instance.Instance.Version} [{instance.Instance.MSBuildPath}]"))}");
+                                instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, maxVersion));
                             }
                         }
                     }
                 }
 
-                toolsVersion ??= versions.Where(version => !version.IsPrerelease || allowPrerelease).Max(version => version);
-                if (toolsVersion is null)
+                if (instance.Instance is not null)
                 {
-                    throw new Exception("Unable to find a valid tools version");
+                    Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance.Instance);
+                    return instance.Instance;
                 }
 
-                var toolset = parsedToolsets[toolsVersion.ToString()];
+                return Microsoft.Build.Locator.MSBuildLocator.RegisterDefaults();
+            }
 
-                Environment.SetEnvironmentVariable("MSBuildSDKsPath", toolset.GetProperty("MSBuildSDKsPath", null).EvaluatedValue);
+            static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, Microsoft.Build.Locator.VisualStudioInstance instance, string? configuration, string? platform)
+            {
+                // get the highest version
+                var toolsets = Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances()
+                    .Select(instance =>
+                    {
+                        var path = instance.MSBuildPath;
+                        var properties = new System.Collections.Generic.Dictionary<string, string>
+                        {
+                            { "MSBuildSDKsPath", System.IO.Path.Combine(path, "Sdks") },
+                            { "RoslynTargetsPath", System.IO.Path.Combine(path, "Roslyn") },
+                            { "MSBuildExtensionsPath", path },
+                        };
 
+                        var propsFile = System.IO.Directory.EnumerateFiles(path, "Microsoft.Common.props", System.IO.SearchOption.AllDirectories).First();
+                        var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile));
+                        return (instance.Version, ToolSet: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection, path));
+                    })
+                    .ToDictionary(val => val.Version, val => val.ToolSet);
+
+                var toolset = toolsets[instance.Version];
                 var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
                 projectCollection.AddToolset(toolset);
                 projectCollection.DefaultToolsVersion = toolset.ToolsVersion;
@@ -557,6 +593,14 @@ namespace Altemiq.SemanticVersioning
             properties ??= new System.Collections.Generic.Dictionary<string, string>();
             properties.Add(name, value);
             return properties;
+        }
+
+        private sealed class SemanticVersion : NuGet.Versioning.SemanticVersion
+        {
+            public SemanticVersion(System.Version version)
+                : base(version)
+            {
+            }
         }
     }
 }
