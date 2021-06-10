@@ -48,9 +48,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <Compile Update="Program.*.cs" DependentUpon="Program.cs" />
+    <Compile Update="Application.*.cs" DependentUpon="Application.cs" />
   </ItemGroup>
 
   <ItemGroup>

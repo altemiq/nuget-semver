@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Program.Json.cs" company="Altemiq">
+// <copyright file="Application.Json.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -7,9 +7,9 @@
 namespace Altemiq.SemanticVersioning
 {
     /// <content>
-    /// Program class for writing the GitHub version.
+    /// Application class for writing the GitHub version.
     /// </content>
-    internal static partial class Program
+    internal static partial class Application
     {
         private static void WriteJsonVersion(NuGet.Versioning.SemanticVersion version)
         {

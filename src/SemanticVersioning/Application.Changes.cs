@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Program.Changes.cs" company="Altemiq">
+// <copyright file="Application.Changes.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -10,9 +10,9 @@ namespace Altemiq.SemanticVersioning
     using System.Linq;
 
     /// <content>
-    /// Program class for writing the changes.
+    /// Application class for writing the changes.
     /// </content>
-    internal static partial class Program
+    internal static partial class Application
     {
         private static void WriteChanges(OutputTypes outputTypes, Assembly.ChangeDetection.Diff.AssemblyDiffCollection differences)
         {

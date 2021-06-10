@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Program.TeamCity.cs" company="Altemiq">
+// <copyright file="Application.TeamCity.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -7,9 +7,9 @@
 namespace Altemiq.SemanticVersioning
 {
     /// <content>
-    /// Program class for writing the TeamCity version.
+    /// Application class for writing the TeamCity version.
     /// </content>
-    internal static partial class Program
+    internal static partial class Application
     {
         private static void WriteTeamCityVersion(NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
         {
