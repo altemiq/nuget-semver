@@ -9,15 +9,41 @@
 namespace Altemiq.SemanticVersioning
 {
     using System;
+    using System.CommandLine.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using System.CommandLine.IO;
 
     /// <summary>
     /// The application class.
     /// </summary>
     internal static partial class Application
     {
+        public const string? DefaultConfiguration = default;
+
+        public const string? DefaultPlatform = default;
+
+        public const string? DefaultPackageIdRegex = default;
+
+        public const string DefaultPackageIdReplace = default;
+
+        public const string? DefaultVersionSuffix = "";
+
+        public const NuGet.Versioning.SemanticVersion? DefaultPrevious = default;
+
+        public const bool DefaultNoVersionSuffix = default;
+
+        public const bool DefaultNoCache = default;
+
+        public const bool DefaultDirectDownload = default;
+
+        public const bool DefaultNoLogo = default;
+
+        public const OutputTypes DefaultOutput = OutputTypes.TeamCity | OutputTypes.Diagnostic;
+
+        public const string DefaultBuildNumberParameter = "buildNumber";
+
+        public const string DefaultVersionSuffixParameter = "system.build.suffix";
+
         private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
 
         private const string IsPackablePropertyName = "IsPackable";
@@ -50,21 +76,21 @@ namespace Altemiq.SemanticVersioning
             System.IO.FileInfo second,
             NuGet.Versioning.SemanticVersion previous,
             string build,
-            OutputTypes output,
-            string buildNumberParameter,
-            string versionSuffixParameter,
-            bool noLogo);
+            OutputTypes output = DefaultOutput,
+            string buildNumberParameter = DefaultBuildNumberParameter,
+            string versionSuffixParameter = DefaultVersionSuffixParameter,
+            bool noLogo = DefaultNoLogo);
 
         /// <summary>
         /// The process project of solution delegate.
         /// </summary>
         /// <param name="console">The console.</param>
         /// <param name="projectOrSolution">The project or solution.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="platform">The platform.</param>
         /// <param name="source">The NuGet source.</param>
         /// <param name="packageId">The package ID.</param>
         /// <param name="exclude">The values to exclude.</param>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="platform">The platform.</param>
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
         /// <param name="versionSuffix">The version suffix.</param>
@@ -72,30 +98,30 @@ namespace Altemiq.SemanticVersioning
         /// <param name="noVersionSuffix">Set to <see langword="true"/> to force there to be no version suffix.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
         /// <param name="output">The output type.</param>
         /// <param name="buildNumberParameter">The parameter name for the build number.</param>
         /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
+        /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
         /// <returns>The task.</returns>
         public delegate Task<int> ProcessProjectOrSolutionDelegate(
             System.CommandLine.IConsole console,
             System.IO.FileSystemInfo projectOrSolution,
-            string? configuration,
-            string? platform,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
             System.Collections.Generic.IEnumerable<string> exclude,
-            string? packageIdRegex,
-            string packageIdReplace,
-            string? versionSuffix,
-            NuGet.Versioning.SemanticVersion? previous,
-            bool noVersionSuffix,
-            bool noCache,
-            bool directDownload,
-            bool noLogo,
-            OutputTypes output,
-            string buildNumberParameter,
-            string versionSuffixParameter);
+            string? configuration = DefaultConfiguration,
+            string? platform = DefaultPlatform,
+            string? packageIdRegex = DefaultPackageIdRegex,
+            string packageIdReplace = DefaultPackageIdReplace,
+            string? versionSuffix = DefaultVersionSuffix,
+            NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
+            bool noVersionSuffix = DefaultNoVersionSuffix,
+            bool noCache = DefaultNoCache,
+            bool directDownload = DefaultDirectDownload,
+            OutputTypes output = DefaultOutput,
+            string buildNumberParameter = DefaultBuildNumberParameter,
+            string versionSuffixParameter = DefaultVersionSuffixParameter,
+            bool noLogo = DefaultNoLogo);
 
         /// <inheritdoc cref="FileFunctionDelegate" />
         public static void FileFunction(
@@ -104,10 +130,10 @@ namespace Altemiq.SemanticVersioning
             System.IO.FileInfo second,
             NuGet.Versioning.SemanticVersion previous,
             string build,
-            OutputTypes output,
-            string buildNumberParameter,
-            string versionSuffixParameter,
-            bool noLogo)
+            OutputTypes output = DefaultOutput,
+            string buildNumberParameter = DefaultBuildNumberParameter,
+            string versionSuffixParameter = DefaultVersionSuffixParameter,
+            bool noLogo = DefaultNoLogo)
         {
             if (!noLogo)
             {
@@ -131,22 +157,22 @@ namespace Altemiq.SemanticVersioning
         public static Task<int> ProcessProjectOrSolution(
             System.CommandLine.IConsole console,
             System.IO.FileSystemInfo projectOrSolution,
-            string? configuration,
-            string? platform,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
             System.Collections.Generic.IEnumerable<string> exclude,
-            string? packageIdRegex,
-            string packageIdReplace,
-            string? versionSuffix,
-            NuGet.Versioning.SemanticVersion? previous,
-            bool noVersionSuffix,
-            bool noCache,
-            bool directDownload,
-            bool noLogo,
-            OutputTypes output,
-            string buildNumberParameter,
-            string versionSuffixParameter)
+            string? configuration = DefaultConfiguration,
+            string? platform = DefaultPlatform,
+            string? packageIdRegex = DefaultPackageIdRegex,
+            string packageIdReplace = DefaultPackageIdReplace,
+            string? versionSuffix = DefaultVersionSuffix,
+            NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
+            bool noVersionSuffix = DefaultNoVersionSuffix,
+            bool noCache = DefaultNoCache,
+            bool directDownload = DefaultDirectDownload,
+            OutputTypes output = DefaultOutput,
+            string buildNumberParameter = DefaultBuildNumberParameter,
+            string versionSuffixParameter = DefaultVersionSuffixParameter,
+            bool noLogo = DefaultNoLogo)
         {
             if (!noLogo)
             {
@@ -164,7 +190,7 @@ namespace Altemiq.SemanticVersioning
                 exclude,
                 packageIdRegex,
                 packageIdReplace,
-                versionSuffix,
+                string.IsNullOrEmpty(versionSuffix) ? default : versionSuffix,
                 previous,
                 noVersionSuffix,
                 noCache,
@@ -369,25 +395,6 @@ namespace Altemiq.SemanticVersioning
                         ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
                         : default;
 
-                    (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
-                    {
-                        if (solution is null)
-                        {
-                            return (configuration, platform, IncludeInBuild: true);
-                        }
-
-                        // get the project in solution
-                        var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
-                        var configurationName = configuration ?? solution.GetDefaultConfigurationName();
-                        var platformName = platform ?? solution.GetDefaultPlatformName();
-
-                        var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
-
-                        var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
-
-                        return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
-                    }
-
                     System.Collections.Generic.IEnumerable<string> projectPaths = solution is null
                         ? new string[] { projectOrSolutionPath.FullName }
                         : solution.ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
@@ -409,6 +416,25 @@ namespace Altemiq.SemanticVersioning
                     }
 
                     return projectCollection;
+
+                    (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
+                    {
+                        if (solution is null)
+                        {
+                            return (configuration, platform, IncludeInBuild: true);
+                        }
+
+                        // get the project in solution
+                        var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
+                        var configurationName = configuration ?? solution.GetDefaultConfigurationName();
+                        var platformName = platform ?? solution.GetDefaultPlatformName();
+
+                        var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
+
+                        var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
+
+                        return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
+                    }
 
                     static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)
                     {
@@ -565,7 +591,7 @@ namespace Altemiq.SemanticVersioning
                 return properties;
             }
 
-            properties ??= new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.Ordinal);
+            properties ??= new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
             properties.Add(name, value);
             return properties;
         }
