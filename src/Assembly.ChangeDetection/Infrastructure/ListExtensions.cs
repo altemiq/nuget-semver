@@ -20,14 +20,14 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// </summary>
         /// <param name="queries">The queries.</param>
         /// <returns>The sreach directories.</returns>
-        public static string GetSearchDirs(this IEnumerable<FileQuery> queries) => queries != null ? string.Join(";", queries.Select(q => q.SearchDir)) : throw new ArgumentNullException(nameof(queries));
+        public static string GetSearchDirs(this IEnumerable<FileQuery> queries) => queries is not null ? string.Join(";", queries.Select(q => q.SearchDir)) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the queries.
         /// </summary>
         /// <param name="queries">The file queries.</param>
         /// <returns>The queries.</returns>
-        public static string GetQueries(this IEnumerable<FileQuery> queries) => queries != null ? string.Join(" ", queries.Select(q => q.Query)) : throw new ArgumentNullException(nameof(queries));
+        public static string GetQueries(this IEnumerable<FileQuery> queries) => queries is not null ? string.Join(" ", queries.Select(q => q.Query)) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the files.
@@ -36,7 +36,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// <returns>The files.</returns>
         public static IEnumerable<string> GetFiles(this IEnumerable<FileQuery> queries)
         {
-            return queries != null ? GetFilesIterator() : throw new ArgumentNullException(nameof(queries));
+            return queries is not null ? GetFilesIterator() : throw new ArgumentNullException(nameof(queries));
 
             IEnumerable<string> GetFilesIterator()
             {
@@ -55,7 +55,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// </summary>
         /// <param name="queries">The queries.</param>
         /// <returns><see langword="true"/> if any items in <paramref name="queries"/> have matches; otherwise <see langword="false"/>.</returns>
-        public static bool HasMatches(this IEnumerable<FileQuery> queries) => queries != null ? queries.Any(q => q.HasMatches) : throw new ArgumentNullException(nameof(queries));
+        public static bool HasMatches(this IEnumerable<FileQuery> queries) => queries is not null ? queries.Any(q => q.HasMatches) : throw new ArgumentNullException(nameof(queries));
 
         /// <summary>
         /// Gets the matching file by name.
@@ -75,7 +75,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
                 throw new ArgumentException(Properties.Resources.FileNameWasNullOrEmpty, nameof(fileName));
             }
 
-            return queries.Select(query => query.GetMatchingFileByName(fileName)).FirstOrDefault(match => match != null);
+            return queries.Select(query => query.GetMatchingFileByName(fileName)).FirstOrDefault(match => match is not null);
         }
 
         /// <summary>

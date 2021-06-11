@@ -13,7 +13,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
     /// </summary>
     internal static class TypeMapper
     {
-        private static readonly IDictionary<string, string> SimpleType2FullType = new Dictionary<string, string>
+        private static readonly IDictionary<string, string> SimpleType2FullType = new Dictionary<string, string>(System.StringComparer.Ordinal)
         {
             { "bool", "System.Boolean" },
             { "byte", "System.Byte" },
@@ -52,7 +52,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
             { "Void", "System.Void" },
         };
 
-        private static readonly Dictionary<string, string> FullType2SimpleType = new Dictionary<string, string>
+        private static readonly IDictionary<string, string> FullType2SimpleType = new Dictionary<string, string>(System.StringComparer.Ordinal)
         {
             { "System.Boolean", "bool" },
             { "System.Byte", "byte" },
@@ -95,13 +95,17 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// </summary>
         /// <param name="shortType">The short type.</param>
         /// <returns>The expanded system type if possible.</returns>
-        public static string ShortToFull(string shortType) => SimpleType2FullType.TryGetValue(shortType, out var fullType) ? fullType : shortType;
+        public static string ShortToFull(string shortType) => SimpleType2FullType.TryGetValue(shortType, out var fullType)
+            ? fullType
+            : shortType;
 
         /// <summary>
         /// Map a full type e.g System.Int32 to the short type int.
         /// </summary>
         /// <param name="fullType">The full type.</param>
         /// <returns>The short type if possible.</returns>
-        public static string FullToShort(string fullType) => FullType2SimpleType.TryGetValue(fullType, out var shortType) ? shortType : fullType;
+        public static string FullToShort(string fullType) => FullType2SimpleType.TryGetValue(fullType, out var shortType)
+            ? shortType
+            : fullType;
     }
 }

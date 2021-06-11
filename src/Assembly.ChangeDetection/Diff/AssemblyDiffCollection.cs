@@ -14,6 +14,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
     /// The assembly diff collection.
     /// </summary>
     [DebuggerDisplay("Add {AddedRemovedTypes.AddedCount} Remove {AddedRemovedTypes.RemovedCount} Changed {ChangedTypes.Count}")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "This is intentional")]
     public class AssemblyDiffCollection
     {
         /// <summary>

@@ -19,7 +19,7 @@ namespace Mondo.Assembly.ChangeDetection.Diff
     /// </summary>
     internal class AssemblyDiffer
     {
-        private readonly AssemblyDiffCollection myDiff = new AssemblyDiffCollection();
+        private readonly AssemblyDiffCollection myDiff = new();
 
         private readonly AssemblyDefinition myV1;
 
@@ -90,16 +90,16 @@ namespace Mondo.Assembly.ChangeDetection.Diff
 
         private static TypeDefinition GetTypeByDefinition(TypeDefinition search, IEnumerable<TypeDefinition> types) => types.FirstOrDefault(type => type.IsEqual(search));
 
-        private void OnAddedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(true)));
+        private void OnAddedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded: true)));
 
-        private void OnRemovedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(false)));
+        private void OnRemovedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded: false)));
 
-        private bool ShallowTypeComapare(TypeDefinition v1, TypeDefinition v2) => v1.FullName == v2.FullName;
+        private bool ShallowTypeComapare(TypeDefinition v1, TypeDefinition v2) => string.Equals(v1.FullName, v2.FullName, StringComparison.Ordinal);
 
         private void DiffTypes(IEnumerable<TypeDefinition> typesV1, IEnumerable<TypeDefinition> typesV2, QueryAggregator queries) =>
             this.myDiff.ChangedTypes.AddRange(typesV1
                 .Select(typeV1 => (first: typeV1, second: GetTypeByDefinition(typeV1, typesV2)))
-                .Where(types => types.second != null)
+                .Where(types => types.second is not null)
                 .Select(types => TypeDiff.GenerateDiff(types.first, types.second, queries))
                 .Where(diffed => TypeDiff.None != diffed));
     }

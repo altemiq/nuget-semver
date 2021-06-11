@@ -39,7 +39,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 throw new ArgumentNullException(nameof(query));
             }
 
-            if (query == "*")
+            if (string.Equals(query, "*", StringComparison.Ordinal))
             {
                 return;
             }
@@ -61,7 +61,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 this.eventTypeFilter = "*" + this.eventTypeFilter;
             }
 
-            if (this.eventTypeFilter == "*")
+            if (string.Equals(this.eventTypeFilter, "*", StringComparison.Ordinal))
             {
                 this.eventTypeFilter = default;
             }
@@ -113,7 +113,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         private bool IsMatchingEvent(EventDefinition ev) => this.MatchMethodModifiers(ev.AddMethod) && this.MatchName(ev.Name) && this.MatchEventType(ev.EventType);
 
         private bool MatchEventType(TypeReference eventType) => string.IsNullOrEmpty(this.eventTypeFilter)
-            || this.eventTypeFilter == "*"
+            || string.Equals(this.eventTypeFilter, "*", StringComparison.Ordinal)
             || Matcher.MatchWithWildcards(this.eventTypeFilter!, eventType.FullName, StringComparison.OrdinalIgnoreCase);
     }
 }

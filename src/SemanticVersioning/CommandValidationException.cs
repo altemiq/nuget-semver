@@ -9,6 +9,7 @@ namespace Mondo.SemanticVersioning
     /// <summary>
     /// The command validation exception.
     /// </summary>
+    [System.Serializable]
     public class CommandValidationException : System.Exception
     {
         /// <summary>

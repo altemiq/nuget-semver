@@ -57,7 +57,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
             var match = this.Parser.Match(query);
             if (!match.Success)
             {
-                throw new ArgumentException(string.Format(Properties.Resources.Culture, "The field query string {0} was not a valid query.", query));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, "The field query string {0} was not a valid query.", query), nameof(query));
             }
 
             this.excludeCompilerGeneratedFields = true;
@@ -69,7 +69,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 this.fieldTypeFilter = "*" + this.fieldTypeFilter;
             }
 
-            if (this.fieldTypeFilter == "*")
+            if (string.Equals(this.fieldTypeFilter, "*", StringComparison.Ordinal))
             {
                 this.fieldTypeFilter = default;
             }
@@ -158,11 +158,11 @@ namespace Mondo.Assembly.ChangeDetection.Query
             }
 
             // Is event backing field for event delegate
-            return def.Events.Any(ev => ev.Name == field.Name);
+            return def.Events.Any(ev => string.Equals(ev.Name, field.Name, StringComparison.Ordinal));
         }
 
         private bool MatchFieldType(FieldDefinition field) => string.IsNullOrEmpty(this.fieldTypeFilter)
-            || this.fieldTypeFilter == "*"
+            || string.Equals(this.fieldTypeFilter, "*", StringComparison.Ordinal)
             || Matcher.MatchWithWildcards(this.fieldTypeFilter!, field.FieldType.FullName, StringComparison.OrdinalIgnoreCase);
 
         private bool MatchFieldModifiers(FieldDefinition field)

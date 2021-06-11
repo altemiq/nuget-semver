@@ -23,7 +23,6 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
         /// <param name="immediateLoad">Set to <see langword="true"/> to immediately load.</param>
         /// <param name="readSymbols">Whether to read the symbols.</param>
         /// <returns>The assembly definition.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is ensure that the application does not crash")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1075:AvoidEmptyCatchClauseThatCatchesSystemException", Justification = "This is ensure that the application does not crash")]
         public static AssemblyDefinition? LoadCecilAssembly(string fileName, bool immediateLoad = default, bool? readSymbols = default)
         {
@@ -32,7 +31,6 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
             var fileInfo = new FileInfo(fileName);
             if (fileInfo.Length == 0)
             {
-                // TODO: t.Info("File {0} has zero byte length", fileName);
                 return null;
             }
 
@@ -47,7 +45,6 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
                 // Managed C++ assemblies are not supported by Mono Cecil
                 if (IsManagedCppAssembly(assemblyDef))
                 {
-                    // TODO: t.Info("File {0} is a managed C++ assembly", fileName);
                     return null;
                 }
 
@@ -59,25 +56,24 @@ namespace Mondo.Assembly.ChangeDetection.Introspection
             }
             catch (IndexOutOfRangeException)
             {
-                // TODO: t.Info("File {0} is a managed C++ assembly", fileName);
+                // ignore managed c++ targets
             }
             catch (NullReferenceException)
             {
                 // ignore managed c++ targets
-                // TODO: t.Info("File {0} is a managed C++ assembly", fileName);
             }
             catch (ArgumentOutOfRangeException)
             {
-                // TODO: t.Info("File {0} is a managed C++ assembly", fileName);
+                // ignore managed c++ assemblies
             }
             catch (Exception)
             {
-                // TODO: t.Error(Level.L1, "Could not read assembly {0}: {1}", fileName, ex);
+                // failed to read assembly
             }
 
             return null;
         }
 
-        private static bool IsManagedCppAssembly(AssemblyDefinition assembly) => assembly.Modules.SelectMany(mod => mod.AssemblyReferences).Any(assemblyRef => assemblyRef.Name == "Microsoft.VisualC");
+        private static bool IsManagedCppAssembly(AssemblyDefinition assembly) => assembly.Modules.SelectMany(mod => mod.AssemblyReferences).Any(assemblyRef => string.Equals(assemblyRef.Name, "Microsoft.VisualC", StringComparison.Ordinal));
     }
 }

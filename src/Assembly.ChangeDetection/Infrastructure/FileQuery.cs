@@ -47,7 +47,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
             {
                 if (query.Contains("*"))
                 {
-                    throw new ArgumentException(string.Format(Properties.Resources.Culture, "Wildcards are not supported in Global Assembly Cache search: {0}", query));
+                    throw new ArgumentException(string.Format(Properties.Resources.Culture, "Wildcards are not supported in Global Assembly Cache search: {0}", query), nameof(query));
                 }
 
                 var fileName = query.Substring(5);
@@ -140,7 +140,7 @@ namespace Mondo.Assembly.ChangeDetection.Infrastructure
         /// </summary>
         /// <param name="query">The query.</param>
         /// <returns>The query list.</returns>
-        public static IList<FileQuery> ParseQueryList(string query) => ParseQueryList(query, null, SearchOption.TopDirectoryOnly);
+        public static IList<FileQuery> ParseQueryList(string query) => ParseQueryList(query, rootDir: null, SearchOption.TopDirectoryOnly);
 
         /// <summary>
         /// Parses the query list.

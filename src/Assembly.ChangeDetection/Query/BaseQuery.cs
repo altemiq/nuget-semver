@@ -32,17 +32,17 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets the event query parser.
         /// </summary>
-        internal static Regex EventQueryParser { get; } = new Regex("^ *(?<modifiers>!?virtual +|event +|" + CommonModifiers + ")* *(?<eventType>[^ ]+(<.*>)?) +(?<eventName>[^ ]+) *$");
+        internal static Regex EventQueryParser { get; } = new Regex("^ *(?<modifiers>!?virtual +|event +|" + CommonModifiers + ")* *(?<eventType>[^ ]+(<.*>)?) +(?<eventName>[^ ]+) *$", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         /// <summary>
         /// Gets the field query parser.
         /// </summary>
-        internal static Regex FieldQueryParser { get; } = new Regex(" *(?<modifiers>!?nocompilergenerated +|!?const +|!?readonlys +|" + CommonModifiers + ")* *(?<fieldType>[^ ]+(<.*>)?) +(?<fieldName>[^ ]+) *$");
+        internal static Regex FieldQueryParser { get; } = new Regex(" *(?<modifiers>!?nocompilergenerated +|!?const +|!?readonlys +|" + CommonModifiers + ")* *(?<fieldType>[^ ]+(<.*>)?) +(?<fieldName>[^ ]+) *$", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         /// <summary>
         /// Gets the method query parser.
         /// </summary>
-        internal static Regex MethodDefParser { get; } = new Regex(" *(?<modifiers>!?virtual +|" + CommonModifiers + ")*" + @"(?<retType>.*<.*>( *\[\])?|[^ (\)]*( *\[\])?) +(?<funcName>.+)\( *(?<args>.*?) *\) *");
+        internal static Regex MethodDefParser { get; } = new Regex(" *(?<modifiers>!?virtual +|" + CommonModifiers + ")*" + @"(?<retType>.*<.*>( *\[\])?|[^ (\)]*( *\[\])?) +(?<funcName>.+)\( *(?<args>.*?) *\) *", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         /// <summary>
         /// Gets a value indicating whether this instance is internal.
@@ -103,12 +103,12 @@ namespace Mondo.Assembly.ChangeDetection.Query
             var notValue = "!" + value;
             foreach (Capture capture in m.Groups["modifiers"].Captures)
             {
-                if (value == capture.Value.TrimEnd())
+                if (string.Equals(value, capture.Value.TrimEnd(), StringComparison.Ordinal))
                 {
                     return true;
                 }
 
-                if (notValue == capture.Value.TrimEnd())
+                if (string.Equals(notValue, capture.Value.TrimEnd(), StringComparison.Ordinal))
                 {
                     return false;
                 }
@@ -145,7 +145,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <param name="name">The name.</param>
         /// <returns>The result.</returns>
         protected virtual bool MatchName(string name) => string.IsNullOrEmpty(this.NameFilter)
-            || this.NameFilter == "*"
+            || string.Equals(this.NameFilter, "*", StringComparison.Ordinal)
             || Matcher.MatchWithWildcards(this.NameFilter!, name, StringComparison.OrdinalIgnoreCase);
     }
 }

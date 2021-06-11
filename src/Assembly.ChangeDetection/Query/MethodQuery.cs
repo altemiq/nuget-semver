@@ -49,7 +49,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
             : base(methodQuery)
         {
             // Return everything if no filter is set
-            if (methodQuery.Trim() == "*")
+            if (string.Equals(methodQuery.Trim(), "*", StringComparison.Ordinal))
             {
                 return;
             }
@@ -62,7 +62,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
 
             if (!m.Success)
             {
-                throw new ArgumentException(string.Format(Properties.Resources.Culture, "Invalid method query: \"{0}\". The method query must be of the form <modifier> <return type> <function name>(<arguments>) e.g. public void F(*) match all public methods with name F with 0 or more arguments, or public * *(*) match any public method.", methodQuery));
+                throw new ArgumentException(string.Format(Properties.Resources.Culture, "Invalid method query: \"{0}\". The method query must be of the form <modifier> <return type> <function name>(<arguments>) e.g. public void F(*) match all public methods with name F with 0 or more arguments, or public * *(*) match any public method.", methodQuery), nameof(methodQuery));
             }
 
             this.CreateReturnTypeFilter(m);
@@ -87,27 +87,27 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets the query for all methods.
         /// </summary>
-        public static MethodQuery AllMethods => new MethodQuery();
+        public static MethodQuery AllMethods => new();
 
         /// <summary>
         /// Gets the query for protected methods.
         /// </summary>
-        public static MethodQuery ProtectedMethods => new MethodQuery("protected " + All);
+        public static MethodQuery ProtectedMethods => new("protected " + All);
 
         /// <summary>
         /// Gets the query for internal methods.
         /// </summary>
-        public static MethodQuery InternalMethods => new MethodQuery("internal " + All);
+        public static MethodQuery InternalMethods => new("internal " + All);
 
         /// <summary>
         /// Gets the query for public methods.
         /// </summary>
-        public static MethodQuery PublicMethods => new MethodQuery("public " + All);
+        public static MethodQuery PublicMethods => new("public " + All);
 
         /// <summary>
         /// Gets the query for private methods.
         /// </summary>
-        public static MethodQuery PrivateMethods => new MethodQuery("private " + All);
+        public static MethodQuery PrivateMethods => new("private " + All);
 
         /// <summary>
         /// Gets or sets a value indicating whether this is virtual.
@@ -141,9 +141,9 @@ namespace Mondo.Assembly.ChangeDetection.Query
         /// <returns>The filters.</returns>
         internal static IList<(Regex, string)>? InitArgumentFilter(string argFilter)
         {
-            if (argFilter is null || argFilter == "*")
+            if (argFilter is null || string.Equals(argFilter, "*", StringComparison.Ordinal))
             {
-                return null;
+                return default;
             }
 
             // To query for void methods
@@ -220,7 +220,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
                 }
             }
 
-            if (curType != null)
+            if (curType is not null)
             {
                 list.Add(AssignArrayBracketsToTypeName(curType, curThing.ToString().Trim()));
             }
@@ -280,7 +280,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
             if (lret)
             {
                 lret = this.MatchName(method.Name);
-                if (method.Name == ".ctor")
+                if (string.Equals(method.Name, ".ctor", StringComparison.Ordinal))
                 {
                     lret = this.MatchName(method.DeclaringType.Name);
                 }
@@ -384,10 +384,10 @@ namespace Mondo.Assembly.ChangeDetection.Query
 
             // unescape added wild cards
             newTypeName = newTypeName.Replace("\\.\\*", ".*");
-            return new Regex(newTypeName, RegexOptions.IgnoreCase);
+            return new Regex(newTypeName, RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
         }
 
-        private static (Regex, string) AssignArrayBracketsToTypeName(string typeName, string argName)
+        private static (Regex TypeFilter, string ArgName) AssignArrayBracketsToTypeName(string typeName, string argName)
         {
             var newTypeName = typeName;
             var newArgName = argName;

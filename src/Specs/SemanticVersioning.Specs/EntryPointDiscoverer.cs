@@ -27,15 +27,10 @@ namespace Mondo.SemanticVersioning
                 foreach (var type in assembly
                     .DefinedTypes
                     .Where(t => t.IsClass)
-                    .Where(t => !t.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute))))
+                    .Where(t => t.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute))))
                 {
                     FindMainMethodCandidates(type, candidates);
                 }
-            }
-
-            string MainMethodFullName()
-            {
-                return string.IsNullOrWhiteSpace(entryPointFullTypeName) ? "Main" : $"{entryPointFullTypeName}.Main";
             }
 
             if (candidates.Count > 1)
@@ -49,25 +44,20 @@ namespace Mondo.SemanticVersioning
             }
 
             return candidates[0];
-        }
 
-        private static void FindMainMethodCandidates(TypeInfo type, List<MethodInfo> candidates)
-        {
-            foreach (var method in type
-                .GetMethods(BindingFlags.Static |
-                            BindingFlags.Public |
-                            BindingFlags.NonPublic)
-                .Where(m =>
-                    string.Equals("Main", m.Name, StringComparison.OrdinalIgnoreCase)))
+            string MainMethodFullName()
             {
-                if (method.ReturnType == typeof(void)
-                    || method.ReturnType == typeof(int)
-                    || method.ReturnType == typeof(System.Threading.Tasks.Task)
-                    || method.ReturnType == typeof(System.Threading.Tasks.Task<int>))
-                {
-                    candidates.Add(method);
-                }
+                return string.IsNullOrWhiteSpace(entryPointFullTypeName) ? "Main" : $"{entryPointFullTypeName}.Main";
             }
         }
+
+        private static void FindMainMethodCandidates(TypeInfo type, List<MethodInfo> candidates) => candidates.AddRange(type
+            .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            .Where(m => string.Equals("Main", m.Name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals("<Main>", m.Name, StringComparison.OrdinalIgnoreCase))
+            .Where(method => method.ReturnType == typeof(void)
+                    || method.ReturnType == typeof(int)
+                    || method.ReturnType == typeof(System.Threading.Tasks.Task)
+                    || method.ReturnType == typeof(System.Threading.Tasks.Task<int>)));
     }
 }
