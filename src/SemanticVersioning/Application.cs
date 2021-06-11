@@ -11,6 +11,7 @@ namespace Mondo.SemanticVersioning
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.CommandLine.IO;
 
     /// <summary>
     /// The application class.
@@ -34,6 +35,7 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// The file function delegate.
         /// </summary>
+        /// <param name="console">The console.</param>
         /// <param name="first">The first file.</param>
         /// <param name="second">The second file.</param>
         /// <param name="previous">The previous version.</param>
@@ -43,6 +45,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="versionSuffixParameter">The version suffix parameter.</param>
         /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
         public delegate void FileFunctionDelegate(
+            System.CommandLine.IConsole console,
             System.IO.FileInfo first,
             System.IO.FileInfo second,
             NuGet.Versioning.SemanticVersion previous,
@@ -55,6 +58,7 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// The process project of solution delegate.
         /// </summary>
+        /// <param name="console">The console.</param>
         /// <param name="projectOrSolution">The project or solution.</param>
         /// <param name="configuration">The configuration.</param>
         /// <param name="platform">The platform.</param>
@@ -74,6 +78,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
         /// <returns>The task.</returns>
         public delegate Task<int> ProcessProjectOrSolutionDelegate(
+            System.CommandLine.IConsole console,
             System.IO.FileSystemInfo projectOrSolution,
             string? configuration,
             string? platform,
@@ -94,35 +99,37 @@ namespace Mondo.SemanticVersioning
 
         /// <inheritdoc cref="FileFunctionDelegate" />
         public static void FileFunction(
-                System.IO.FileInfo first,
-                System.IO.FileInfo second,
-                NuGet.Versioning.SemanticVersion previous,
-                string build,
-                OutputTypes output,
-                string buildNumberParameter,
-                string versionSuffixParameter,
-                bool noLogo)
+            System.CommandLine.IConsole console,
+            System.IO.FileInfo first,
+            System.IO.FileInfo second,
+            NuGet.Versioning.SemanticVersion previous,
+            string build,
+            OutputTypes output,
+            string buildNumberParameter,
+            string versionSuffixParameter,
+            bool noLogo)
         {
             if (!noLogo)
             {
-                WriteHeader();
+                WriteHeader(console);
             }
 
             var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
             WriteChanges(output, result.Differences);
             if (output.HasFlag(OutputTypes.TeamCity))
             {
-                WriteTeamCityVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
+                WriteTeamCityVersion(console, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
             }
 
             if (output.HasFlag(OutputTypes.Json))
             {
-                WriteJsonVersion(NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                WriteJsonVersion(console, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
             }
         }
 
         /// <inheritdoc cref="ProcessProjectOrSolutionDelegate" />
         public static Task<int> ProcessProjectOrSolution(
+            System.CommandLine.IConsole console,
             System.IO.FileSystemInfo projectOrSolution,
             string? configuration,
             string? platform,
@@ -143,10 +150,11 @@ namespace Mondo.SemanticVersioning
         {
             if (!noLogo)
             {
-                WriteHeader();
+                WriteHeader(console);
             }
 
             return ProcessProjectOrSolutionWithInstance(
+                console,
                 projectOrSolution,
                 RegisterMSBuild(projectOrSolution),
                 configuration,
@@ -166,6 +174,7 @@ namespace Mondo.SemanticVersioning
                 versionSuffixParameter);
 
             static async Task<int> ProcessProjectOrSolutionWithInstance(
+                System.CommandLine.IConsole console,
                 System.IO.FileSystemInfo projectOrSolution,
                 Microsoft.Build.Locator.VisualStudioInstance instance,
                 string? configuration,
@@ -198,7 +207,7 @@ namespace Mondo.SemanticVersioning
                     var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
                     if (output.HasFlag(OutputTypes.Diagnostic))
                     {
-                        Console.WriteLine(Properties.Resources.Checking, projectName);
+                        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
                     }
 
                     var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
@@ -267,7 +276,7 @@ namespace Mondo.SemanticVersioning
 
                     if (output.HasFlag(OutputTypes.Diagnostic))
                     {
-                        Console.WriteLine(Properties.Resources.Calculated, projectName, calculatedVersion);
+                        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
                     }
 
                     version = Max(version, calculatedVersion);
@@ -276,12 +285,12 @@ namespace Mondo.SemanticVersioning
                 // write out the version and the suffix
                 if (output.HasFlag(OutputTypes.TeamCity))
                 {
-                    WriteTeamCityVersion(version, buildNumberParameter, versionSuffixParameter);
+                    WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
                 }
 
                 if (output.HasFlag(OutputTypes.Json))
                 {
-                    WriteJsonVersion(version);
+                    WriteJsonVersion(console, version);
                 }
 
                 return 0;
@@ -540,10 +549,10 @@ namespace Mondo.SemanticVersioning
             }
         }
 
-        private static void WriteHeader()
+        private static void WriteHeader(System.CommandLine.IConsole console)
         {
-            Console.WriteLine(Properties.Resources.Logo, VersionUtils.GetVersion());
-            Console.WriteLine(Properties.Resources.Copyright);
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Logo, VersionUtils.GetVersion()));
+            console.Out.WriteLine(Properties.Resources.Copyright);
         }
 
         private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
