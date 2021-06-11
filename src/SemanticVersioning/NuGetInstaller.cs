@@ -49,7 +49,7 @@ namespace Altemiq.SemanticVersioning
             foreach (var packageName in packageNames)
             {
                 var package = version is null
-                    ? await GetLatestPackage(enumerableSources, packageName, false, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken).ConfigureAwait(false)
+                    ? await GetLatestPackage(enumerableSources, packageName, includePrerelease: false, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken).ConfigureAwait(false)
                     : await GetPackage(enumerableSources, packageName, version, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken).ConfigureAwait(false);
                 if (package is null)
                 {
@@ -68,7 +68,65 @@ namespace Altemiq.SemanticVersioning
                 return await InstallPackage(latest, enumerableSources, settings, System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), latest.Id), !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
             }
 
-            throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), null));
+            throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), version: null));
+
+            static async Task<SourcePackageDependencyInfo?> GetLatestPackage(
+                IEnumerable<string> sources,
+                string packageId,
+                bool includePrerelease,
+                NuGet.Common.ILogger log,
+                ISettings settings,
+                System.Threading.CancellationToken cancellationToken)
+            {
+                SourcePackageDependencyInfo? latest = default;
+                foreach (var repository in GetRepositories(settings, sources))
+                {
+                    var package = await GetLatestPackage(repository, packageId, includePrerelease, log, cancellationToken).ConfigureAwait(false);
+                    if (package is null)
+                    {
+                        continue;
+                    }
+
+                    latest ??= package;
+                    if (package.Version > latest.Version)
+                    {
+                        latest = package;
+                    }
+                }
+
+                return latest;
+
+                static async Task<SourcePackageDependencyInfo?> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+                {
+                    return await GetVersions(source, packageId, log, cancellationToken)
+                        .Where(package => package.Listed && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
+                        .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
+                        .FirstOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+
+            static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Setup local installation path
+                var localInstallPath = installPath ?? System.IO.Directory.GetCurrentDirectory();
+
+                // Read package file from remote or cache
+                log.LogInformation($"Downloading package {package}");
+                using var packageReader = await DownloadPackage(package, sources, settings, useCache, addToCache, log, cancellationToken).ConfigureAwait(false);
+
+                // Package installation
+                log.LogInformation($"Installing package {package} to {localInstallPath}");
+
+                var tempInstallPath = await InstallToTemp(package, packageReader, log, cancellationToken).ConfigureAwait(false);
+                CopyFiles(log, tempInstallPath, localInstallPath);
+                System.IO.Directory.Delete(tempInstallPath, recursive: true);
+
+                log.LogInformation($"Package {package} installation complete");
+                return System.IO.Path.GetFullPath(localInstallPath);
+            }
         }
 
         /// <summary>
@@ -90,35 +148,20 @@ namespace Altemiq.SemanticVersioning
             var settings = Settings.LoadDefaultSettings(root);
             await foreach (var group in packageNames
                 .ToAsyncEnumerable()
-                .SelectMany(packageName => GetVersions(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken))
+                .SelectMany(packageName => GetVersionsFromSources(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken))
                 .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion)
                 .Select(info => info.Version)
-                .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease)))
+                .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease))
+                .ConfigureAwait(false)
+                .WithCancellation(cancellationToken))
             {
                 yield return await group.MaxAsync(cancellationToken).ConfigureAwait(false);
             }
-        }
 
-        private static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Setup local installation path
-            var localInstallPath = installPath ?? System.IO.Directory.GetCurrentDirectory();
-
-            // Read package file from remote or cache
-            log.LogInformation($"Downloading package {package}");
-            using var packageReader = await DownloadPackage(package, sources, settings, useCache, addToCache, log, cancellationToken).ConfigureAwait(false);
-
-            // Package installation
-            log.LogInformation($"Installing package {package} to {localInstallPath}");
-
-            var tempInstallPath = await InstallToTemp(package, packageReader, log, cancellationToken).ConfigureAwait(false);
-            CopyFiles(log, tempInstallPath, localInstallPath);
-            System.IO.Directory.Delete(tempInstallPath, true);
-
-            log.LogInformation($"Package {package} installation complete");
-            return System.IO.Path.GetFullPath(localInstallPath);
+            static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersionsFromSources(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken)
+            {
+                return GetRepositories(settings, sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
+            }
         }
 
         private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string>? sources)
@@ -150,33 +193,6 @@ namespace Altemiq.SemanticVersioning
             }
         }
 
-        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(
-            IEnumerable<string> sources,
-            string packageId,
-            bool includePrerelease,
-            NuGet.Common.ILogger log,
-            ISettings settings,
-            System.Threading.CancellationToken cancellationToken)
-        {
-            SourcePackageDependencyInfo? latest = default;
-            foreach (var repository in GetRepositories(settings, sources))
-            {
-                var package = await GetLatestPackage(repository, packageId, includePrerelease, log, cancellationToken).ConfigureAwait(false);
-                if (package is null)
-                {
-                    continue;
-                }
-
-                latest ??= package;
-                if (package.Version > latest.Version)
-                {
-                    latest = package;
-                }
-            }
-
-            return latest;
-        }
-
         private static async Task<SourcePackageDependencyInfo?> GetPackage(
             IEnumerable<string> sources,
             string packageId,
@@ -197,21 +213,14 @@ namespace Altemiq.SemanticVersioning
             }
 
             return default;
+
+            static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+            {
+                return await GetVersions(source, packageId, log, cancellationToken)
+                    .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
-
-        private static async Task<SourcePackageDependencyInfo?> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
-            GetVersions(source, packageId, log, cancellationToken)
-                .Where(package => package.Listed && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
-                .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
-                .FirstOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        private static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken) => await
-            GetVersions(source, packageId, log, cancellationToken)
-                .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
-                .ConfigureAwait(false);
-
-        private static IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken) => GetRepositories(settings, sources).ToAsyncEnumerable().SelectMany(repository => GetVersions(repository, packageId, log, cancellationToken));
 
         private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(
             SourceRepository source,
@@ -268,7 +277,7 @@ namespace Altemiq.SemanticVersioning
             if (useCache)
             {
                 var globalPackage = GlobalPackagesFolderUtility.GetPackage(package, SettingsUtility.GetGlobalPackagesFolder(settings));
-                if (globalPackage != null)
+                if (globalPackage is not null)
                 {
                     logger.LogInformation($"Found {package} in global package folder");
                     return globalPackage.PackageReader;
@@ -295,15 +304,21 @@ namespace Altemiq.SemanticVersioning
 
                     if (!downloaded)
                     {
-                        throw new Exception($"Failed to fetch package {package} from source {repository}");
+                        throw new InvalidOperationException($"Failed to fetch package {package} from source {repository}");
                     }
 
                     if (addToCache)
                     {
-                        using var stream = System.IO.File.OpenRead(tempFile);
-                        var downloadCacheContext = new PackageDownloadContext(sourceCacheContext);
-                        var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
-                        using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
+                        var stream = System.IO.File.OpenRead(tempFile);
+#if NETCOREAPP3_1_OR_GREATER
+                        await
+#endif
+                        using (stream)
+                        {
+                            var downloadCacheContext = new PackageDownloadContext(sourceCacheContext);
+                            var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
+                            using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
+                        }
                     }
 
                     return new PackageArchiveReader(tempFile);
@@ -318,7 +333,7 @@ namespace Altemiq.SemanticVersioning
             cancellationToken.ThrowIfCancellationRequested();
 
             var tempInstallPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
-            var versionFolderPathResolver = new VersionFolderPathResolver(tempInstallPath, true);
+            var versionFolderPathResolver = new VersionFolderPathResolver(tempInstallPath, isLowercase: true);
 
             var hashFileName = versionFolderPathResolver.GetHashFileName(package.Id, package.Version);
             var packageFiles = (await reader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).Where(file => ShouldInclude(file, hashFileName)).ToList();
@@ -334,20 +349,20 @@ namespace Altemiq.SemanticVersioning
             // Not all the files from a zip file are needed
             // So, files such as '.rels' and '[Content_Types].xml' are not extracted
             var fileName = System.IO.Path.GetFileName(fullName);
-            if (fileName != null)
+            if (fileName is not null)
             {
-                if (fileName == ".rels")
+                if (string.Equals(fileName, ".rels", StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
 
-                if (fileName == "[Content_Types].xml")
+                if (string.Equals(fileName, "[Content_Types].xml", StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
             }
 
-            return System.IO.Path.GetExtension(fullName) != ".psmdcp"
+            return !string.Equals(System.IO.Path.GetExtension(fullName), ".psmdcp", StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(fullName, hashFileName, StringComparison.OrdinalIgnoreCase)
                 && (!PackageHelper.IsRoot(fullName) || (!PackageHelper.IsNuspec(fullName) && !fullName.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase)));
         }
@@ -378,11 +393,11 @@ namespace Altemiq.SemanticVersioning
                 }
 
                 // copy to destination
-                System.IO.File.Copy(file, destinationPath, true);
+                System.IO.File.Copy(file, destinationPath, overwrite: true);
 
                 if (!ValidateFileInstallation(file, source, destination))
                 {
-                    throw new Exception($"Failed to install package file <{relativePath}> to <{destinationPath}>");
+                    throw new InvalidOperationException($"Failed to install package file <{relativePath}> to <{destinationPath}>");
                 }
 
                 logger.LogDebug($"Installed file {relativePath} to {destinationPath}");
@@ -399,7 +414,7 @@ namespace Altemiq.SemanticVersioning
             var baseUri = new Uri(basePath);
             var uri = new Uri(absolutePath);
 
-            if (baseUri.Scheme != uri.Scheme)
+            if (!string.Equals(baseUri.Scheme, uri.Scheme, StringComparison.Ordinal))
             {
                 return absolutePath;
             }

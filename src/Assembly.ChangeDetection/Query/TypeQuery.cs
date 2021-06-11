@@ -16,7 +16,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     /// </summary>
     internal class TypeQuery
     {
-        private static readonly TypeQueryFactory QueryFactory = new TypeQueryFactory();
+        private static readonly TypeQueryFactory QueryFactory = new();
 
         private TypeQueryMode typeQueryMode;
 
@@ -142,7 +142,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <param name="assembly">The assembly.</param>
         /// <param name="typeName">The type name.</param>
         /// <returns>The type definition.</returns>
-        public static TypeDefinition? GetTypeByName(AssemblyDefinition assembly, string typeName) => new TypeQuery().GetTypes(assembly).FirstOrDefault(type => type.FullName == typeName);
+        public static TypeDefinition? GetTypeByName(AssemblyDefinition assembly, string typeName) => new TypeQuery().GetTypes(assembly).FirstOrDefault(type => string.Equals(type.FullName, typeName, StringComparison.Ordinal));
 
         /// <summary>
         /// Filters the type list.
@@ -168,7 +168,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         private static bool IsEnabled(TypeQueryMode current, TypeQueryMode requested) => (current & requested) == requested;
 
-        private static bool HasCompilerGeneratedAttribute(TypeDefinition typeDef) => typeDef.CustomAttributes?.Any(att => att.Constructor.DeclaringType.Name == "CompilerGeneratedAttribute") ?? false;
+        private static bool HasCompilerGeneratedAttribute(TypeDefinition typeDef) => typeDef.CustomAttributes?.Any(att => string.Equals(att.Constructor.DeclaringType.Name, "CompilerGeneratedAttribute", StringComparison.Ordinal)) ?? false;
 
         private static TypeQueryMode CheckSearchMode(TypeQueryMode mode)
         {
@@ -192,12 +192,10 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             if (this.CheckVisbility(typeDef))
             {
                 // throw away compiler generated types
-                if (this.IsEnabled(TypeQueryMode.NotCompilerGenerated))
+                if (this.IsEnabled(TypeQueryMode.NotCompilerGenerated)
+                    && (typeDef.IsSpecialName || string.Equals(typeDef.Name, "<Module>", StringComparison.Ordinal) || HasCompilerGeneratedAttribute(typeDef)))
                 {
-                    if (typeDef.IsSpecialName || typeDef.Name == "<Module>" || HasCompilerGeneratedAttribute(typeDef))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
 
                 // Nested types have no declaring namespace only the not nested declaring type
@@ -209,7 +207,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                     decl = decl.DeclaringType;
                 }
 
-                if (decl?.Namespace != null)
+                if (decl?.Namespace is not null)
                 {
                     typeNS = decl.Namespace;
                 }

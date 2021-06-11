@@ -39,7 +39,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             var formattedType = normalizedName;
 
             var root = ParseGenericType(normalizedName);
-            if (root != null)
+            if (root is not null)
             {
                 TransformGeneric(root, typeNameTransformer);
 
@@ -107,7 +107,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 {
                     if (curType is null)
                     {
-                        curType = new GenericType(curArg.ToString(), null);
+                        curType = new GenericType(curArg.ToString(), parent: null);
                         root = curType;
                     }
                     else
@@ -121,12 +121,12 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 }
                 else if (normalizedName[i] == '>')
                 {
-                    if (curArg.Length > 0 && curType != null)
+                    if (curArg.Length > 0 && curType is not null)
                     {
-                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), null));
+                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
                     }
 
-                    if (curType?.Parent != null)
+                    if (curType?.Parent is not null)
                     {
                         curType = curType.Parent;
                     }
@@ -135,9 +135,9 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 }
                 else if (normalizedName[i] == ',')
                 {
-                    if (curArg.Length > 0 && curType != null)
+                    if (curArg.Length > 0 && curType is not null)
                     {
-                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), null));
+                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
                     }
 
                     curArg.Length = 0;

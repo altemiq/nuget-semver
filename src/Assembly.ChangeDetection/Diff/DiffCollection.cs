@@ -38,11 +38,13 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
         /// <summary>
         /// Gets the added list.
         /// </summary>
-        public IList<T> AddedList => this.Added.Select(type => type.ObjectV1).ToList();
+        /// <returns>The added list.</returns>
+        public IReadOnlyList<T> GetAddedList() => this.Added.Select(type => type.ObjectV1).ToList();
 
         /// <summary>
         /// Gets the removed list.
         /// </summary>
-        public IList<T> RemovedList => this.Removed.Select(type => type.ObjectV1).ToList();
+        /// <returns>The removed list.</returns>
+        public IReadOnlyList<T> GetRemovedList() => this.Removed.Select(type => type.ObjectV1).ToList();
     }
 }

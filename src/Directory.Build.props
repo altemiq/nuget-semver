@@ -8,28 +8,43 @@
     <Authors>Ross King</Authors>
     <Deterministic>true</Deterministic>
     <NeutralLanguage>en-AU</NeutralLanguage>
-    <Copyright>Copyright © $(Company) Pty Ltd 2020</Copyright>
+    <Copyright>Copyright © $(Company) Pty Ltd 2021</Copyright>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
     <Nullable>enable</Nullable>
+  </PropertyGroup>
 
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  <PropertyGroup Label="Analyzers">
+    <AnalysisMode>Recommended</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="$([MSBuild]::GetPathOfFileAbove(stylecop.json))" />
+    <None Include="$([MSBuild]::GetPathOfFileAbove(.editorconfig))" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Roslynator.Analyzers" Version="3.0.0">
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Roslynator.Analyzers" Version="3.1.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.24.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 

@@ -17,7 +17,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
     /// </summary>
     public sealed class TypeDiff
     {
-        private static readonly TypeDefinition NoType = new TypeDefinition("noType", null, TypeAttributes.Class, null);
+        private static readonly TypeDefinition NoType = new("noType", name: null, TypeAttributes.Class, baseType: null);
 
         private TypeDiff(TypeDefinition v1, TypeDefinition v2)
         {
@@ -125,7 +125,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
 
             return CompareNull(t1, t2)
                 && CompareNull(t1.BaseType, t2.BaseType)
-                && t1.BaseType.FullName == t2.BaseType.FullName;
+                && string.Equals(t1.BaseType.FullName, t2.BaseType.FullName, StringComparison.Ordinal);
         }
 
         private void DoDiff(QueryAggregator diffQueries)
@@ -149,7 +149,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
             {
                 if (!this.TypeV2.Interfaces.Select(i => i.InterfaceType).Any(baseV2 => baseV2.IsEqual(baseV1)))
                 {
-                    this.Interfaces.Add(new DiffResult<TypeReference>(baseV1, new DiffOperation(false)));
+                    this.Interfaces.Add(new DiffResult<TypeReference>(baseV1, new DiffOperation(isAdded: false)));
                 }
             }
 
@@ -158,7 +158,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
             {
                 if (!this.TypeV1.Interfaces.Select(i => i.InterfaceType).Any(baseV1 => baseV1.IsEqual(baseV2)))
                 {
-                    this.Interfaces.Add(new DiffResult<TypeReference>(baseV2, new DiffOperation(true)));
+                    this.Interfaces.Add(new DiffResult<TypeReference>(baseV2, new DiffOperation(isAdded: true)));
                 }
             }
         }
@@ -169,7 +169,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
             var fieldsV2 = diffQueries.ExecuteAndAggregateFieldQueries(this.TypeV2);
 
             var fieldDiffer = new ListDiffer<FieldDefinition>(this.CompareFieldsByTypeAndName);
-            fieldDiffer.Diff(fieldsV1, fieldsV2, addedField => this.Fields.Add(new DiffResult<FieldDefinition>(addedField, new DiffOperation(true))), removedField => this.Fields.Add(new DiffResult<FieldDefinition>(removedField, new DiffOperation(false))));
+            fieldDiffer.Diff(fieldsV1, fieldsV2, addedField => this.Fields.Add(new DiffResult<FieldDefinition>(addedField, new DiffOperation(isAdded: true))), removedField => this.Fields.Add(new DiffResult<FieldDefinition>(removedField, new DiffOperation(isAdded: false))));
         }
 
         private bool CompareFieldsByTypeAndName(FieldDefinition fieldV1, FieldDefinition fieldV2) => fieldV1.IsEqual(fieldV2);
@@ -181,7 +181,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
 
             var differ = new ListDiffer<MethodDefinition>(this.CompareMethodByNameAndTypesIncludingGenericArguments);
 
-            differ.Diff(methodsV1, methodsV2, added => this.Methods.Add(new DiffResult<MethodDefinition>(added, new DiffOperation(true))), removed => this.Methods.Add(new DiffResult<MethodDefinition>(removed, new DiffOperation(false))));
+            differ.Diff(methodsV1, methodsV2, added => this.Methods.Add(new DiffResult<MethodDefinition>(added, new DiffOperation(isAdded: true))), removed => this.Methods.Add(new DiffResult<MethodDefinition>(removed, new DiffOperation(isAdded: false))));
         }
 
         private bool CompareMethodByNameAndTypesIncludingGenericArguments(MethodDefinition m1, MethodDefinition m2) => m1.IsEqual(m2);
@@ -193,7 +193,7 @@ namespace Altemiq.Assembly.ChangeDetection.Diff
 
             var differ = new ListDiffer<EventDefinition>(this.CompareEvents);
 
-            differ.Diff(eventsV1, eventsV2, added => this.Events.Add(new DiffResult<EventDefinition>(added, new DiffOperation(true))), removed => this.Events.Add(new DiffResult<EventDefinition>(removed, new DiffOperation(false))));
+            differ.Diff(eventsV1, eventsV2, added => this.Events.Add(new DiffResult<EventDefinition>(added, new DiffOperation(isAdded: true))), removed => this.Events.Add(new DiffResult<EventDefinition>(removed, new DiffOperation(isAdded: false))));
         }
 
         private bool CompareEvents(EventDefinition evV1, EventDefinition evV2) => evV1.IsEqual(evV2);

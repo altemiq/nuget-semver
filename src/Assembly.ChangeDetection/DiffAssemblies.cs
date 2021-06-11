@@ -43,7 +43,7 @@ namespace Altemiq.Assembly.ChangeDetection
                 var assemblyV1 = Introspection.AssemblyLoader.LoadCecilAssembly(fileName1);
                 var assemblyV2 = Introspection.AssemblyLoader.LoadCecilAssembly(fileName2);
 
-                if (assemblyV1 != null && assemblyV2 != null)
+                if (assemblyV1 is not null && assemblyV2 is not null)
                 {
                     var differ = new Diff.AssemblyDiffer(assemblyV1, assemblyV2);
                     var differences = differ.GenerateTypeDiff(Query.QueryAggregator.PublicApiQueries);

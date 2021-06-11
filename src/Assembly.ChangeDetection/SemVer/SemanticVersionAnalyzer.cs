@@ -49,7 +49,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
 
             var lastSemanticVersions = lastVersions is null
                 ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
-                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
+                : lastVersions.Select(SafeParse).WhereNotNull().ToArray();
 
             NuGet.Versioning.SemanticVersion previousVersion;
             if (System.IO.File.Exists(previousAssembly))
@@ -76,14 +76,21 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
                 calculatedVersion = GetNextPatchVersion(lastSemanticVersions, previousVersion, prerelease);
             }
 
-            if (build != null)
+            if (build is not null)
             {
                 calculatedVersion = calculatedVersion.Change(metadata: build);
             }
 
+            var resultsType = (breakingChange, featuresAdded) switch
+            {
+                (true, _) => ResultsType.Major,
+                (false, true) => ResultsType.Minor,
+                (false, false) => ResultsType.Patch,
+            };
+
             return new AnalysisResult(
                 calculatedVersion.ToString(),
-                breakingChange ? ResultsType.Major : featuresAdded ? ResultsType.Minor : ResultsType.Patch,
+                resultsType,
                 differences);
         }
 
@@ -97,7 +104,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         {
             var lastSemanticVersions = lastVersions is null
                 ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
-                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
+                : lastVersions.Select(SafeParse).WhereNotNull().ToArray();
 
             var previousVersion = lastSemanticVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? lastSemanticVersions.Max();
             return GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(major: previousVersion.Major + 1, minor: 0, patch: 0), prerelease);
@@ -113,7 +120,7 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         {
             var lastSemanticVersions = lastVersions is null
                 ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
-                : lastVersions.Select(lastVersion => NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version) ? version : null).Where(version => version != null).Cast<NuGet.Versioning.SemanticVersion>().ToArray();
+                : lastVersions.Select(SafeParse).WhereNotNull().ToArray();
 
             var previousVersion = lastSemanticVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? lastSemanticVersions.Max();
             return GetNextPatchVersion(lastSemanticVersions, previousVersion.Change(minor: previousVersion.Minor + 1, patch: 0), prerelease);
@@ -132,5 +139,26 @@ namespace Altemiq.Assembly.ChangeDetection.SemVer
         }
 
         private static NuGet.Versioning.SemanticVersion GetProductVersion(string assembly) => NuGet.Versioning.SemanticVersion.Parse(System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly).ProductVersion);
+
+        private static NuGet.Versioning.SemanticVersion? SafeParse(string lastVersion)
+        {
+            if (NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version))
+            {
+                return version;
+            }
+
+            return default;
+        }
+
+        private static System.Collections.Generic.IEnumerable<T> WhereNotNull<T>(this System.Collections.Generic.IEnumerable<T?> source)
+        {
+            foreach (var item in source)
+            {
+                if (item is not null)
+                {
+                    yield return item;
+                }
+            }
+        }
     }
 }

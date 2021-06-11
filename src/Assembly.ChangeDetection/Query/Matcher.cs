@@ -22,7 +22,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <summary>
         /// Gets the cached filter string regular expressions for later reuse.
         /// </summary>
-        internal static IDictionary<string, Regex> Filter2Regex { get; } = new Dictionary<string, Regex>();
+        internal static IDictionary<string, Regex> Filter2Regex { get; } = new Dictionary<string, Regex>(StringComparer.Ordinal);
 
         /// <summary>
         /// Check if a given test string does match the pattern specified by the filterString. Besides
@@ -39,7 +39,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <returns>true if the teststring does match, false otherwise.</returns>
         public static bool MatchWithWildcards(string? filterString, string? testString, StringComparison compMode)
         {
-            if (filterString is null || filterString == "*")
+            if (filterString is null || string.Equals(filterString, "*", StringComparison.Ordinal))
             {
                 return true;
             }
@@ -123,7 +123,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             }
 
             var rex = "^" + Regex.Escape(filter.Replace("*", EscapedStar)) + "$";
-            regex = new Regex(rex.Replace(EscapedStar, ".*?"), (mode == StringComparison.CurrentCultureIgnoreCase || mode == StringComparison.InvariantCultureIgnoreCase || mode == StringComparison.OrdinalIgnoreCase) ? RegexOptions.IgnoreCase : RegexOptions.None);
+            regex = new Regex(rex.Replace(EscapedStar, ".*?"), (mode == StringComparison.CurrentCultureIgnoreCase || mode == StringComparison.InvariantCultureIgnoreCase || mode == StringComparison.OrdinalIgnoreCase) ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(3));
             Filter2Regex.Add(filter, regex);
             return regex;
         }

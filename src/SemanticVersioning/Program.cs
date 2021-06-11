@@ -32,7 +32,7 @@ var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calcula
 var diffCommandBuilder = new CommandBuilder(new Command("diff", "Calculates the differences"))
     .AddCommand(fileCommandBuilder.Command)
     .AddCommand(solutionCommandBuilder.Command)
-    .AddGlobalOption(new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>(argumentResult => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) }.WithDefaultValue(null))
+    .AddGlobalOption(new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, "The previous version") { Argument = new Argument<NuGet.Versioning.SemanticVersion>(argumentResult => NuGet.Versioning.SemanticVersion.Parse(argumentResult.Tokens.Single().Value)) }.WithDefaultValue(value: null))
     .AddGlobalOption(new Option<string>("--build-number-parameter", "The parameter name for the build number").WithArgumentName("PARAMETER").WithDefaultValue("buildNumber"))
     .AddGlobalOption(new Option<string>("--version-suffix-parameter", "The parameter name for the version suffix").WithArgumentName("PARAMETER").WithDefaultValue("system.build.suffix"))
     .AddGlobalOption(new Option<OutputTypes>("--output", "The output type").WithArgumentName("OUTPUT_TYPE").WithDefaultValue(OutputTypes.TeamCity | OutputTypes.Diagnostic))

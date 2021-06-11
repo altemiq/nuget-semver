@@ -16,7 +16,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     /// </summary>
     internal class TypeQueryFactory
     {
-        private static readonly Regex QueryParser = new Regex("^ *(?<modifiers>api +|nocompiler +|public +|internal +|class +|struct +|interface +|enum +)* *(?<typeName>[^ ]+) *$");
+        private static readonly Regex QueryParser = new("^ *(?<modifiers>api +|nocompiler +|public +|internal +|class +|struct +|interface +|enum +)* *(?<typeName>[^ ]+) *$", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         /// <summary>
         /// Parse a list of type queries separated by ; and return the resulting type query list.
@@ -51,7 +51,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
                 var m = QueryParser.Match(query);
                 if (!m.Success)
                 {
-                    throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.IncorrectTypeQuery, query));
+                    throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.IncorrectTypeQuery, query), nameof(typeQueries));
                 }
 
                 var mode = this.GetQueryMode(m);
@@ -71,7 +71,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// </summary>
         /// <param name="fullQualifiedTypeName">The fully qualified name.</param>
         /// <returns>The namespace and type.</returns>
-        internal static (string? @namespace, string type) SplitNameSpaceAndType(string fullQualifiedTypeName)
+        internal static (string? Namespace, string Type) SplitNameSpaceAndType(string fullQualifiedTypeName)
         {
             if (string.IsNullOrEmpty(fullQualifiedTypeName))
             {
@@ -93,7 +93,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// <param name="m">The match.</param>
         /// <param name="value">The value.</param>
         /// <returns>The result.</returns>
-        protected internal virtual bool Captures(Match m, string value) => m.Groups["modifiers"].Captures.OfType<Capture>().Any(capture => value == capture.Value.TrimEnd());
+        protected internal virtual bool Captures(Match m, string value) => m.Groups["modifiers"].Captures.OfType<Capture>().Any(capture => string.Equals(value, capture.Value.TrimEnd(), StringComparison.Ordinal));
 
         private TypeQueryMode GetQueryMode(Match m)
         {

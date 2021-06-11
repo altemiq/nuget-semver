@@ -147,30 +147,30 @@ namespace Altemiq.Assembly.ChangeDetection.Query
 
         private class TypeNameComparer : IEqualityComparer<TypeDefinition>
         {
-            public bool Equals(TypeDefinition x, TypeDefinition y) => x.FullName == y.FullName;
+            public bool Equals(TypeDefinition x, TypeDefinition y) => string.Equals(x.FullName, y.FullName, System.StringComparison.Ordinal);
 
-            public int GetHashCode(TypeDefinition obj) => obj.Name.GetHashCode();
+            public int GetHashCode(TypeDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
         }
 
         private class MethodComparer : IEqualityComparer<MethodDefinition>
         {
             public bool Equals(MethodDefinition x, MethodDefinition y) => x.IsEqual(y);
 
-            public int GetHashCode(MethodDefinition obj) => obj.Name.GetHashCode();
+            public int GetHashCode(MethodDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
         }
 
         private class FieldComparer : IEqualityComparer<FieldDefinition>
         {
             public bool Equals(FieldDefinition x, FieldDefinition y) => x.IsEqual(y);
 
-            public int GetHashCode(FieldDefinition obj) => obj.Name.GetHashCode();
+            public int GetHashCode(FieldDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
         }
 
         private class EventComparer : IEqualityComparer<EventDefinition>
         {
             public bool Equals(EventDefinition x, EventDefinition y) => x.AddMethod.IsEqual(y.AddMethod);
 
-            public int GetHashCode(EventDefinition obj) => obj.AddMethod.Name.GetHashCode();
+            public int GetHashCode(EventDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.AddMethod.Name);
         }
     }
 }

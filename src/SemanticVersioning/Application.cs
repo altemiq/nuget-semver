@@ -29,7 +29,7 @@ namespace Altemiq.SemanticVersioning
 
         private const string TargetExtPropertyName = "TargetExt";
 
-        private static readonly NuGet.Versioning.SemanticVersion Empty = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+        private static readonly NuGet.Versioning.SemanticVersion Empty = new(0, 0, 0);
 
         /// <summary>
         /// The file function delegate.
@@ -187,7 +187,9 @@ namespace Altemiq.SemanticVersioning
                 var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 var packageIds = packageId ?? Enumerable.Empty<string>();
-                var regex = string.IsNullOrEmpty(packageIdRegex) ? null : new System.Text.RegularExpressions.Regex(packageIdRegex);
+                var regex = string.IsNullOrEmpty(packageIdRegex)
+                    ? null
+                    : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
                 using var projectCollection = GetProjects(projectOrSolution, instance, configuration, platform);
                 foreach (var project in projectCollection.LoadedProjects.Where(project =>
                     bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
@@ -200,7 +202,7 @@ namespace Altemiq.SemanticVersioning
                     }
 
                     var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
-                    if (exclude?.Contains(projectPackageId) == true)
+                    if (exclude?.Contains(projectPackageId, StringComparer.Ordinal) == true)
                     {
                         continue;
                     }
@@ -209,10 +211,10 @@ namespace Altemiq.SemanticVersioning
                     var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
 
                     // install the NuGet package
-                    var projectPackageIds = new[] { projectPackageId }.Union(packageIds);
-                    if (regex != null)
+                    var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
+                    if (regex is not null)
                     {
-                        projectPackageIds = projectPackageIds.Union(new[] { regex.Replace(projectPackageId, packageIdReplace) });
+                        projectPackageIds = projectPackageIds.Union(new[] { regex.Replace(projectPackageId, packageIdReplace) }, StringComparer.Ordinal);
                     }
 
                     var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
@@ -241,13 +243,13 @@ namespace Altemiq.SemanticVersioning
                         // check the frameworks
                         var currentFrameworks = System.IO.Directory.EnumerateDirectories(packageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
                         var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
-                        var frameworks = currentFrameworks.Intersect(previousFrameworks);
-                        if (previousFrameworks.Except(currentFrameworks).Any())
+                        var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
+                        if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             // we have removed frameworks, this is a breaking change
                             calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateBreakingChange(previousStringVersions, GetVersionSuffix());
                         }
-                        else if (currentFrameworks.Except(previousFrameworks).Any())
+                        else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             // we have added frameworks, this is a feature change
                             calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateFeatureChange(previousStringVersions, GetVersionSuffix());
@@ -260,7 +262,7 @@ namespace Altemiq.SemanticVersioning
                             WriteChanges(output, result.Differences);
                         }
 
-                        System.IO.Directory.Delete(installDir, true);
+                        System.IO.Directory.Delete(installDir, recursive: true);
                     }
 
                     if (output.HasFlag(OutputTypes.Diagnostic))
@@ -335,7 +337,7 @@ namespace Altemiq.SemanticVersioning
                         .Select(instance =>
                         {
                             var path = instance.MSBuildPath;
-                            var properties = new System.Collections.Generic.Dictionary<string, string>
+                            var properties = new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal)
                             {
                                 { "MSBuildSDKsPath", System.IO.Path.Combine(path, "Sdks") },
                                 { "RoslynTargetsPath", System.IO.Path.Combine(path, "Roslyn") },
@@ -362,15 +364,15 @@ namespace Altemiq.SemanticVersioning
                     {
                         if (solution is null)
                         {
-                            return (configuration, platform, true);
+                            return (configuration, platform, IncludeInBuild: true);
                         }
 
                         // get the project in solution
-                        var projectInSolution = solution.ProjectsInOrder.First(p => p.AbsolutePath == path);
+                        var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
                         var configurationName = configuration ?? solution.GetDefaultConfigurationName();
                         var platformName = platform ?? solution.GetDefaultPlatformName();
 
-                        var solutionConfiguration = solution.SolutionConfigurations.First(c => c.ConfigurationName == configurationName && c.PlatformName == platformName);
+                        var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
 
                         var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
 
@@ -483,7 +485,7 @@ namespace Altemiq.SemanticVersioning
                             ? tempVersion
                             : default;
                         allowPrerelease = sdkElement.TryGetProperty("allowPrerelease", out var tempAllowPrerelease) && tempAllowPrerelease.GetBoolean();
-                        if (requestedVersion != null)
+                        if (requestedVersion is not null)
                         {
                             instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, requestedVersion));
                             if (instance.Instance is null)
@@ -498,7 +500,7 @@ namespace Altemiq.SemanticVersioning
 
                                 var maxVersion = validInstances.Length > 0
                                     ? validInstances.Max(instance => instance.Version)
-                                    : throw new Exception($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", instances.Select(instance => $"{instance.Instance.Version} [{instance.Instance.MSBuildPath}]"))}");
+                                    : throw new InvalidOperationException(FormattableString.Invariant($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", instances.Select(instance => $"{instance.Instance.Version} [{instance.Instance.MSBuildPath}]"))}"));
                                 instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, maxVersion));
                             }
                         }
@@ -554,14 +556,15 @@ namespace Altemiq.SemanticVersioning
                 return properties;
             }
 
-            properties ??= new System.Collections.Generic.Dictionary<string, string>();
+            properties ??= new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.Ordinal);
             properties.Add(name, value);
             return properties;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0097:A class that implements IComparable<T> or IComparable should override comparison operators", Justification = "This is not required")]
         private sealed class SemanticVersion : NuGet.Versioning.SemanticVersion
         {
-            public SemanticVersion(System.Version version)
+            public SemanticVersion(Version version)
                 : base(version)
             {
             }
