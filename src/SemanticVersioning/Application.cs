@@ -18,30 +18,69 @@ namespace Altemiq.SemanticVersioning
     /// </summary>
     internal static partial class Application
     {
+        /// <summary>
+        /// The default for the configuration option.
+        /// </summary>
         public const string? DefaultConfiguration = default;
 
+        /// <summary>
+        /// The default for the platform option.
+        /// </summary>
         public const string? DefaultPlatform = default;
 
+        /// <summary>
+        /// The default for the package ID Regex option.
+        /// </summary>
         public const string? DefaultPackageIdRegex = default;
 
+        /// <summary>
+        /// The default for the package ID replace option.
+        /// </summary>
         public const string DefaultPackageIdReplace = default;
 
+        /// <summary>
+        /// The default for the version suffix option.
+        /// </summary>
         public const string? DefaultVersionSuffix = "";
 
+        /// <summary>
+        /// The default for the previous version option.
+        /// </summary>
         public const NuGet.Versioning.SemanticVersion? DefaultPrevious = default;
 
+        /// <summary>
+        /// The default for the no version suffix option.
+        /// </summary>
         public const bool DefaultNoVersionSuffix = default;
 
+        /// <summary>
+        /// The default for the no cache option.
+        /// </summary>
         public const bool DefaultNoCache = default;
 
+        /// <summary>
+        /// The default for the direct download option.
+        /// </summary>
         public const bool DefaultDirectDownload = default;
 
+        /// <summary>
+        /// The default for the no logo option.
+        /// </summary>
         public const bool DefaultNoLogo = default;
 
+        /// <summary>
+        /// The default for the output option.
+        /// </summary>
         public const OutputTypes DefaultOutput = OutputTypes.TeamCity | OutputTypes.Diagnostic;
 
+        /// <summary>
+        /// The default for the build number parameter option.
+        /// </summary>
         public const string DefaultBuildNumberParameter = "buildNumber";
 
+        /// <summary>
+        /// The default for the version suffix parameter option.
+        /// </summary>
         public const string DefaultVersionSuffixParameter = "system.build.suffix";
 
         private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
@@ -219,13 +258,18 @@ namespace Altemiq.SemanticVersioning
                 string buildNumberParameter,
                 string versionSuffixParameter)
             {
+                if (output.HasFlag(OutputTypes.Diagnostic))
+                {
+                    console.Out.WriteLine($"Using {instance.Name} {instance.Version}");
+                }
+
                 var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 var packageIds = packageId ?? Enumerable.Empty<string>();
                 var regex = string.IsNullOrEmpty(packageIdRegex)
                     ? null
                     : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
-                using var projectCollection = GetProjects(projectOrSolution, instance, configuration, platform);
+                using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
                 foreach (var project in projectCollection.LoadedProjects.Where(project =>
                     bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
                     && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
@@ -365,31 +409,9 @@ namespace Altemiq.SemanticVersioning
                     yield return value;
                 }
 
-                static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, Microsoft.Build.Locator.VisualStudioInstance instance, string? configuration, string? platform)
+                static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, string? configuration, string? platform)
                 {
-                    // get the highest version
-                    var toolsets = Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances()
-                        .Select(instance =>
-                        {
-                            var path = instance.MSBuildPath;
-                            var properties = new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal)
-                            {
-                                { "MSBuildSDKsPath", System.IO.Path.Combine(path, "Sdks") },
-                                { "RoslynTargetsPath", System.IO.Path.Combine(path, "Roslyn") },
-                                { "MSBuildExtensionsPath", path },
-                            };
-
-                            var propsFile = System.IO.Directory.EnumerateFiles(path, "Microsoft.Common.props", System.IO.SearchOption.AllDirectories).First();
-                            var currentToolsVersion = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(propsFile));
-                            return (instance.Version, ToolSet: new Microsoft.Build.Evaluation.Toolset(currentToolsVersion, path, properties, Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection, path));
-                        })
-                        .ToDictionary(val => val.Version, val => val.ToolSet);
-
-                    var toolset = toolsets[instance.Version];
                     var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-                    projectCollection.AddToolset(toolset);
-                    projectCollection.DefaultToolsVersion = toolset.ToolsVersion;
-
                     var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
                     var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
                         ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
@@ -412,7 +434,7 @@ namespace Altemiq.SemanticVersioning
                             .AddProperty("Configuration", configurationName)
                             .AddProperty("Platform", platformName);
 
-                        projectCollection.LoadProject(projectPath, globalProperties, toolset.ToolsVersion);
+                        projectCollection.LoadProject(projectPath, globalProperties, projectCollection.DefaultToolsVersion);
                     }
 
                     return projectCollection;
@@ -502,13 +524,12 @@ namespace Altemiq.SemanticVersioning
 
             static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(System.IO.FileSystemInfo projectOrSolution)
             {
-                (Microsoft.Build.Locator.VisualStudioInstance Instance, NuGet.Versioning.SemanticVersion Version) instance = default;
+                (Microsoft.Build.Locator.VisualStudioInstance? Instance, NuGet.Versioning.SemanticVersion? Version) instance = default;
                 var globalJson = FindGlobalJson(projectOrSolution);
                 if (globalJson is not null)
                 {
                     // get the tool version
-                    var instances = Microsoft.Build.Locator.MSBuildLocator
-                        .QueryVisualStudioInstances()
+                    var instances = GetInstances()
                         .Select(instance => (Instance: instance, Version: new SemanticVersion(instance.Version)))
                         .ToArray();
 
@@ -542,13 +563,15 @@ namespace Altemiq.SemanticVersioning
                     }
                 }
 
+                instance.Instance ??= GetInstances().FirstOrDefault();
+
                 if (instance.Instance is not null)
                 {
                     Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance.Instance);
                     return instance.Instance;
                 }
 
-                return Microsoft.Build.Locator.MSBuildLocator.RegisterDefaults();
+                throw new InvalidOperationException("No instances of MSBuild could be detected.");
 
                 static string? FindGlobalJson(System.IO.FileSystemInfo? path)
                 {
@@ -572,6 +595,14 @@ namespace Altemiq.SemanticVersioning
 
                     return default;
                 }
+            }
+
+            static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
+            {
+                return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
+                {
+                    DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
+                });
             }
         }
 

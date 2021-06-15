@@ -15,7 +15,7 @@ namespace Altemiq.SemanticVersioning
     public static class VersionUtils
     {
         private static readonly Lazy<string> AssemblyVersion =
-            new Lazy<string>(() =>
+            new(() =>
             {
                 var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
                 var assemblyVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
