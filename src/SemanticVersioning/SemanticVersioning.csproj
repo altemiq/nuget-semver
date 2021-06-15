@@ -12,9 +12,11 @@
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Deterministic>true</Deterministic>
+  </PropertyGroup>
 
+  <PropertyGroup Label="Versions">
     <MicrosoftBuildVersion>16.3.0</MicrosoftBuildVersion>
-    <NuGetVersion>5.5.1</NuGetVersion>
+    <NuGetVersion>5.9.1</NuGetVersion>
     <DotNetVersion>5.0.0</DotNetVersion>
   </PropertyGroup>
 
@@ -41,9 +43,27 @@
     <PackageReference Include="System.Linq.Async.Queryable" Version="$(DotNetVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition=" $(TargetFramework.StartsWith('netcoreapp2')) ">
-    <PackageReference Include="System.Text.Json" Version="$(DotNetVersion)" />
-  </ItemGroup>
+  <Choose>
+    <When Condition=" $(TargetFramework.StartsWith('netcoreapp2')) ">
+      <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="$(DotNetVersion)" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <SystemVersion>4.3.0</SystemVersion>
+      </PropertyGroup>
+
+      <ItemGroup>
+        <PackageReference Include="System.Diagnostics.Debug" Version="$(SystemVersion)" />
+        <PackageReference Include="System.IO.FileSystem.Primitives" Version="$(SystemVersion)" />
+        <PackageReference Include="System.Text.Encoding.Extensions" Version="$(SystemVersion)" />
+        <PackageReference Include="System.Threading" Version="$(SystemVersion)" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
+  
 
   <ItemGroup>
     <ProjectReference Include="..\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
