@@ -35,8 +35,6 @@
 
         private static SemVer.AnalysisResult analysisResult;
 
-        private readonly Establish context = () => { };
-
         private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1-alpha" });
 
         private readonly It should_have_a_major_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Major);
@@ -50,8 +48,6 @@
         private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "NonBreakingAdditiveChange"), "Original.dll");
 
         private static SemVer.AnalysisResult analysisResult;
-
-        private readonly Establish context = () => { };
 
         private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1" });
 
@@ -67,8 +63,6 @@
 
         private static SemVer.AnalysisResult analysisResult;
 
-        private readonly Establish context = () => { };
-
         private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, TestAssembly, new[] { "1.0.1-beta" });
 
         private readonly It should_have_a_patch_version_change = () => analysisResult.ResultsType.Should().Be(SemVer.ResultsType.Patch);
@@ -82,8 +76,6 @@
         private static readonly string TestAssembly = GetPath(System.IO.Path.Combine("Projects", "New"), "New.dll");
 
         private static SemVer.AnalysisResult analysisResult;
-
-        private readonly Establish context = () => { };
 
         private readonly Because of = () => analysisResult = SemVer.SemanticVersionAnalyzer.Analyze(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(BaseAssembly), System.IO.Path.GetFileName(TestAssembly)), TestAssembly, new[] { "1.0.1" });
 

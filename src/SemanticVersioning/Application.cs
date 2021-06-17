@@ -524,85 +524,18 @@ namespace Mondo.SemanticVersioning
 
             static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(System.IO.FileSystemInfo projectOrSolution)
             {
-                (Microsoft.Build.Locator.VisualStudioInstance? Instance, NuGet.Versioning.SemanticVersion? Version) instance = default;
-                var globalJson = FindGlobalJson(projectOrSolution);
-                if (globalJson is not null)
-                {
-                    // get the tool version
-                    var instances = GetInstances()
-                        .Select(instance => (Instance: instance, Version: new SemanticVersion(instance.Version)))
-                        .ToArray();
+                var finder = new VisualStudioInstanceFinder(GetInstances());
+                var instance = finder.GetVisualStudioInstance(projectOrSolution);
+                Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
+                return instance;
 
-                    var allowPrerelease = false;
-                    var jsonDocument = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(globalJson));
-                    if (jsonDocument.RootElement.TryGetProperty("sdk", out var sdkElement))
+                static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
+                {
+                    return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
                     {
-                        var requestedVersion = sdkElement.TryGetProperty("version", out var versionElement) && NuGet.Versioning.SemanticVersion.TryParse(versionElement.GetString(), out var tempVersion)
-                            ? tempVersion
-                            : default;
-                        allowPrerelease = sdkElement.TryGetProperty("allowPrerelease", out var tempAllowPrerelease) && tempAllowPrerelease.GetBoolean();
-                        if (requestedVersion is not null)
-                        {
-                            instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, requestedVersion));
-                            if (instance.Instance is null)
-                            {
-                                // find the patch version
-                                var validInstances = instances
-                                    .Where(instance => instance.Version.Major == requestedVersion.Major
-                                        && instance.Version.Minor == requestedVersion.Minor
-                                        && (instance.Version.Patch / 100) == (requestedVersion.Patch / 100)
-                                        && (instance.Version.Patch % 100) >= (requestedVersion.Patch % 100))
-                                    .ToArray();
-
-                                var maxVersion = validInstances.Length > 0
-                                    ? validInstances.Max(instance => instance.Version)
-                                    : throw new InvalidOperationException(FormattableString.Invariant($"A compatible installed dotnet SDK for global.json version: [{requestedVersion}] from [{globalJson}] was not found{Environment.NewLine}Please install the [{requestedVersion}] SDK up update [{globalJson}] with an installed dotnet SDK:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", instances.Select(instance => $"{instance.Instance.Version} [{instance.Instance.MSBuildPath}]"))}"));
-                                instance = Array.Find(instances, instance => NuGet.Versioning.VersionComparer.VersionRelease.Equals(instance.Version, maxVersion));
-                            }
-                        }
-                    }
+                        DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
+                    });
                 }
-
-                instance.Instance ??= GetInstances().FirstOrDefault();
-
-                if (instance.Instance is not null)
-                {
-                    Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance.Instance);
-                    return instance.Instance;
-                }
-
-                throw new InvalidOperationException("No instances of MSBuild could be detected.");
-
-                static string? FindGlobalJson(System.IO.FileSystemInfo? path)
-                {
-                    var directory = path switch
-                    {
-                        System.IO.DirectoryInfo directoryInfo => directoryInfo.FullName,
-                        System.IO.FileInfo fileInfo => fileInfo.DirectoryName,
-                        _ => System.IO.Directory.GetCurrentDirectory(),
-                    };
-
-                    while (directory is not null)
-                    {
-                        var filePath = System.IO.Path.Combine(directory, "global.json");
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            return filePath;
-                        }
-
-                        directory = System.IO.Path.GetDirectoryName(directory);
-                    }
-
-                    return default;
-                }
-            }
-
-            static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
-            {
-                return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
-                {
-                    DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
-                });
             }
         }
 
@@ -625,15 +558,6 @@ namespace Mondo.SemanticVersioning
             properties ??= new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
             properties.Add(name, value);
             return properties;
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0097:A class that implements IComparable<T> or IComparable should override comparison operators", Justification = "This is not required")]
-        private sealed class SemanticVersion : NuGet.Versioning.SemanticVersion
-        {
-            public SemanticVersion(Version version)
-                : base(version)
-            {
-            }
         }
     }
 }

@@ -4,7 +4,8 @@
     <Company>Mondo</Company>
     <RootNamespace>$(Company).$(MSBuildProjectName.Replace('.Specs', ''))</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
-    
+    <LangVersion>latest</LangVersion>
+
     <IsPackable>false</IsPackable>
 
     <NoWarn>1701;1702;IDE0052</NoWarn>
@@ -13,11 +14,11 @@
   <PropertyGroup>
     <TestSdkVersion>16.10.0</TestSdkVersion>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="Machine.Specifications" Version="1.0.0" />
-    <PackageReference Include="Machine.Specifications.Runner.VisualStudio" Version="2.10.2" />
+    <PackageReference Include="Machine.Specifications.Runner.VisualStudio" Version="2.10.2" TreatAsUsed="true" />
     <PackageReference Include="Mono.Cecil" Version="0.11.3" NoWarn="NU1608" />
   </ItemGroup>
 

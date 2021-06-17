@@ -290,11 +290,7 @@ namespace Mondo.Assembly.ChangeDetection.Query
         }
 
         /// <inheritdoc/>
-        protected override void SetModifierFilter(Match m)
-        {
-            base.SetModifierFilter(m);
-            this.MyIsVirtual = this.Captures(m, "virtual");
-        }
+        protected override void SetModifierFilterCore(Match m) => this.MyIsVirtual = this.Captures(m, "virtual");
 
         /// <summary>
         /// Match the method modifiers.
