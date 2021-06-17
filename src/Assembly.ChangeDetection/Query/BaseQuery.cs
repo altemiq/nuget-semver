@@ -12,7 +12,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
     /// <summary>
     /// The base query.
     /// </summary>
-    internal class BaseQuery
+    internal abstract class BaseQuery
     {
         // Common Regular expression part shared by the different queries
         private const string CommonModifiers = "!?static +|!?public +|!?protected +internal +|!?protected +|!?internal +|!?private +";
@@ -129,7 +129,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query
         /// Sets the modifier filters.
         /// </summary>
         /// <param name="m">The match.</param>
-        protected virtual void SetModifierFilter(Match m)
+        protected void SetModifierFilter(Match m)
         {
             this.IsProtected = this.Captures(m, "protected");
             this.IsInternal = this.Captures(m, "internal");
@@ -137,7 +137,14 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             this.IsPublic = this.Captures(m, "public");
             this.IsPrivate = this.Captures(m, "private");
             this.IsStatic = this.Captures(m, "static");
+            this.SetModifierFilterCore(m);
         }
+
+        /// <summary>
+        /// Sets the modifier filters.
+        /// </summary>
+        /// <param name="m">The match.</param>
+        protected abstract void SetModifierFilterCore(Match m);
 
         /// <summary>
         /// Matches the name.

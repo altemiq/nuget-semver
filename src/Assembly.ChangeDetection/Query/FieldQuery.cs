@@ -135,9 +135,8 @@ namespace Altemiq.Assembly.ChangeDetection.Query
             && !IsEventFieldOrPropertyBackingFieldOrEnumBackingField(field, type);
 
         /// <inheritdoc/>
-        protected override void SetModifierFilter(Match m)
+        protected override void SetModifierFilterCore(Match m)
         {
-            base.SetModifierFilter(m);
             this.isReadonly = this.Captures(m, "readonly");
             this.isConst = this.Captures(m, "const");
             var excludeCompilerGenerated = this.Captures(m, "nocompilergenerated");
