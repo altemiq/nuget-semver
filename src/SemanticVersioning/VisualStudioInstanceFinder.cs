@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="VisualStudioInstanceFinder.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="VisualStudioInstanceFinder.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Altemiq.SemanticVersioning
 {
     using System;
     using System.Linq;
@@ -78,7 +78,7 @@ namespace Mondo.SemanticVersioning
                 System.IO.File.ReadAllText(globalJson),
                 new System.Text.Json.JsonSerializerOptions
                 {
-                    Converters = { SemanticVersionConverter.Instance },
+                    Converters = { SemanticVersionConverter.Instance, RollForwardPolicyConverter.Instance },
                     PropertyNameCaseInsensitive = true,
                 });
 
@@ -90,7 +90,7 @@ namespace Mondo.SemanticVersioning
                 return this.GetVisualStudioInstance(
                     globalJson,
                     sdk.Version,
-                    sdk.AllowPrerelease ?? true,
+                    sdk.AllowPrerelease,
                     sdk.RollForward ?? GetDefaultRollForwardPolicy(sdk.Version));
             }
 
@@ -180,8 +180,21 @@ namespace Mondo.SemanticVersioning
             public static NuGet.Versioning.SemanticVersion Create(Version version) => new SemanticVersion(version);
         }
 
+        private sealed class RollForwardPolicyConverter : System.Text.Json.Serialization.JsonConverter<RollForwardPolicy>
+        {
+            public static readonly System.Text.Json.Serialization.JsonConverter Instance = new RollForwardPolicyConverter();
+
+            public override RollForwardPolicy Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>
+                reader.GetString() is string value
+                    ? Enum.Parse<RollForwardPolicy>(value, ignoreCase: true)
+                    : RollForwardPolicy.Unsupported;
+
+            public override void Write(System.Text.Json.Utf8JsonWriter writer, RollForwardPolicy value, System.Text.Json.JsonSerializerOptions options) =>
+                writer.WriteStringValue(System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(value.ToString()));
+        }
+
         private record Global(Sdk? Sdk);
 
-        private record Sdk(NuGet.Versioning.SemanticVersion? Version, bool? AllowPrerelease = default, RollForwardPolicy? RollForward = default);
+        private record Sdk(NuGet.Versioning.SemanticVersion? Version, bool AllowPrerelease = true, RollForwardPolicy? RollForward = default);
     }
 }
