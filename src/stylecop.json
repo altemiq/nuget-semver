@@ -10,7 +10,8 @@
     "documentationRules": {
       "companyName": "Altemiq",
       "documentationCulture": "en-GB",
-      "headerDecoration": "-----------------------------------------------------------------------"
+      "headerDecoration": "-----------------------------------------------------------------------",
+      "copyrightText": "Copyright (c) {companyName}. All rights reserved."
     }
   }
 }
