@@ -14,7 +14,7 @@ namespace Altemiq.SemanticVersioning
     /// </content>
     internal static partial class Application
     {
-        private static void WriteChanges(OutputTypes outputTypes, Assembly.ChangeDetection.Diff.AssemblyDiffCollection differences)
+        private static void WriteChanges(OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
         {
             var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
             var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);
@@ -24,7 +24,7 @@ namespace Altemiq.SemanticVersioning
                 return;
             }
 
-            void PrintBreakingChange(Assembly.ChangeDetection.Diff.DiffOperation operation, string message, int tabs = 0)
+            void PrintBreakingChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
             {
                 if (breakingChanges && operation.IsRemoved)
                 {
@@ -32,7 +32,7 @@ namespace Altemiq.SemanticVersioning
                 }
             }
 
-            void PrintFunctionalChange(Assembly.ChangeDetection.Diff.DiffOperation operation, string message, int tabs = 0)
+            void PrintFunctionalChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
             {
                 if (functionalChanges && operation.IsAdded)
                 {
@@ -40,7 +40,7 @@ namespace Altemiq.SemanticVersioning
                 }
             }
 
-            void PrintDiff<T>(Assembly.ChangeDetection.Diff.DiffResult<T> diffResult, int tabs = 0)
+            void PrintDiff<T>(Endjin.ApiChange.Api.Diff.DiffResult<T> diffResult, int tabs = 0)
             {
                 var message = $"{diffResult}";
                 PrintFunctionalChange(diffResult.Operation, message, tabs);
@@ -60,18 +60,18 @@ namespace Altemiq.SemanticVersioning
                 return breakingChanges && changedBaseType;
             }
 
-            bool ShouldPrintChangedTypes(System.Collections.Generic.IList<Assembly.ChangeDetection.Diff.TypeDiff> typeDifferences)
+            bool ShouldPrintChangedTypes(System.Collections.Generic.IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
             {
                 return typeDifferences.Any(ShouldPrintChangedType);
             }
 
-            bool ShouldPrintChanged<T>(Assembly.ChangeDetection.Diff.DiffCollection<T> collection)
+            bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
             {
                 return (breakingChanges && collection.Any(method => method.Operation.IsRemoved))
                     || (functionalChanges && collection.Any(method => method.Operation.IsAdded));
             }
 
-            bool ShouldPrintChangedType(Assembly.ChangeDetection.Diff.TypeDiff typeDiff)
+            bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)
             {
                 return ShouldPrintChangedBaseType(typeDiff.HasChangedBaseType)
                     || ShouldPrintChanged(typeDiff.Methods)
@@ -80,7 +80,7 @@ namespace Altemiq.SemanticVersioning
                     || ShouldPrintChanged(typeDiff.Interfaces);
             }
 
-            bool ShouldPrintCollection(Assembly.ChangeDetection.Diff.AssemblyDiffCollection assemblyDiffCollection)
+            bool ShouldPrintCollection(Endjin.ApiChange.Api.Diff.AssemblyDiffCollection assemblyDiffCollection)
             {
                 return (breakingChanges && assemblyDiffCollection.AddedRemovedTypes.RemovedCount != 0)
                     || (functionalChanges && assemblyDiffCollection.AddedRemovedTypes.AddedCount != 0)

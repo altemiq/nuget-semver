@@ -20,27 +20,27 @@ namespace Altemiq.SemanticVersioning
         /// <summary>
         /// Output breaking changes.
         /// </summary>
-        BreakingChanges = 1,
+        BreakingChanges = 1 << 0,
 
         /// <summary>
         /// Output functional changes.
         /// </summary>
-        FunctionalChanges = 2,
+        FunctionalChanges = 1 << 1,
 
         /// <summary>
         /// Output TeamCity version.
         /// </summary>
-        TeamCity = 4,
+        TeamCity = 1 << 2,
 
         /// <summary>
         /// Output Json version.
         /// </summary>
-        Json = 8,
+        Json = 1 << 3,
 
         /// <summary>
         /// Diagnostic output.
         /// </summary>
-        Diagnostic = 16,
+        Diagnostic = 1 << 4,
 
         /// <summary>
         /// All outputs.
