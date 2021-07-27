@@ -1,28 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net5.0;netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
-
-    <PackageId>$(AssemblyName)</PackageId>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>dotnet-semver</ToolCommandName>
+    <RootNamespace>$(Company).$(Title)</RootNamespace>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
-    <MicrosoftBuildVersion>16.3.0</MicrosoftBuildVersion>
     <NuGetVersion>5.9.1</NuGetVersion>
     <DotNetVersion>5.0.0</DotNetVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(PublishDir)' != '' ">
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,9 +20,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(DotNetVersion)" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -44,29 +32,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
     <PackageReference Include="System.Linq.Async.Queryable" Version="$(DotNetVersion)" />
+    <PackageReference Include="System.Text.Json" Version="$(DotNetVersion)" />
   </ItemGroup>
-
-  <Choose>
-    <When Condition=" $(TargetFramework.StartsWith('netcoreapp2')) ">
-      <ItemGroup>
-        <PackageReference Include="System.Text.Json" Version="$(DotNetVersion)" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <SystemVersion>4.3.0</SystemVersion>
-      </PropertyGroup>
-
-      <ItemGroup>
-        <PackageReference Include="System.Diagnostics.Debug" Version="$(SystemVersion)" />
-        <PackageReference Include="System.IO.FileSystem.Primitives" Version="$(SystemVersion)" />
-        <PackageReference Include="System.Text.Encoding.Extensions" Version="$(SystemVersion)" />
-        <PackageReference Include="System.Threading" Version="$(SystemVersion)" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
 
   <ItemGroup>
     <Compile Update="Application.*.cs" DependentUpon="Application.cs" />

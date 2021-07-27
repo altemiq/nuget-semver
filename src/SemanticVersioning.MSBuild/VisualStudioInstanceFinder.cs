@@ -82,8 +82,7 @@ namespace Mondo.SemanticVersioning
                     PropertyNameCaseInsensitive = true,
                 });
 
-            if (global is not null
-                && global.Sdk is not null)
+            if (global?.Sdk is not null)
             {
                 var sdk = global.Sdk;
 
@@ -186,7 +185,11 @@ namespace Mondo.SemanticVersioning
 
             public override RollForwardPolicy Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>
                 reader.GetString() is string value
+#if NETFRAMEWORK
+                    ? (RollForwardPolicy)Enum.Parse(typeof(RollForwardPolicy), value, ignoreCase: true)
+#else
                     ? Enum.Parse<RollForwardPolicy>(value, ignoreCase: true)
+#endif
                     : RollForwardPolicy.Unsupported;
 
             public override void Write(System.Text.Json.Utf8JsonWriter writer, RollForwardPolicy value, System.Text.Json.JsonSerializerOptions options) =>

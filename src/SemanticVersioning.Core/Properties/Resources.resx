@@ -117,17 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Calculated" xml:space="preserve">
-    <value>  Calculated {0} to be {1}</value>
-  </data>
   <data name="ChangedBaseType" xml:space="preserve">
     <value>Changed base type.</value>
   </data>
   <data name="ChangedTypes" xml:space="preserve">
     <value>Changed types:</value>
-  </data>
-  <data name="Checking" xml:space="preserve">
-    <value>Checking {0}</value>
   </data>
   <data name="Copyright" xml:space="preserve">
     <value>Copyright (C) Mondo Power. All rights reserved.</value>
@@ -146,14 +140,5 @@
   </data>
   <data name="Methods" xml:space="preserve">
     <value>Methods:</value>
-  </data>
-  <data name="MultipleInCurrentFolder" xml:space="preserve">
-    <value>Specify which project or solution file to use because this folder contains more than one project or solution file.</value>
-  </data>
-  <data name="MultipleInSpecifiedFolder" xml:space="preserve">
-    <value>Specify which project or solution file to use because the folder "{0}" contains for than one project or solution file.</value>
-  </data>
-  <data name="ProjectFileDoesNotExist" xml:space="preserve">
-    <value>Project file does not exist.</value>
   </data>
 </root>

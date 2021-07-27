@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SemanticVersioning\SemanticVersioning.csproj" />
+    <ProjectReference Include="..\..\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj" />
     <ProjectReference Include="..\Projects\Original\Original.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

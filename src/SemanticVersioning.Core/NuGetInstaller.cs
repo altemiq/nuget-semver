@@ -19,7 +19,7 @@ namespace Mondo.SemanticVersioning
     /// <summary>
     /// The NuGet installer.
     /// </summary>
-    internal static class NuGetInstaller
+    public static class NuGetInstaller
     {
         /// <summary>
         /// Installs the specified package.

@@ -61,15 +61,6 @@ namespace Mondo.SemanticVersioning.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to   Calculated {0} to be {1}.
-        /// </summary>
-        internal static string Calculated {
-            get {
-                return ResourceManager.GetString("Calculated", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Changed base type..
         /// </summary>
         internal static string ChangedBaseType {
@@ -84,15 +75,6 @@ namespace Mondo.SemanticVersioning.Properties {
         internal static string ChangedTypes {
             get {
                 return ResourceManager.GetString("ChangedTypes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Checking {0}.
-        /// </summary>
-        internal static string Checking {
-            get {
-                return ResourceManager.GetString("Checking", resourceCulture);
             }
         }
         
@@ -147,33 +129,6 @@ namespace Mondo.SemanticVersioning.Properties {
         internal static string Methods {
             get {
                 return ResourceManager.GetString("Methods", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Specify which project or solution file to use because this folder contains more than one project or solution file..
-        /// </summary>
-        internal static string MultipleInCurrentFolder {
-            get {
-                return ResourceManager.GetString("MultipleInCurrentFolder", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Specify which project or solution file to use because the folder &quot;{0}&quot; contains for than one project or solution file..
-        /// </summary>
-        internal static string MultipleInSpecifiedFolder {
-            get {
-                return ResourceManager.GetString("MultipleInSpecifiedFolder", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Project file does not exist..
-        /// </summary>
-        internal static string ProjectFileDoesNotExist {
-            get {
-                return ResourceManager.GetString("ProjectFileDoesNotExist", resourceCulture);
             }
         }
     }

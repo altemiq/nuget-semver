@@ -6,14 +6,19 @@
 
 namespace Mondo.SemanticVersioning
 {
-    using System.CommandLine.IO;
+    using Microsoft.Extensions.Logging;
 
     /// <content>
     /// Application class for writing the GitHub version.
     /// </content>
-    internal static partial class Application
+    public static partial class Application
     {
-        private static void WriteJsonVersion(System.CommandLine.IConsole console, NuGet.Versioning.SemanticVersion version)
+        /// <summary>
+        /// Writes the JSON version.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        /// <param name="version">The version to write.</param>
+        public static void WriteJsonVersion(ILogger logger, NuGet.Versioning.SemanticVersion version)
         {
             // export these as environment variables
             var versions = new Versions
@@ -24,7 +29,7 @@ namespace Mondo.SemanticVersioning
             };
 
             var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
-            console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options));
+            logger.LogInformation(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options));
         }
 
         private class Versions

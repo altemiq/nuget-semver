@@ -15,17 +15,17 @@ var fileCommandBuilder = new CommandBuilder(new Command("file", "Calculated the 
     .AddArgument(new Argument<System.IO.FileInfo>("second") { Description = "The second assembly" })
     .AddOption(new Option<string>(new string[] { "-b", "--build" }, "Ths build label"));
 
-var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new Application.ProcessProjectOrSolutionDelegate(Application.ProcessProjectOrSolution)) })
+var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new MSBuildApplication.ProcessProjectOrSolutionDelegate(MSBuildApplication.ProcessProjectOrSolution)) })
     .AddArgument(new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-    .AddOption(new Option<string?>(new string[] { "--configuration", "-c" }, () => Application.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
-    .AddOption(new Option<string?>("--platform", () => Application.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
+    .AddOption(new Option<string?>(new string[] { "--configuration", "-c" }, () => MSBuildApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
+    .AddOption(new Option<string?>("--platform", () => MSBuildApplication.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
     .AddOption(new Option<string?>("--source", "Specifies the server URL.", ArgumentArity.OneOrMore).WithAlias("-s"))
-    .AddOption(new Option<bool>("--no-version-suffix", () => Application.DefaultNoVersionSuffix, "Forces there to be no version suffix. This overrides --version-suffix"))
-    .AddOption(new Option<string?>("--version-suffix", () => Application.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used."))
-    .AddOption(new Option<bool>("--no-cache", () => Application.DefaultNoCache, "Disable using the machine cache as the first package source."))
-    .AddOption(new Option<bool>("--direct-download", () => Application.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries."))
-    .AddOption(new Option<string?>("--package-id-regex", () => Application.DefaultPackageIdRegex, "The regular expression to match in the package id."))
-    .AddOption(new Option<string>("--package-id-replace", () => Application.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex"))
+    .AddOption(new Option<bool>("--no-version-suffix", () => MSBuildApplication.DefaultNoVersionSuffix, "Forces there to be no version suffix. This overrides --version-suffix"))
+    .AddOption(new Option<string?>("--version-suffix", () => MSBuildApplication.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used."))
+    .AddOption(new Option<bool>("--no-cache", () => MSBuildApplication.DefaultNoCache, "Disable using the machine cache as the first package source."))
+    .AddOption(new Option<bool>("--direct-download", () => MSBuildApplication.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries."))
+    .AddOption(new Option<string?>("--package-id-regex", () => MSBuildApplication.DefaultPackageIdRegex, "The regular expression to match in the package id."))
+    .AddOption(new Option<string>("--package-id-replace", () => MSBuildApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex"))
     .AddOption(new Option<string?>("--package-id", "The package ID to check for previous versions", ArgumentArity.OneOrMore))
     .AddOption(new Option<string?>("--exclude", "A package ID to check exclude from analysis", ArgumentArity.OneOrMore));
 
@@ -59,7 +59,7 @@ static NuGet.Versioning.SemanticVersion? ParseVersion(ArgumentResult argumentRes
         }
     }
 
-    return Application.DefaultPrevious;
+    return MSBuildApplication.DefaultPrevious;
 }
 
 static System.IO.FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
@@ -74,7 +74,7 @@ static System.IO.FileSystemInfo? GetFileSystemInformation(ArgumentResult argumen
     if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
     {
         return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
-            ? (System.IO.FileSystemInfo)new System.IO.DirectoryInfo(path)
+            ? new System.IO.DirectoryInfo(path)
             : new System.IO.FileInfo(path);
     }
 
