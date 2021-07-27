@@ -50,7 +50,7 @@ return await commandLineBuilder
 static NuGet.Versioning.SemanticVersion? ParseVersion(ArgumentResult argumentResult)
 {
     var tokens = argumentResult.Tokens;
-    if (tokens is not null && tokens.Count > 0)
+    if (tokens?.Count > 0)
     {
         var value = tokens[0].Value;
         if (NuGet.Versioning.SemanticVersion.TryParse(value, out var version))

@@ -15,7 +15,7 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --output Json,Diagnostic --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --output All --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\Math"
     },
     "Solution - IO": {
@@ -31,6 +31,10 @@
     "Help": {
       "commandName": "Project",
       "commandLineArgs": "diff solution --help"
+    },
+    "newProfile1": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution C:\\Users\\rsking\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
     }
   }
 }

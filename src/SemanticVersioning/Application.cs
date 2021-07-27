@@ -97,6 +97,8 @@ namespace Mondo.SemanticVersioning
 
         private static readonly NuGet.Versioning.SemanticVersion Empty = new(0, 0, 0);
 
+        private static bool isRegistered;
+
         /// <summary>
         /// The file function delegate.
         /// </summary>
@@ -179,16 +181,19 @@ namespace Mondo.SemanticVersioning
                 WriteHeader(console);
             }
 
-            var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
-            WriteChanges(output, result.Differences);
-            if (output.HasFlag(OutputTypes.TeamCity))
+            (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
+            WriteChanges(output, differences);
+            if (version is not null)
             {
-                WriteTeamCityVersion(console, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber), buildNumberParameter, versionSuffixParameter);
-            }
+                if (output.HasFlag(OutputTypes.TeamCity))
+                {
+                    WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
+                }
 
-            if (output.HasFlag(OutputTypes.Json))
-            {
-                WriteJsonVersion(console, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
+                if (output.HasFlag(OutputTypes.Json))
+                {
+                    WriteJsonVersion(console, version);
+                }
             }
         }
 
@@ -263,7 +268,7 @@ namespace Mondo.SemanticVersioning
                     console.Out.WriteLine($"Using {instance.Name} {instance.Version}");
                 }
 
-                var version = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+                var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
                 var packageIds = packageId ?? Enumerable.Empty<string>();
                 var regex = string.IsNullOrEmpty(packageIdRegex)
@@ -306,7 +311,7 @@ namespace Mondo.SemanticVersioning
                     {
                         var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
                         calculatedVersion = previousVersion is null
-                            ? new NuGet.Versioning.SemanticVersion(1, 0, 0, GetVersionSuffix(Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.DefaultAlphaRelease)) // have this as being a 0.1.0 release
+                            ? new NuGet.Versioning.SemanticVersion(1, 0, 0, GetVersionSuffix(LibraryComparison.DefaultAlphaRelease)) // have this as being a 0.1.0 release
                             : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, GetVersionSuffix(previousVersion.Release));
                     }
                     else
@@ -326,19 +331,19 @@ namespace Mondo.SemanticVersioning
                         if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             // we have removed frameworks, this is a breaking change
-                            calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateBreakingChange(previousStringVersions, GetVersionSuffix());
+                            calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Major, previousStringVersions, GetVersionSuffix());
                         }
                         else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             // we have added frameworks, this is a feature change
-                            calculatedVersion = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.CreateFeatureChange(previousStringVersions, GetVersionSuffix());
+                            calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Minor, previousStringVersions, GetVersionSuffix());
                         }
 
                         foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = false })))
                         {
-                            var result = Assembly.ChangeDetection.SemVer.SemanticVersionAnalyzer.Analyze(currentDll.Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture), currentDll, previousStringVersions, GetVersionSuffix());
-                            calculatedVersion = Max(calculatedVersion, NuGet.Versioning.SemanticVersion.Parse(result.VersionNumber));
-                            WriteChanges(output, result.Differences);
+                            (var version, _, var differences) = LibraryComparison.Analyze(currentDll.Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture), currentDll, previousStringVersions, GetVersionSuffix());
+                            calculatedVersion = Max(calculatedVersion, version);
+                            WriteChanges(output, differences);
                         }
 
                         System.IO.Directory.Delete(installDir, recursive: true);
@@ -349,18 +354,18 @@ namespace Mondo.SemanticVersioning
                         console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
                     }
 
-                    version = Max(version, calculatedVersion);
+                    globalVersion = Max(globalVersion, calculatedVersion);
                 }
 
                 // write out the version and the suffix
                 if (output.HasFlag(OutputTypes.TeamCity))
                 {
-                    WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
+                    WriteTeamCityVersion(console, globalVersion, buildNumberParameter, versionSuffixParameter);
                 }
 
                 if (output.HasFlag(OutputTypes.Json))
                 {
-                    WriteJsonVersion(console, version);
+                    WriteJsonVersion(console, globalVersion);
                 }
 
                 return 0;
@@ -398,9 +403,16 @@ namespace Mondo.SemanticVersioning
                     return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 }
 
-                static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion second)
+                static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion? second)
                 {
-                    return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0 ? first : second;
+                    if (second is null)
+                    {
+                        return first;
+                    }
+
+                    return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0
+                        ? first
+                        : second;
                 }
 
                 static async System.Collections.Generic.IAsyncEnumerable<T> CreateAsyncEnumerable<T>(T value)
@@ -526,7 +538,12 @@ namespace Mondo.SemanticVersioning
             {
                 var finder = new VisualStudioInstanceFinder(GetInstances());
                 var instance = finder.GetVisualStudioInstance(projectOrSolution);
-                Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
+                if (!isRegistered)
+                {
+                    isRegistered = true;
+                    Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
+                }
+
                 return instance;
 
                 static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()

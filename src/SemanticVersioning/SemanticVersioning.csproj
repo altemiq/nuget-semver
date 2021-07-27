@@ -26,6 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Endjin.ApiChange" Version="0.1.0" />
     <PackageReference Include="IsExternalInit" Version="1.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -66,12 +67,6 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
-
-  
-
-  <ItemGroup>
-    <ProjectReference Include="..\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Application.*.cs" DependentUpon="Application.cs" />
