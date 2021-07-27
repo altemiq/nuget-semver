@@ -12,9 +12,14 @@ namespace Altemiq.SemanticVersioning
     /// <content>
     /// Application class for writing the changes.
     /// </content>
-    internal static partial class Application
+    public static partial class Application
     {
-        private static void WriteChanges(OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
+        /// <summary>
+        /// Writes the changes.
+        /// </summary>
+        /// <param name="outputTypes">The output type.</param>
+        /// <param name="differences">The differences.</param>
+        public static void WriteChanges(OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
         {
             var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
             var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);

@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="SemanticVersionChange.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="SemanticVersionChange.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Altemiq.SemanticVersioning
 {
     /// <summary>
     /// The type of change from one Semantic Version to another.

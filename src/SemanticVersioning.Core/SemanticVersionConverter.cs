@@ -9,7 +9,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The <see cref="NuGet.Versioning.SemanticVersion"/> <see cref="System.Text.Json.Serialization.JsonConverter"/>.
     /// </summary>
-    internal class SemanticVersionConverter : System.Text.Json.Serialization.JsonConverter<NuGet.Versioning.SemanticVersion>
+    public sealed class SemanticVersionConverter : System.Text.Json.Serialization.JsonConverter<NuGet.Versioning.SemanticVersion>
     {
         /// <summary>
         /// The instance.

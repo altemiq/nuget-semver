@@ -9,34 +9,8 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The <see cref="NuGet.Versioning.SemanticVersion"/> extensions.
     /// </summary>
-    internal static class SemanticVersionExtensions
+    public static class SemanticVersionExtensions
     {
-        /// <summary>
-        /// Creates a new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.
-        /// </summary>
-        /// <param name="version">The version.</param>
-        /// <param name="major">The major changes.</param>
-        /// <param name="minor">The minor changes.</param>
-        /// <param name="patch">The patch changes.</param>
-        /// <param name="releaseLabel">The release label changes.</param>
-        /// <param name="metadata">The metadata changes.</param>
-        /// <returns>A new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.</returns>
-        public static NuGet.Versioning.SemanticVersion With(this NuGet.Versioning.SemanticVersion version, int? major = default, int? minor = default, int? patch = default, string? releaseLabel = default, string? metadata = default) => new(major ?? version.Major, minor ?? version.Minor, patch ?? version.Patch, releaseLabel ?? version.Release, metadata ?? version.Metadata);
-
-        /// <summary>
-        /// Gets the feature version.
-        /// </summary>
-        /// <param name="version">The version.</param>
-        /// <returns>The feature version.</returns>
-        public static int GetFeature(this NuGet.Versioning.SemanticVersion version) => version.Patch / 100;
-
-        /// <summary>
-        /// Gets the patch version.
-        /// </summary>
-        /// <param name="version">The version.</param>
-        /// <returns>The patch version.</returns>
-        public static int GetPatch(this NuGet.Versioning.SemanticVersion version) => version.Patch % 100;
-
         /// <summary>
         /// Gets a value as to whether the specified version matches the policy.
         /// </summary>
@@ -132,5 +106,31 @@ namespace Altemiq.SemanticVersioning
                 };
             }
         }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <param name="major">The major changes.</param>
+        /// <param name="minor">The minor changes.</param>
+        /// <param name="patch">The patch changes.</param>
+        /// <param name="releaseLabel">The release label changes.</param>
+        /// <param name="metadata">The metadata changes.</param>
+        /// <returns>A new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.</returns>
+        internal static NuGet.Versioning.SemanticVersion With(this NuGet.Versioning.SemanticVersion version, int? major = default, int? minor = default, int? patch = default, string? releaseLabel = default, string? metadata = default) => new(major ?? version.Major, minor ?? version.Minor, patch ?? version.Patch, releaseLabel ?? version.Release, metadata ?? version.Metadata);
+
+        /// <summary>
+        /// Gets the feature version.
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <returns>The feature version.</returns>
+        internal static int GetFeature(this NuGet.Versioning.SemanticVersion version) => version.Patch / 100;
+
+        /// <summary>
+        /// Gets the patch version.
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <returns>The patch version.</returns>
+        internal static int GetPatch(this NuGet.Versioning.SemanticVersion version) => version.Patch % 100;
     }
 }

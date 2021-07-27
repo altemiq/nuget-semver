@@ -1,33 +1,21 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Application.cs" company="Altemiq">
+// <copyright file="MSBuildApplication.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altemiq.SemanticVersioning.Specs")]
-
 namespace Altemiq.SemanticVersioning
 {
     using System;
-    using System.CommandLine.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
-    /// The application class.
+    /// The MSBuild application.
     /// </summary>
-    internal static partial class Application
+    public static class MSBuildApplication
     {
-        /// <summary>
-        /// The default for the configuration option.
-        /// </summary>
-        public const string? DefaultConfiguration = default;
-
-        /// <summary>
-        /// The default for the platform option.
-        /// </summary>
-        public const string? DefaultPlatform = default;
-
         /// <summary>
         /// The default for the package ID Regex option.
         /// </summary>
@@ -64,24 +52,14 @@ namespace Altemiq.SemanticVersioning
         public const bool DefaultDirectDownload = default;
 
         /// <summary>
-        /// The default for the no logo option.
+        /// The default for the configuration option.
         /// </summary>
-        public const bool DefaultNoLogo = default;
+        public const string? DefaultConfiguration = default;
 
         /// <summary>
-        /// The default for the output option.
+        /// The default for the platform option.
         /// </summary>
-        public const OutputTypes DefaultOutput = OutputTypes.TeamCity | OutputTypes.Diagnostic;
-
-        /// <summary>
-        /// The default for the build number parameter option.
-        /// </summary>
-        public const string DefaultBuildNumberParameter = "buildNumber";
-
-        /// <summary>
-        /// The default for the version suffix parameter option.
-        /// </summary>
-        public const string DefaultVersionSuffixParameter = "system.build.suffix";
+        public const string? DefaultPlatform = default;
 
         private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
 
@@ -98,29 +76,6 @@ namespace Altemiq.SemanticVersioning
         private static readonly NuGet.Versioning.SemanticVersion Empty = new(0, 0, 0);
 
         private static bool isRegistered;
-
-        /// <summary>
-        /// The file function delegate.
-        /// </summary>
-        /// <param name="console">The console.</param>
-        /// <param name="first">The first file.</param>
-        /// <param name="second">The second file.</param>
-        /// <param name="previous">The previous version.</param>
-        /// <param name="build">The build.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="buildNumberParameter">The build number parameter.</param>
-        /// <param name="versionSuffixParameter">The version suffix parameter.</param>
-        /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
-        public delegate void FileFunctionDelegate(
-            System.CommandLine.IConsole console,
-            System.IO.FileInfo first,
-            System.IO.FileInfo second,
-            NuGet.Versioning.SemanticVersion previous,
-            string build,
-            OutputTypes output = DefaultOutput,
-            string buildNumberParameter = DefaultBuildNumberParameter,
-            string versionSuffixParameter = DefaultVersionSuffixParameter,
-            bool noLogo = DefaultNoLogo);
 
         /// <summary>
         /// The process project of solution delegate.
@@ -145,7 +100,7 @@ namespace Altemiq.SemanticVersioning
         /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
         /// <returns>The task.</returns>
         public delegate Task<int> ProcessProjectOrSolutionDelegate(
-            System.CommandLine.IConsole console,
+            ILogger console,
             System.IO.FileSystemInfo projectOrSolution,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
@@ -159,47 +114,14 @@ namespace Altemiq.SemanticVersioning
             bool noVersionSuffix = DefaultNoVersionSuffix,
             bool noCache = DefaultNoCache,
             bool directDownload = DefaultDirectDownload,
-            OutputTypes output = DefaultOutput,
-            string buildNumberParameter = DefaultBuildNumberParameter,
-            string versionSuffixParameter = DefaultVersionSuffixParameter,
-            bool noLogo = DefaultNoLogo);
-
-        /// <inheritdoc cref="FileFunctionDelegate" />
-        public static void FileFunction(
-            System.CommandLine.IConsole console,
-            System.IO.FileInfo first,
-            System.IO.FileInfo second,
-            NuGet.Versioning.SemanticVersion previous,
-            string build,
-            OutputTypes output = DefaultOutput,
-            string buildNumberParameter = DefaultBuildNumberParameter,
-            string versionSuffixParameter = DefaultVersionSuffixParameter,
-            bool noLogo = DefaultNoLogo)
-        {
-            if (!noLogo)
-            {
-                WriteHeader(console);
-            }
-
-            (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
-            WriteChanges(output, differences);
-            if (version is not null)
-            {
-                if (output.HasFlag(OutputTypes.TeamCity))
-                {
-                    WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
-                }
-
-                if (output.HasFlag(OutputTypes.Json))
-                {
-                    WriteJsonVersion(console, version);
-                }
-            }
-        }
+            OutputTypes output = Application.DefaultOutput,
+            string buildNumberParameter = Application.DefaultBuildNumberParameter,
+            string versionSuffixParameter = Application.DefaultVersionSuffixParameter,
+            bool noLogo = Application.DefaultNoLogo);
 
         /// <inheritdoc cref="ProcessProjectOrSolutionDelegate" />
         public static Task<int> ProcessProjectOrSolution(
-            System.CommandLine.IConsole console,
+            ILogger logger,
             System.IO.FileSystemInfo projectOrSolution,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
@@ -213,18 +135,18 @@ namespace Altemiq.SemanticVersioning
             bool noVersionSuffix = DefaultNoVersionSuffix,
             bool noCache = DefaultNoCache,
             bool directDownload = DefaultDirectDownload,
-            OutputTypes output = DefaultOutput,
-            string buildNumberParameter = DefaultBuildNumberParameter,
-            string versionSuffixParameter = DefaultVersionSuffixParameter,
-            bool noLogo = DefaultNoLogo)
+            OutputTypes output = Application.DefaultOutput,
+            string buildNumberParameter = Application.DefaultBuildNumberParameter,
+            string versionSuffixParameter = Application.DefaultVersionSuffixParameter,
+            bool noLogo = Application.DefaultNoLogo)
         {
             if (!noLogo)
             {
-                WriteHeader(console);
+                Application.WriteHeader(logger);
             }
 
             return ProcessProjectOrSolutionWithInstance(
-                console,
+                logger,
                 projectOrSolution,
                 RegisterMSBuild(projectOrSolution),
                 configuration,
@@ -244,7 +166,7 @@ namespace Altemiq.SemanticVersioning
                 versionSuffixParameter);
 
             static async Task<int> ProcessProjectOrSolutionWithInstance(
-                System.CommandLine.IConsole console,
+                ILogger logger,
                 System.IO.FileSystemInfo projectOrSolution,
                 Microsoft.Build.Locator.VisualStudioInstance instance,
                 string? configuration,
@@ -265,7 +187,7 @@ namespace Altemiq.SemanticVersioning
             {
                 if (output.HasFlag(OutputTypes.Diagnostic))
                 {
-                    console.Out.WriteLine($"Using {instance.Name} {instance.Version}");
+                    logger.LogTrace($"Using {instance.Name} {instance.Version}");
                 }
 
                 var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
@@ -282,7 +204,7 @@ namespace Altemiq.SemanticVersioning
                     var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
                     if (output.HasFlag(OutputTypes.Diagnostic))
                     {
-                        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
+                        logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
                     }
 
                     var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
@@ -339,11 +261,24 @@ namespace Altemiq.SemanticVersioning
                             calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Minor, previousStringVersions, GetVersionSuffix());
                         }
 
-                        foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), assemblyName + targetExt, new System.IO.EnumerationOptions { RecurseSubdirectories = false })))
+                        var searchPattern = assemblyName + targetExt;
+                        var searchOptions =
+#if NETFRAMEWORK
+                                System.IO.SearchOption.TopDirectoryOnly;
+#else
+                                new System.IO.EnumerationOptions { RecurseSubdirectories = false };
+#endif
+                        foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
                         {
-                            (var version, _, var differences) = LibraryComparison.Analyze(currentDll.Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture), currentDll, previousStringVersions, GetVersionSuffix());
+                            var oldDll = currentDll
+#if NETFRAMEWORK
+                                .Replace(packageOutputPath, buildOutputTargetFolder);
+#else
+                                .Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+#endif
+                            (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, GetVersionSuffix());
                             calculatedVersion = Max(calculatedVersion, version);
-                            WriteChanges(output, differences);
+                            Application.WriteChanges(output, differences);
                         }
 
                         System.IO.Directory.Delete(installDir, recursive: true);
@@ -351,7 +286,7 @@ namespace Altemiq.SemanticVersioning
 
                     if (output.HasFlag(OutputTypes.Diagnostic))
                     {
-                        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
+                        logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
                     }
 
                     globalVersion = Max(globalVersion, calculatedVersion);
@@ -360,12 +295,12 @@ namespace Altemiq.SemanticVersioning
                 // write out the version and the suffix
                 if (output.HasFlag(OutputTypes.TeamCity))
                 {
-                    WriteTeamCityVersion(console, globalVersion, buildNumberParameter, versionSuffixParameter);
+                    Application.WriteTeamCityVersion(logger, globalVersion, buildNumberParameter, versionSuffixParameter);
                 }
 
                 if (output.HasFlag(OutputTypes.Json))
                 {
-                    WriteJsonVersion(console, globalVersion);
+                    Application.WriteJsonVersion(logger, globalVersion);
                 }
 
                 return 0;
@@ -474,7 +409,7 @@ namespace Altemiq.SemanticVersioning
                     {
                         if (!path.Exists)
                         {
-                            throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                            throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                         }
 
                         // If a directory was passed in, search for a .sln or .csproj file
@@ -492,10 +427,10 @@ namespace Altemiq.SemanticVersioning
                                 {
                                     if (currentDirectory)
                                     {
-                                        throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
+                                        throw new System.IO.FileLoadException(Properties.Resources.MultipleInCurrentFolder);
                                     }
 
-                                    throw new CommandValidationException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                                    throw new System.IO.FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                                 }
 
                                 // We did not find any solutions, so try and find individual projects
@@ -512,14 +447,14 @@ namespace Altemiq.SemanticVersioning
                                 {
                                     if (currentDirectory)
                                     {
-                                        throw new CommandValidationException(Properties.Resources.MultipleInCurrentFolder);
+                                        throw new System.IO.FileLoadException(Properties.Resources.MultipleInCurrentFolder);
                                     }
 
-                                    throw new CommandValidationException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                                    throw new System.IO.FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                                 }
 
                                 // At this point the path contains no solutions or projects, so throw an exception
-                                throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                                throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                             case System.IO.FileInfo fileInfo when
                                 string.Equals(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
                                     || string.Equals(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase)
@@ -529,7 +464,7 @@ namespace Altemiq.SemanticVersioning
                         }
 
                         // At this point, we know the file passed in is not a valid project or solution
-                        throw new CommandValidationException(Properties.Resources.ProjectFileDoesNotExist);
+                        throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                     }
                 }
             }
@@ -554,12 +489,6 @@ namespace Altemiq.SemanticVersioning
                     });
                 }
             }
-        }
-
-        private static void WriteHeader(System.CommandLine.IConsole console)
-        {
-            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Logo, VersionUtils.GetVersion()));
-            console.Out.WriteLine(Properties.Resources.Copyright);
         }
 
         private static System.Collections.Generic.IDictionary<string, string>? AddProperty(

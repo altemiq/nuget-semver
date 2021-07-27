@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net5.0;netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+    <RootNamespace>$(Company).$(Title)</RootNamespace>
+    
+    <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+
+    <PackageId>$(RootNamespace)</PackageId>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dotnet-semver</ToolCommandName>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(PublishDir)' != '' ">
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Versions">
+    <SystemVersion>4.3.0</SystemVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.Debug" Version="$(SystemVersion)" />
+    <PackageReference Include="System.IO.FileSystem.Primitives" Version="$(SystemVersion)" />
+    <PackageReference Include="System.Text.Encoding.Extensions" Version="$(SystemVersion)" />
+    <PackageReference Include="System.Threading" Version="$(SystemVersion)" />
+  </ItemGroup>
+
+</Project>

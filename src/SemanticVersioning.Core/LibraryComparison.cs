@@ -17,7 +17,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The library comparison.
     /// </summary>
-    internal static class LibraryComparison
+    public static class LibraryComparison
     {
         /// <summary>
         /// The default alpha release.

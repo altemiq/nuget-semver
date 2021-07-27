@@ -9,7 +9,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The roll forward policy.
     /// </summary>
-    internal enum RollForwardPolicy
+    public enum RollForwardPolicy
     {
         /// <summary>
         /// The specified policy is not supported.

@@ -10,22 +10,22 @@
     },
     "Solution - Hardware": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
+      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO.Devices"
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --output All --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --output All --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Math"
     },
     "Solution - IO": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/IO.sln\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/IO.sln\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
+      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "$(UserProfile)\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
     },
     "Help": {

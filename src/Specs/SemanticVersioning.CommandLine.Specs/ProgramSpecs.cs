@@ -57,7 +57,7 @@ namespace Altemiq.SemanticVersioning
             {
                 if (MainMethod is null)
                 {
-                    MainMethod = EntryPointDiscoverer.FindStaticEntryMethod(typeof(Application).Assembly);
+                    MainMethod = EntryPointDiscoverer.FindStaticEntryMethod(typeof(MSBuildApplication).Assembly);
                 }
             }
         };
@@ -82,7 +82,7 @@ namespace Altemiq.SemanticVersioning
         }
     }
 
-    [Subject(typeof(Application))]
+    [Subject(typeof(MSBuildApplication))]
     internal class When_running_the_program_with_no_valid_nuget : When_running_the_program
     {
         private static int exitValue;
@@ -117,7 +117,7 @@ namespace Altemiq.SemanticVersioning
         private readonly It should_not_have_thrown_an_exception = () => error.Should().BeEmpty();
     }
 
-    [Subject(typeof(Application))]
+    [Subject(typeof(MSBuildApplication))]
     internal class When_running_the_program_with_no_full_release : When_running_the_program
     {
         private static int exitValue;
@@ -135,7 +135,7 @@ namespace Altemiq.SemanticVersioning
         private readonly It should_not_have_thrown_an_exception = () => error.Should().BeEmpty();
     }
 
-    [Subject(typeof(Application))]
+    [Subject(typeof(MSBuildApplication))]
     internal class When_running_the_program_with_no_pre_release : When_running_the_program
     {
         private static int exitValue;
@@ -153,7 +153,7 @@ namespace Altemiq.SemanticVersioning
         private readonly It should_not_have_thrown_an_exception = () => error.Should().BeEmpty();
     }
 
-    [Subject(typeof(Application))]
+    [Subject(typeof(MSBuildApplication))]
     internal class When_running_the_program_with_pre_release_and_release : When_running_the_program
     {
         private static int exitValue;
