@@ -226,9 +226,7 @@ namespace Mondo.SemanticVersioning
                 noVersionSuffix,
                 noCache,
                 directDownload,
-                output,
-                buildNumberParameter,
-                versionSuffixParameter).ConfigureAwait(false);
+                output).ConfigureAwait(false);
 
             // write out the version and the suffix
             if (output.HasFlag(OutputTypes.TeamCity))

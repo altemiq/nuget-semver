@@ -48,8 +48,6 @@ namespace Mondo.SemanticVersioning
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="output">The output type.</param>
-        /// <param name="buildNumberParameter">The parameter name for the build number.</param>
-        /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
                 ILogger logger,
@@ -66,9 +64,7 @@ namespace Mondo.SemanticVersioning
                 bool noVersionSuffix,
                 bool noCache,
                 bool directDownload,
-                OutputTypes output,
-                string buildNumberParameter,
-                string versionSuffixParameter)
+                OutputTypes output)
         {
             var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
@@ -78,151 +74,40 @@ namespace Mondo.SemanticVersioning
                 : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
             using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
             foreach (var project in projectCollection.LoadedProjects.Where(project =>
-                bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable
-                && (!bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) || !excludeFromSemanticVersioning)))
+                IsPackable(project)
+                && !ShouldDisableSemanticVersioning(project)
+                && !ShouldExclude(project, exclude)))
             {
-                var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
-                if (output.HasFlag(OutputTypes.Diagnostic))
-                {
-                    logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
-                }
-
-                var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
-                if (exclude?.Contains(projectPackageId, StringComparer.Ordinal) == true)
-                {
-                    continue;
-                }
-
-                var projectDirectory = project.DirectoryPath;
-                var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
-
-                // install the NuGet package
-                var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
-                if (regex is not null)
-                {
-                    projectPackageIds = projectPackageIds.Union(new[] { regex.Replace(projectPackageId, packageIdReplace) }, StringComparer.Ordinal);
-                }
-
-                var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
-                var previousVersions = IsNullOrEmpty(previous)
-                    ? NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory)
-                    : CreateAsyncEnumerable(previous);
-                var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
-
-                if (installDir is null)
-                {
-                    var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
-                    calculatedVersion = previousVersion is null
-                        ? new NuGet.Versioning.SemanticVersion(1, 0, 0, GetVersionSuffix(LibraryComparison.DefaultAlphaRelease)) // have this as being a 0.1.0 release
-                        : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, GetVersionSuffix(previousVersion.Release));
-                }
-                else
-                {
-                    var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
-
-                    var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
-                    var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
-
-                    // Get the package output path
-                    var packageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("PackageOutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
-
-                    // check the frameworks
-                    var currentFrameworks = System.IO.Directory.EnumerateDirectories(packageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
-                    var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
-                    var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
-                    if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
-                    {
-                        // we have removed frameworks, this is a breaking change
-                        calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Major, previousStringVersions, GetVersionSuffix());
-                    }
-                    else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
-                    {
-                        // we have added frameworks, this is a feature change
-                        calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Minor, previousStringVersions, GetVersionSuffix());
-                    }
-
-                    var searchPattern = assemblyName + targetExt;
-                    var searchOptions =
-#if NETFRAMEWORK
-                                System.IO.SearchOption.TopDirectoryOnly;
-#else
-                                new System.IO.EnumerationOptions { RecurseSubdirectories = false };
-#endif
-                    foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
-                    {
-                        var oldDll = currentDll
-#if NETFRAMEWORK
-                                .Replace(packageOutputPath, buildOutputTargetFolder);
-#else
-                                .Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
-#endif
-                        (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, GetVersionSuffix());
-                        calculatedVersion = Max(calculatedVersion, version);
-                        WriteChanges(output, differences);
-                    }
-
-                    System.IO.Directory.Delete(installDir, recursive: true);
-                }
-
-                if (output.HasFlag(OutputTypes.Diagnostic))
-                {
-                    logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
-                }
-
+                var calculatedVersion = await ProcessProject(
+                    project,
+                    source,
+                    packageIds,
+                    regex,
+                    packageIdReplace,
+                    logger,
+                    output,
+                    previous,
+                    noCache,
+                    directDownload,
+                    GetVersionSuffix).ConfigureAwait(false);
                 globalVersion = Max(globalVersion, calculatedVersion);
             }
 
             return globalVersion;
 
-            bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
+            static bool IsPackable(Microsoft.Build.Evaluation.Project project)
             {
-                return version?.Equals(Empty) != false;
+                return bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable;
             }
 
-            string? GetVersionSuffix(string? previousVersionRelease = default)
+            static bool ShouldDisableSemanticVersioning(Microsoft.Build.Evaluation.Project project)
             {
-                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
+                return bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) && excludeFromSemanticVersioning;
             }
 
-            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
+            static bool ShouldExclude(Microsoft.Build.Evaluation.Project project, System.Collections.Generic.IEnumerable<string> excludes)
             {
-                var previousVersion = IsNullOrEmpty(previous)
-                    ? default
-                    : previous;
-                NuGet.Common.ILogger? logger = default;
-                try
-                {
-                    return await NuGetInstaller.InstallAsync(packageIds, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
-                }
-                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
-                {
-                    logger?.LogError(ex.Message);
-                }
-
-                return default;
-            }
-
-            static string TrimEndingDirectorySeparator(string path)
-            {
-                return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-            }
-
-            static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion? second)
-            {
-                if (second is null)
-                {
-                    return first;
-                }
-
-                return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0
-                    ? first
-                    : second;
-            }
-
-            static async System.Collections.Generic.IAsyncEnumerable<T> CreateAsyncEnumerable<T>(T value)
-            {
-                await Task.CompletedTask.ConfigureAwait(false);
-                yield return value;
+                return excludes?.Contains(project.GetPropertyValue(PackageIdPropertyName), StringComparer.Ordinal) == true;
             }
 
             static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, string? configuration, string? platform)
@@ -335,6 +220,159 @@ namespace Mondo.SemanticVersioning
                     // At this point, we know the file passed in is not a valid project or solution
                     throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                 }
+            }
+
+            string? GetVersionSuffix(string? previousVersionRelease = default)
+            {
+                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
+            }
+        }
+
+        /// <summary>
+        /// The process project.
+        /// </summary>
+        /// <param name="project">The project.</param>
+        /// <param name="source">The NuGet source.</param>
+        /// <param name="packageIds">The package ID.</param>
+        /// <param name="packageIdRegex">The package ID regex.</param>
+        /// <param name="packageIdReplace">The package ID replacement value.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="output">The output type.</param>
+        /// <param name="previous">The previous version.</param>
+        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
+        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
+        /// <param name="getVersionSuffix">The function to get the version suffix.</param>
+        /// <returns>The task.</returns>
+        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+            Microsoft.Build.Evaluation.Project project,
+            System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageIds,
+            System.Text.RegularExpressions.Regex? packageIdRegex,
+            string packageIdReplace,
+            ILogger logger,
+            OutputTypes output,
+            NuGet.Versioning.SemanticVersion? previous,
+            bool noCache,
+            bool directDownload,
+            Func<string?, string?> getVersionSuffix)
+        {
+            var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
+            if (output.HasFlag(OutputTypes.Diagnostic))
+            {
+                logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
+            }
+
+            var projectDirectory = project.DirectoryPath;
+            var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
+            var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
+
+            // install the NuGet package
+            var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
+            if (packageIdRegex is not null)
+            {
+                projectPackageIds = projectPackageIds.Union(new[] { packageIdRegex.Replace(projectPackageId, packageIdReplace) }, StringComparer.Ordinal);
+            }
+
+            var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
+            var previousVersions = IsNullOrEmpty(previous)
+                ? NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory)
+                : CreateAsyncEnumerable(previous);
+            var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+
+            if (installDir is null)
+            {
+                var previousVersion = await previousVersions.MaxAsync().ConfigureAwait(false);
+                calculatedVersion = previousVersion is null
+                    ? new NuGet.Versioning.SemanticVersion(1, 0, 0, getVersionSuffix(LibraryComparison.DefaultAlphaRelease)) // have this as being a 0.1.0 release
+                    : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, getVersionSuffix(previousVersion.Release));
+            }
+            else
+            {
+                var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
+
+                var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
+                var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
+
+                // Get the package output path
+                var packageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("PackageOutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
+
+                // check the frameworks
+                var currentFrameworks = System.IO.Directory.EnumerateDirectories(packageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
+                var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
+                var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
+                if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
+                {
+                    // we have removed frameworks, this is a breaking change
+                    calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Major, previousStringVersions, getVersionSuffix(default));
+                }
+                else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
+                {
+                    // we have added frameworks, this is a feature change
+                    calculatedVersion = LibraryComparison.CalculateVersion(SemanticVersionChange.Minor, previousStringVersions, getVersionSuffix(default));
+                }
+
+                var searchPattern = assemblyName + targetExt;
+                var searchOptions =
+#if NETFRAMEWORK
+                                System.IO.SearchOption.TopDirectoryOnly;
+#else
+                                new System.IO.EnumerationOptions { RecurseSubdirectories = false };
+#endif
+                foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
+                {
+                    var oldDll = currentDll
+#if NETFRAMEWORK
+                                .Replace(packageOutputPath, buildOutputTargetFolder);
+#else
+                                .Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+#endif
+                    (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
+                    calculatedVersion = Max(calculatedVersion, version);
+                    WriteChanges(output, differences);
+                }
+
+                System.IO.Directory.Delete(installDir, recursive: true);
+            }
+
+            if (output.HasFlag(OutputTypes.Diagnostic))
+            {
+                logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
+            }
+
+            return calculatedVersion;
+
+            bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
+            {
+                return version?.Equals(Empty) != false;
+            }
+
+            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
+            {
+                var previousVersion = IsNullOrEmpty(previous)
+                    ? default
+                    : previous;
+                NuGet.Common.ILogger? logger = default;
+                try
+                {
+                    return await NuGetInstaller.InstallAsync(packageIds, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
+                }
+                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
+                {
+                    logger?.LogError(ex.Message);
+                }
+
+                return default;
+            }
+
+            static string TrimEndingDirectorySeparator(string path)
+            {
+                return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            }
+
+            static async System.Collections.Generic.IAsyncEnumerable<T> CreateAsyncEnumerable<T>(T value)
+            {
+                await Task.CompletedTask.ConfigureAwait(false);
+                yield return value;
             }
         }
 
@@ -472,6 +510,18 @@ namespace Mondo.SemanticVersioning
                     }
                 }
             }
+        }
+
+        private static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion? second)
+        {
+            if (second is null)
+            {
+                return first;
+            }
+
+            return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0
+                ? first
+                : second;
         }
 
         private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
