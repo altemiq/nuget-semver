@@ -118,7 +118,7 @@ namespace Altemiq.SemanticVersioning
 #endif
                     (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
                     calculatedVersion = calculatedVersion.Max(version);
-                    logger.Log(LogLevel.None, 0, differences, default, (_, __) => string.Empty);
+                    logger.Log(LogLevel.Information, 0, differences, default, (_, __) => string.Empty);
                 }
 
                 System.IO.Directory.Delete(installDir, recursive: true);

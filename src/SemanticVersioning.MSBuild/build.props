@@ -1,0 +1,11 @@
+﻿<Project TreatAsLocalProperty="TaskFolder;TaskAssembly">
+
+  <PropertyGroup>
+    <TaskFolder Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netstandard2.0</TaskFolder>
+    <TaskFolder Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net461</TaskFolder>
+    <TaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(TaskFolder)\$(MSBuildThisFileName).dll</TaskAssembly>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(TaskAssembly)" />
+
+</Project>

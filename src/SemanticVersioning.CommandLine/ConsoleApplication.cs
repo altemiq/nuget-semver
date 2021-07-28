@@ -228,6 +228,10 @@ namespace Altemiq.SemanticVersioning
                 console.Out.WriteLine($"Using {instance.Name} {instance.Version}");
             }
 
+            var regex = string.IsNullOrEmpty(packageIdRegex)
+                ? null
+                : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
+
             var version = await ProcessProjectOrSolution(
                 new ConsoleLogger(console, output),
                 projectOrSolution,
@@ -236,7 +240,7 @@ namespace Altemiq.SemanticVersioning
                 source,
                 packageId,
                 exclude,
-                packageIdRegex,
+                regex,
                 packageIdReplace,
                 string.IsNullOrEmpty(versionSuffix) ? default : versionSuffix,
                 previous,
@@ -305,7 +309,7 @@ namespace Altemiq.SemanticVersioning
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageId,
             System.Collections.Generic.IEnumerable<string> exclude,
-            string? packageIdRegex,
+            System.Text.RegularExpressions.Regex? packageIdRegex,
             string? packageIdReplace,
             string? versionSuffix,
             NuGet.Versioning.SemanticVersion? previous,
@@ -316,9 +320,6 @@ namespace Altemiq.SemanticVersioning
             var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
             var packageIds = packageId ?? Enumerable.Empty<string>();
-            var regex = string.IsNullOrEmpty(packageIdRegex)
-                ? null
-                : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
             using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
             foreach (var project in projectCollection.LoadedProjects.Where(project =>
                 IsPackable(project)
@@ -329,7 +330,7 @@ namespace Altemiq.SemanticVersioning
                     project,
                     source,
                     packageIds,
-                    regex,
+                    packageIdRegex,
                     packageIdReplace,
                     logger,
                     previous,
