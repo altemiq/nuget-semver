@@ -50,21 +50,21 @@ namespace Altemiq.SemanticVersioning
         /// <param name="output">The output type.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
-                ILogger logger,
-                System.IO.FileSystemInfo projectOrSolution,
-                string? configuration,
-                string? platform,
-                System.Collections.Generic.IEnumerable<string> source,
-                System.Collections.Generic.IEnumerable<string> packageId,
-                System.Collections.Generic.IEnumerable<string> exclude,
-                string? packageIdRegex,
-                string packageIdReplace,
-                string? versionSuffix,
-                NuGet.Versioning.SemanticVersion? previous,
-                bool noVersionSuffix,
-                bool noCache,
-                bool directDownload,
-                OutputTypes output)
+            ILogger logger,
+            System.IO.FileSystemInfo projectOrSolution,
+            string? configuration,
+            string? platform,
+            System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageId,
+            System.Collections.Generic.IEnumerable<string> exclude,
+            string? packageIdRegex,
+            string packageIdReplace,
+            string? versionSuffix,
+            NuGet.Versioning.SemanticVersion? previous,
+            bool noVersionSuffix,
+            bool noCache,
+            bool directDownload,
+            OutputTypes output)
         {
             var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
@@ -243,8 +243,66 @@ namespace Altemiq.SemanticVersioning
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
         /// <returns>The task.</returns>
-        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+        public static Task<NuGet.Versioning.SemanticVersion> ProcessProject(
             Microsoft.Build.Evaluation.Project project,
+            System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageIds,
+            System.Text.RegularExpressions.Regex? packageIdRegex,
+            string packageIdReplace,
+            ILogger logger,
+            OutputTypes output,
+            NuGet.Versioning.SemanticVersion? previous,
+            bool noCache,
+            bool directDownload,
+            Func<string?, string?> getVersionSuffix) =>
+            ProcessProject(
+                project.GetPropertyValue(MSBuildProjectNamePropertyName),
+                project.DirectoryPath,
+                project.GetPropertyValue(AssemblyNamePropertyName),
+                project.GetPropertyValue(PackageIdPropertyName),
+                project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll",
+                project.GetPropertyValue("BuildOutputTargetFolder"),
+                project.GetPropertyValue("PackageOutputPath"),
+                source,
+                packageIds,
+                packageIdRegex,
+                packageIdReplace,
+                logger,
+                output,
+                previous,
+                noCache,
+                directDownload,
+                getVersionSuffix);
+
+        /// <summary>
+        /// The process project.
+        /// </summary>
+        /// <param name="projectName">The project name.</param>
+        /// <param name="projectDirectory">The project directory.</param>
+        /// <param name="assemblyName">The assembly name.</param>
+        /// <param name="projectPackageId">The project package ID.</param>
+        /// <param name="targetExt">The target extension.</param>
+        /// <param name="buildOutputTargetFolder">The build output target folder.</param>
+        /// <param name="packageOutputPath">The package output path.</param>
+        /// <param name="source">The NuGet source.</param>
+        /// <param name="packageIds">The package ID.</param>
+        /// <param name="packageIdRegex">The package ID regex.</param>
+        /// <param name="packageIdReplace">The package ID replacement value.</param>
+        /// <param name="logger">The logger.</param>
+        /// <param name="output">The output type.</param>
+        /// <param name="previous">The previous version.</param>
+        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
+        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
+        /// <param name="getVersionSuffix">The function to get the version suffix.</param>
+        /// <returns>The task.</returns>
+        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+            string projectName,
+            string projectDirectory,
+            string assemblyName,
+            string projectPackageId,
+            string targetExt,
+            string buildOutputTargetFolder,
+            string packageOutputPath,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
@@ -256,15 +314,10 @@ namespace Altemiq.SemanticVersioning
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
         {
-            var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
             if (output.HasFlag(OutputTypes.Diagnostic))
             {
                 logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
             }
-
-            var projectDirectory = project.DirectoryPath;
-            var assemblyName = project.GetPropertyValue(AssemblyNamePropertyName);
-            var projectPackageId = project.GetPropertyValue(PackageIdPropertyName);
 
             // install the NuGet package
             var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
@@ -288,17 +341,16 @@ namespace Altemiq.SemanticVersioning
             }
             else
             {
-                var buildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, project.GetPropertyValue("BuildOutputTargetFolder")));
+                var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, buildOutputTargetFolder));
 
-                var targetExt = project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll";
                 var previousStringVersions = await previousVersions.Select(previousVersion => previousVersion.ToString()).ToArrayAsync().ConfigureAwait(false);
 
                 // Get the package output path
-                var packageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(project.DirectoryPath, project.GetPropertyValue("PackageOutputPath").Replace('\\', System.IO.Path.DirectorySeparatorChar)));
+                var fullPackageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(projectDirectory, packageOutputPath.Replace('\\', System.IO.Path.DirectorySeparatorChar)));
 
                 // check the frameworks
-                var currentFrameworks = System.IO.Directory.EnumerateDirectories(packageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
-                var previousFrameworks = System.IO.Directory.EnumerateDirectories(buildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
+                var currentFrameworks = System.IO.Directory.EnumerateDirectories(fullPackageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
+                var previousFrameworks = System.IO.Directory.EnumerateDirectories(installedBuildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
                 var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
                 if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                 {
@@ -318,13 +370,13 @@ namespace Altemiq.SemanticVersioning
 #else
                                 new System.IO.EnumerationOptions { RecurseSubdirectories = false };
 #endif
-                foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(packageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
+                foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
                 {
                     var oldDll = currentDll
 #if NETFRAMEWORK
-                                .Replace(packageOutputPath, buildOutputTargetFolder);
+                                .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder);
 #else
-                                .Replace(packageOutputPath, buildOutputTargetFolder, StringComparison.CurrentCulture);
+                                .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder, StringComparison.CurrentCulture);
 #endif
                     (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
                     calculatedVersion = Max(calculatedVersion, version);
