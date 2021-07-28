@@ -310,7 +310,7 @@ namespace Mondo.SemanticVersioning
                     if (addToCache)
                     {
                         var stream = System.IO.File.OpenRead(tempFile);
-#if NETCOREAPP3_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER
                         await
 #endif
                         using (stream)

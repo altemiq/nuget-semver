@@ -1,0 +1,162 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="SemanticVersioningTask.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace Mondo.SemanticVersioning
+{
+    using System;
+    using Microsoft.Build.Framework;
+    using Microsoft.Build.Utilities;
+
+    /// <summary>
+    /// The semantic versioning task.
+    /// </summary>
+    public class SemanticVersioningTask : Task
+    {
+        /// <summary>
+        /// Gets or sets the project name.
+        /// </summary>
+        [Required]
+        public string ProjectName { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the project directory.
+        /// </summary>
+        [Required]
+        public string ProjectDir { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the assembly name.
+        /// </summary>
+        [Required]
+        public string AssemblyName { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the package ID.
+        /// </summary>
+        [Required]
+        public string PackageId { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the target extension.
+        /// </summary>
+        [Required]
+        public string TargetExt { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the build output target folder.
+        /// </summary>
+        [Required]
+        public string BuildOutputTargetFolder { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the package output path.
+        /// </summary>
+        [Required]
+        public string PackageOutputPath { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the semicolon-delimited list of package sources.
+        /// </summary>
+        public string? RestoreSources { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package replace regular expression.
+        /// </summary>
+        public string? PackageReplaceRegex { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package ID replace value.
+        /// </summary>
+        public string? PackageIdReplace { get; set; }
+
+        /// <summary>
+        /// Gets or sets the previous version.
+        /// </summary>
+        public string? Previous { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to disable using the machine cache as the first package source.
+        /// </summary>
+        public bool NoCache { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to download directly without populating any caches with metadata or binaries.
+        /// </summary>
+        public bool DirectDownload { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to force there to be no version suffix.
+        /// </summary>
+        public bool NoVersionSuffix { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pre-release value. If none is specified, the pre-release from the previous version is used.
+        /// </summary>
+        public string? VersionSuffix { get; set; }
+
+        /// <summary>
+        /// Gets the calculated semantic version.
+        /// </summary>
+        [Output]
+        public string? ComputedVersion { get; private set; }
+
+        /// <summary>
+        /// Gets the calculated version prefix.
+        /// </summary>
+        [Output]
+        public string? ComputedVersionPrefix { get; private set; }
+
+        /// <summary>
+        /// Gets the calculated version suffix.
+        /// </summary>
+        [Output]
+        public string? ComputedVersionSuffix { get; private set; }
+
+        /// <inheritdoc/>
+        public override bool Execute()
+        {
+            var logger = new MSBuildLogger(this.Log);
+            var regex = this.PackageReplaceRegex is null
+                ? null
+                : new System.Text.RegularExpressions.Regex(this.PackageReplaceRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
+
+            var previousVersion = this.Previous is null
+                ? default
+                : NuGet.Versioning.SemanticVersion.Parse(this.Previous);
+
+            var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
+
+            var version = MSBuildApplication.ProcessProject(
+                this.ProjectName,
+                this.ProjectDir,
+                this.AssemblyName,
+                this.PackageId,
+                this.TargetExt,
+                this.BuildOutputTargetFolder,
+                this.PackageOutputPath,
+                restoreSources,
+                new[] { this.PackageId },
+                regex,
+                this.PackageReplaceRegex,
+                logger,
+                previousVersion,
+                this.NoCache,
+                this.DirectDownload,
+                GetVersionSuffix).Result;
+
+            this.ComputedVersion = version.ToString();
+            this.ComputedVersionPrefix = version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance);
+            this.ComputedVersionSuffix = version.ToString("R", NuGet.Versioning.VersionFormatter.Instance);
+
+            return this.ComputedVersion is not null;
+
+            string? GetVersionSuffix(string? previousVersionRelease = default)
+            {
+                return this.NoVersionSuffix ? string.Empty : (this.VersionSuffix ?? previousVersionRelease);
+            }
+        }
+    }
+}

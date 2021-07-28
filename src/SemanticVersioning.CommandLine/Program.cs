@@ -26,7 +26,7 @@ var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calcula
     .AddOption(new Option<bool>("--no-cache", () => ConsoleApplication.DefaultNoCache, "Disable using the machine cache as the first package source."))
     .AddOption(new Option<bool>("--direct-download", () => ConsoleApplication.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries."))
     .AddOption(new Option<string?>("--package-id-regex", () => ConsoleApplication.DefaultPackageIdRegex, "The regular expression to match in the package id."))
-    .AddOption(new Option<string>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex"))
+    .AddOption(new Option<string?>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex"))
     .AddOption(new Option<string?>("--package-id", "The package ID to check for previous versions", ArgumentArity.OneOrMore))
     .AddOption(new Option<string?>("--exclude", "A package ID to check exclude from analysis", ArgumentArity.OneOrMore));
 

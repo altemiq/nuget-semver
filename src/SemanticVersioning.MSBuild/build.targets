@@ -1,0 +1,9 @@
+﻿<Project>
+
+  <Target Name="SemanticVersioning" AfterTargets="BeforeBuild">
+    <Mondo.SemanticVersioning.SemanticVersioningTask>
+    
+    </Mondo.SemanticVersioning.SemanticVersioningTask>
+  </Target>
+
+</Project>
