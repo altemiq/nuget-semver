@@ -57,7 +57,7 @@ namespace Altemiq.SemanticVersioning
             {
                 if (MainMethod is null)
                 {
-                    MainMethod = EntryPointDiscoverer.FindStaticEntryMethod(typeof(MSBuildApplication).Assembly);
+                    MainMethod = EntryPointDiscoverer.FindStaticEntryMethod(typeof(ConsoleApplication).Assembly);
                 }
             }
         };
