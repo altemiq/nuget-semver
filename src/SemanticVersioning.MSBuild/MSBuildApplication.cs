@@ -33,7 +33,6 @@ namespace Mondo.SemanticVersioning
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="output">The output type.</param>
         /// <param name="previous">The previous version.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
@@ -50,18 +49,14 @@ namespace Mondo.SemanticVersioning
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
-            string packageIdReplace,
+            string? packageIdReplace,
             ILogger logger,
-            OutputTypes output,
             NuGet.Versioning.SemanticVersion? previous,
             bool noCache,
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
         {
-            if (output.HasFlag(OutputTypes.Diagnostic))
-            {
-                logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
-            }
+            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
 
             // install the NuGet package
             var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
@@ -108,31 +103,28 @@ namespace Mondo.SemanticVersioning
                 }
 
                 var searchPattern = assemblyName + targetExt;
-#if NETFRAMEWORK
-                const System.IO.SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
-#else
+#if NETSTANDARD2_1_OR_GREATER
                 var searchOptions = new System.IO.EnumerationOptions { RecurseSubdirectories = false };
+#else
+                const System.IO.SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
 #endif
                 foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
                 {
                     var oldDll = currentDll
-#if NETFRAMEWORK
-                                .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder);
+#if NETSTANDARD2_1_OR_GREATER
+                        .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder, StringComparison.CurrentCulture);
 #else
-                                .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder, StringComparison.CurrentCulture);
+                        .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder);
 #endif
                     (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
                     calculatedVersion = calculatedVersion.Max(version);
-                    WriteChanges(output, differences);
+                    logger.Log(LogLevel.None, 0, differences, default, (_, __) => string.Empty);
                 }
 
                 System.IO.Directory.Delete(installDir, recursive: true);
             }
 
-            if (output.HasFlag(OutputTypes.Diagnostic))
-            {
-                logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
-            }
+            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
 
             return calculatedVersion;
 
@@ -168,142 +160,6 @@ namespace Mondo.SemanticVersioning
             {
                 await Task.CompletedTask.ConfigureAwait(false);
                 yield return value;
-            }
-        }
-
-        /// <summary>
-        /// Writes the changes.
-        /// </summary>
-        /// <param name="outputTypes">The output type.</param>
-        /// <param name="differences">The differences.</param>
-        public static void WriteChanges(OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
-        {
-            var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
-            var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);
-            if (!breakingChanges
-                && !functionalChanges)
-            {
-                return;
-            }
-
-            void PrintBreakingChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
-            {
-                if (breakingChanges && operation.IsRemoved)
-                {
-                    WriteLine(ConsoleColor.Red, message, tabs);
-                }
-            }
-
-            void PrintFunctionalChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
-            {
-                if (functionalChanges && operation.IsAdded)
-                {
-                    WriteLine(ConsoleColor.Blue, message, tabs);
-                }
-            }
-
-            void PrintDiff<T>(Endjin.ApiChange.Api.Diff.DiffResult<T> diffResult, int tabs = 0)
-            {
-                var message = $"{diffResult}";
-                PrintFunctionalChange(diffResult.Operation, message, tabs);
-                PrintBreakingChange(diffResult.Operation, message, tabs);
-            }
-
-            var originalColour = Console.ForegroundColor;
-            void WriteLine(ConsoleColor consoleColor, string value, int tabs = 0)
-            {
-                Console.ForegroundColor = consoleColor;
-                Console.WriteLine(string.Concat(new string('\t', tabs), value));
-                Console.ForegroundColor = originalColour;
-            }
-
-            bool ShouldPrintChangedBaseType(bool changedBaseType)
-            {
-                return breakingChanges && changedBaseType;
-            }
-
-            bool ShouldPrintChangedTypes(System.Collections.Generic.IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
-            {
-                return typeDifferences.Any(ShouldPrintChangedType);
-            }
-
-            bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
-            {
-                return (breakingChanges && collection.Any(method => method.Operation.IsRemoved))
-                    || (functionalChanges && collection.Any(method => method.Operation.IsAdded));
-            }
-
-            bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)
-            {
-                return ShouldPrintChangedBaseType(typeDiff.HasChangedBaseType)
-                    || ShouldPrintChanged(typeDiff.Methods)
-                    || ShouldPrintChanged(typeDiff.Fields)
-                    || ShouldPrintChanged(typeDiff.Events)
-                    || ShouldPrintChanged(typeDiff.Interfaces);
-            }
-
-            bool ShouldPrintCollection(Endjin.ApiChange.Api.Diff.AssemblyDiffCollection assemblyDiffCollection)
-            {
-                return (breakingChanges && assemblyDiffCollection.AddedRemovedTypes.RemovedCount != 0)
-                    || (functionalChanges && assemblyDiffCollection.AddedRemovedTypes.AddedCount != 0)
-                    || ShouldPrintChangedTypes(assemblyDiffCollection.ChangedTypes);
-            }
-
-            if (ShouldPrintCollection(differences))
-            {
-                foreach (var addedRemovedType in differences.AddedRemovedTypes)
-                {
-                    PrintDiff(addedRemovedType, 1);
-                }
-
-                if (ShouldPrintChangedTypes(differences.ChangedTypes))
-                {
-                    WriteLine(originalColour, Properties.Resources.ChangedTypes, 1);
-                    foreach (var changedType in differences.ChangedTypes.Where(ShouldPrintChangedType))
-                    {
-                        WriteLine(originalColour, $"{changedType.TypeV1}", 2);
-                        if (ShouldPrintChangedBaseType(changedType.HasChangedBaseType))
-                        {
-                            WriteLine(ConsoleColor.Red, Properties.Resources.ChangedBaseType, 3);
-                        }
-
-                        if (ShouldPrintChanged(changedType.Methods))
-                        {
-                            WriteLine(originalColour, Properties.Resources.Methods, 3);
-                            foreach (var method in changedType.Methods)
-                            {
-                                PrintDiff(method, 4);
-                            }
-                        }
-
-                        if (ShouldPrintChanged(changedType.Fields))
-                        {
-                            WriteLine(originalColour, Properties.Resources.Fields, 3);
-                            foreach (var field in changedType.Fields)
-                            {
-                                PrintDiff(field, 4);
-                            }
-                        }
-
-                        if (ShouldPrintChanged(changedType.Events))
-                        {
-                            WriteLine(originalColour, Properties.Resources.Events, 3);
-                            foreach (var @event in changedType.Events)
-                            {
-                                PrintDiff(@event, 4);
-                            }
-                        }
-
-                        if (ShouldPrintChanged(changedType.Interfaces))
-                        {
-                            WriteLine(originalColour, Properties.Resources.Interfaces, 3);
-                            foreach (var @interface in changedType.Interfaces)
-                            {
-                                PrintDiff(@interface, 4);
-                            }
-                        }
-                    }
-                }
             }
         }
     }
