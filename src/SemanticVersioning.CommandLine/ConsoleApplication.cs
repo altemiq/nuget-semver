@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Mondo.SemanticVersioning.CommandLine.Specs")]
+
 namespace Mondo.SemanticVersioning
 {
     using System;

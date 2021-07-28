@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
-namespace Mondo.SemanticVersioning
+﻿namespace Mondo.SemanticVersioning
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
 
     public class EntryPointDiscoverer
     {
-        public static MethodInfo FindStaticEntryMethod(System.Reflection.Assembly assembly, string entryPointFullTypeName = default)
+        public static MethodInfo FindStaticEntryMethod(Assembly assembly, string entryPointFullTypeName = default)
         {
             var candidates = new List<MethodInfo>();
 
