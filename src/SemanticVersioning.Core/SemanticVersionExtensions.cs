@@ -108,6 +108,24 @@ namespace Altemiq.SemanticVersioning
         }
 
         /// <summary>
+        /// Gets the maximum from two versions.
+        /// </summary>
+        /// <param name="first">The first version.</param>
+        /// <param name="second">The second vesion.</param>
+        /// <returns>The maximum version.</returns>
+        public static NuGet.Versioning.SemanticVersion Max(this NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion? second)
+        {
+            if (second is null)
+            {
+                return first;
+            }
+
+            return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0
+                ? first
+                : second;
+        }
+
+        /// <summary>
         /// Creates a new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.
         /// </summary>
         /// <param name="version">The version.</param>
