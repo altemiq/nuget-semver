@@ -16,12 +16,6 @@ namespace Mondo.SemanticVersioning
     public class SemanticVersioningTask : Task
     {
         /// <summary>
-        /// Gets or sets the project name.
-        /// </summary>
-        [Required]
-        public string ProjectName { get; set; } = default!;
-
-        /// <summary>
         /// Gets or sets the project directory.
         /// </summary>
         [Required]
@@ -130,7 +124,6 @@ namespace Mondo.SemanticVersioning
             var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
 
             var version = MSBuildApplication.ProcessProject(
-                this.ProjectName,
                 this.ProjectDir,
                 this.AssemblyName,
                 this.PackageId,

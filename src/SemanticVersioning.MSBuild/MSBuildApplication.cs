@@ -21,7 +21,6 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// The process project.
         /// </summary>
-        /// <param name="projectName">The project name.</param>
         /// <param name="projectDirectory">The project directory.</param>
         /// <param name="assemblyName">The assembly name.</param>
         /// <param name="projectPackageId">The project package ID.</param>
@@ -39,7 +38,6 @@ namespace Mondo.SemanticVersioning
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
-            string projectName,
             string projectDirectory,
             string assemblyName,
             string projectPackageId,
@@ -56,8 +54,6 @@ namespace Mondo.SemanticVersioning
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
         {
-            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
-
             // install the NuGet package
             var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
             if (packageIdRegex is not null)
@@ -123,8 +119,6 @@ namespace Mondo.SemanticVersioning
 
                 System.IO.Directory.Delete(installDir, recursive: true);
             }
-
-            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
 
             return calculatedVersion;
 

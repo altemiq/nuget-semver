@@ -12,6 +12,7 @@ namespace Mondo.SemanticVersioning
     using System.CommandLine.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// The console application.
@@ -489,19 +490,22 @@ namespace Mondo.SemanticVersioning
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
         /// <returns>The task.</returns>
-        public static Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
             Microsoft.Build.Evaluation.Project project,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
             string? packageIdReplace,
-            Microsoft.Extensions.Logging.ILogger logger,
+            ILogger logger,
             NuGet.Versioning.SemanticVersion? previous,
             bool noCache,
             bool directDownload,
-            System.Func<string?, string?> getVersionSuffix) =>
-            MSBuildApplication.ProcessProject(
-                project.GetPropertyValue(MSBuildProjectNamePropertyName),
+            Func<string?, string?> getVersionSuffix)
+        {
+            var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
+            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
+
+            var calculatedVersion = await MSBuildApplication.ProcessProject(
                 project.DirectoryPath,
                 project.GetPropertyValue(AssemblyNamePropertyName),
                 project.GetPropertyValue(PackageIdPropertyName),
@@ -516,7 +520,12 @@ namespace Mondo.SemanticVersioning
                 previous,
                 noCache,
                 directDownload,
-                getVersionSuffix);
+                getVersionSuffix).ConfigureAwait(false);
+
+            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
+
+            return calculatedVersion;
+        }
 
         private static void WriteHeader(System.CommandLine.IConsole console)
         {
