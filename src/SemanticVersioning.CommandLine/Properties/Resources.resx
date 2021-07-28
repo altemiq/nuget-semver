@@ -117,28 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ChangedBaseType" xml:space="preserve">
-    <value>Changed base type.</value>
-  </data>
-  <data name="ChangedTypes" xml:space="preserve">
-    <value>Changed types:</value>
-  </data>
   <data name="Copyright" xml:space="preserve">
     <value>Copyright (C) Mondo Power. All rights reserved.</value>
   </data>
-  <data name="Events" xml:space="preserve">
-    <value>Events:</value>
-  </data>
-  <data name="Fields" xml:space="preserve">
-    <value>Fields:</value>
-  </data>
-  <data name="Interfaces" xml:space="preserve">
-    <value>Interfaces:</value>
-  </data>
   <data name="Logo" xml:space="preserve">
     <value>Mondo (R) Semantic Version Generator {0}</value>
-  </data>
-  <data name="Methods" xml:space="preserve">
-    <value>Methods:</value>
   </data>
 </root>

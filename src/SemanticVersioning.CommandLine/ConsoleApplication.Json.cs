@@ -1,24 +1,24 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Application.Json.cs" company="Mondo">
+// <copyright file="ConsoleApplication.Json.cs" company="Mondo">
 // Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
 namespace Mondo.SemanticVersioning
 {
-    using Microsoft.Extensions.Logging;
+    using System.CommandLine.IO;
 
     /// <content>
     /// Application class for writing the GitHub version.
     /// </content>
-    public static partial class Application
+    internal static partial class ConsoleApplication
     {
         /// <summary>
         /// Writes the JSON version.
         /// </summary>
-        /// <param name="logger">The logger.</param>
+        /// <param name="console">The console.</param>
         /// <param name="version">The version to write.</param>
-        public static void WriteJsonVersion(ILogger logger, NuGet.Versioning.SemanticVersion version)
+        public static void WriteJsonVersion(System.CommandLine.IConsole console, NuGet.Versioning.SemanticVersion version)
         {
             // export these as environment variables
             var versions = new Versions
@@ -29,7 +29,7 @@ namespace Mondo.SemanticVersioning
             };
 
             var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
-            logger.LogInformation(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options));
+            console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options));
         }
 
         private class Versions

@@ -16,51 +16,6 @@ namespace Mondo.SemanticVersioning
     /// </summary>
     public static class MSBuildApplication
     {
-        /// <summary>
-        /// The default for the package ID Regex option.
-        /// </summary>
-        public const string? DefaultPackageIdRegex = default;
-
-        /// <summary>
-        /// The default for the package ID replace option.
-        /// </summary>
-        public const string DefaultPackageIdReplace = default;
-
-        /// <summary>
-        /// The default for the version suffix option.
-        /// </summary>
-        public const string? DefaultVersionSuffix = "";
-
-        /// <summary>
-        /// The default for the previous version option.
-        /// </summary>
-        public const NuGet.Versioning.SemanticVersion? DefaultPrevious = default;
-
-        /// <summary>
-        /// The default for the no version suffix option.
-        /// </summary>
-        public const bool DefaultNoVersionSuffix = default;
-
-        /// <summary>
-        /// The default for the no cache option.
-        /// </summary>
-        public const bool DefaultNoCache = default;
-
-        /// <summary>
-        /// The default for the direct download option.
-        /// </summary>
-        public const bool DefaultDirectDownload = default;
-
-        /// <summary>
-        /// The default for the configuration option.
-        /// </summary>
-        public const string? DefaultConfiguration = default;
-
-        /// <summary>
-        /// The default for the platform option.
-        /// </summary>
-        public const string? DefaultPlatform = default;
-
         private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
 
         private const string IsPackablePropertyName = "IsPackable";
@@ -76,15 +31,15 @@ namespace Mondo.SemanticVersioning
         private static readonly NuGet.Versioning.SemanticVersion Empty = new(0, 0, 0);
 
         /// <summary>
-        /// The process project of solution delegate.
+        /// The process project of solution.
         /// </summary>
-        /// <param name="console">The console.</param>
+        /// <param name="logger">The logger.</param>
         /// <param name="projectOrSolution">The project or solution.</param>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="platform">The platform.</param>
         /// <param name="source">The NuGet source.</param>
         /// <param name="packageId">The package ID.</param>
         /// <param name="exclude">The values to exclude.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="platform">The platform.</param>
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
         /// <param name="versionSuffix">The version suffix.</param>
@@ -95,30 +50,8 @@ namespace Mondo.SemanticVersioning
         /// <param name="output">The output type.</param>
         /// <param name="buildNumberParameter">The parameter name for the build number.</param>
         /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
-        /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
         /// <returns>The task.</returns>
-        public delegate Task<int> ProcessProjectOrSolutionDelegate(
-            ILogger console,
-            System.IO.FileSystemInfo projectOrSolution,
-            System.Collections.Generic.IEnumerable<string> source,
-            System.Collections.Generic.IEnumerable<string> packageId,
-            System.Collections.Generic.IEnumerable<string> exclude,
-            string? configuration = DefaultConfiguration,
-            string? platform = DefaultPlatform,
-            string? packageIdRegex = DefaultPackageIdRegex,
-            string packageIdReplace = DefaultPackageIdReplace,
-            string? versionSuffix = DefaultVersionSuffix,
-            NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
-            bool noVersionSuffix = DefaultNoVersionSuffix,
-            bool noCache = DefaultNoCache,
-            bool directDownload = DefaultDirectDownload,
-            OutputTypes output = Application.DefaultOutput,
-            string buildNumberParameter = Application.DefaultBuildNumberParameter,
-            string versionSuffixParameter = Application.DefaultVersionSuffixParameter,
-            bool noLogo = Application.DefaultNoLogo);
-
-        /// <inheritdoc cref="ProcessProjectOrSolutionDelegate" />
-        public static async Task<int> ProcessProjectOrSolution(
+        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
                 ILogger logger,
                 System.IO.FileSystemInfo projectOrSolution,
                 string? configuration,
@@ -225,7 +158,7 @@ namespace Mondo.SemanticVersioning
 #endif
                         (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, GetVersionSuffix());
                         calculatedVersion = Max(calculatedVersion, version);
-                        Application.WriteChanges(output, differences);
+                        WriteChanges(output, differences);
                     }
 
                     System.IO.Directory.Delete(installDir, recursive: true);
@@ -239,18 +172,7 @@ namespace Mondo.SemanticVersioning
                 globalVersion = Max(globalVersion, calculatedVersion);
             }
 
-            // write out the version and the suffix
-            if (output.HasFlag(OutputTypes.TeamCity))
-            {
-                Application.WriteTeamCityVersion(logger, globalVersion, buildNumberParameter, versionSuffixParameter);
-            }
-
-            if (output.HasFlag(OutputTypes.Json))
-            {
-                Application.WriteJsonVersion(logger, globalVersion);
-            }
-
-            return 0;
+            return globalVersion;
 
             bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
             {
@@ -412,6 +334,142 @@ namespace Mondo.SemanticVersioning
 
                     // At this point, we know the file passed in is not a valid project or solution
                     throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes the changes.
+        /// </summary>
+        /// <param name="outputTypes">The output type.</param>
+        /// <param name="differences">The differences.</param>
+        public static void WriteChanges(OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
+        {
+            var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
+            var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);
+            if (!breakingChanges
+                && !functionalChanges)
+            {
+                return;
+            }
+
+            void PrintBreakingChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
+            {
+                if (breakingChanges && operation.IsRemoved)
+                {
+                    WriteLine(ConsoleColor.Red, message, tabs);
+                }
+            }
+
+            void PrintFunctionalChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
+            {
+                if (functionalChanges && operation.IsAdded)
+                {
+                    WriteLine(ConsoleColor.Blue, message, tabs);
+                }
+            }
+
+            void PrintDiff<T>(Endjin.ApiChange.Api.Diff.DiffResult<T> diffResult, int tabs = 0)
+            {
+                var message = $"{diffResult}";
+                PrintFunctionalChange(diffResult.Operation, message, tabs);
+                PrintBreakingChange(diffResult.Operation, message, tabs);
+            }
+
+            var originalColour = Console.ForegroundColor;
+            void WriteLine(ConsoleColor consoleColor, string value, int tabs = 0)
+            {
+                Console.ForegroundColor = consoleColor;
+                Console.WriteLine(string.Concat(new string('\t', tabs), value));
+                Console.ForegroundColor = originalColour;
+            }
+
+            bool ShouldPrintChangedBaseType(bool changedBaseType)
+            {
+                return breakingChanges && changedBaseType;
+            }
+
+            bool ShouldPrintChangedTypes(System.Collections.Generic.IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
+            {
+                return typeDifferences.Any(ShouldPrintChangedType);
+            }
+
+            bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
+            {
+                return (breakingChanges && collection.Any(method => method.Operation.IsRemoved))
+                    || (functionalChanges && collection.Any(method => method.Operation.IsAdded));
+            }
+
+            bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)
+            {
+                return ShouldPrintChangedBaseType(typeDiff.HasChangedBaseType)
+                    || ShouldPrintChanged(typeDiff.Methods)
+                    || ShouldPrintChanged(typeDiff.Fields)
+                    || ShouldPrintChanged(typeDiff.Events)
+                    || ShouldPrintChanged(typeDiff.Interfaces);
+            }
+
+            bool ShouldPrintCollection(Endjin.ApiChange.Api.Diff.AssemblyDiffCollection assemblyDiffCollection)
+            {
+                return (breakingChanges && assemblyDiffCollection.AddedRemovedTypes.RemovedCount != 0)
+                    || (functionalChanges && assemblyDiffCollection.AddedRemovedTypes.AddedCount != 0)
+                    || ShouldPrintChangedTypes(assemblyDiffCollection.ChangedTypes);
+            }
+
+            if (ShouldPrintCollection(differences))
+            {
+                foreach (var addedRemovedType in differences.AddedRemovedTypes)
+                {
+                    PrintDiff(addedRemovedType, 1);
+                }
+
+                if (ShouldPrintChangedTypes(differences.ChangedTypes))
+                {
+                    WriteLine(originalColour, Properties.Resources.ChangedTypes, 1);
+                    foreach (var changedType in differences.ChangedTypes.Where(ShouldPrintChangedType))
+                    {
+                        WriteLine(originalColour, $"{changedType.TypeV1}", 2);
+                        if (ShouldPrintChangedBaseType(changedType.HasChangedBaseType))
+                        {
+                            WriteLine(ConsoleColor.Red, Properties.Resources.ChangedBaseType, 3);
+                        }
+
+                        if (ShouldPrintChanged(changedType.Methods))
+                        {
+                            WriteLine(originalColour, Properties.Resources.Methods, 3);
+                            foreach (var method in changedType.Methods)
+                            {
+                                PrintDiff(method, 4);
+                            }
+                        }
+
+                        if (ShouldPrintChanged(changedType.Fields))
+                        {
+                            WriteLine(originalColour, Properties.Resources.Fields, 3);
+                            foreach (var field in changedType.Fields)
+                            {
+                                PrintDiff(field, 4);
+                            }
+                        }
+
+                        if (ShouldPrintChanged(changedType.Events))
+                        {
+                            WriteLine(originalColour, Properties.Resources.Events, 3);
+                            foreach (var @event in changedType.Events)
+                            {
+                                PrintDiff(@event, 4);
+                            }
+                        }
+
+                        if (ShouldPrintChanged(changedType.Interfaces))
+                        {
+                            WriteLine(originalColour, Properties.Resources.Interfaces, 3);
+                            foreach (var @interface in changedType.Interfaces)
+                            {
+                                PrintDiff(@interface, 4);
+                            }
+                        }
+                    }
                 }
             }
         }
