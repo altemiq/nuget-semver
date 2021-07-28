@@ -70,65 +70,11 @@ namespace Altemiq.SemanticVersioning.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Changed base type..
-        /// </summary>
-        internal static string ChangedBaseType {
-            get {
-                return ResourceManager.GetString("ChangedBaseType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Changed types:.
-        /// </summary>
-        internal static string ChangedTypes {
-            get {
-                return ResourceManager.GetString("ChangedTypes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Checking {0}.
         /// </summary>
         internal static string Checking {
             get {
                 return ResourceManager.GetString("Checking", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Events:.
-        /// </summary>
-        internal static string Events {
-            get {
-                return ResourceManager.GetString("Events", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fields:.
-        /// </summary>
-        internal static string Fields {
-            get {
-                return ResourceManager.GetString("Fields", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Interfaces:.
-        /// </summary>
-        internal static string Interfaces {
-            get {
-                return ResourceManager.GetString("Interfaces", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Methods:.
-        /// </summary>
-        internal static string Methods {
-            get {
-                return ResourceManager.GetString("Methods", resourceCulture);
             }
         }
     }

@@ -46,12 +46,12 @@ namespace Altemiq.SemanticVersioning
         /// <summary>
         /// The default for the package ID replace option.
         /// </summary>
-        public const string DefaultPackageIdReplace = default;
+        public const string? DefaultPackageIdReplace = default;
 
         /// <summary>
         /// The default for the version suffix option.
         /// </summary>
-        public const string? DefaultVersionSuffix = "";
+        public const string DefaultVersionSuffix = "";
 
         /// <summary>
         /// The default for the previous version option.
@@ -151,7 +151,7 @@ namespace Altemiq.SemanticVersioning
             string? configuration = DefaultConfiguration,
             string? platform = DefaultPlatform,
             string? packageIdRegex = DefaultPackageIdRegex,
-            string packageIdReplace = DefaultPackageIdReplace,
+            string? packageIdReplace = DefaultPackageIdReplace,
             string? versionSuffix = DefaultVersionSuffix,
             NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
             bool noVersionSuffix = DefaultNoVersionSuffix,
@@ -180,7 +180,8 @@ namespace Altemiq.SemanticVersioning
             }
 
             (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
-            MSBuildApplication.WriteChanges(output, differences);
+
+            ConsoleLogger.WriteChanges(console, output, differences);
             if (version is not null)
             {
                 if (output.HasFlag(OutputTypes.TeamCity))
@@ -205,7 +206,7 @@ namespace Altemiq.SemanticVersioning
             string? configuration = DefaultConfiguration,
             string? platform = DefaultPlatform,
             string? packageIdRegex = DefaultPackageIdRegex,
-            string packageIdReplace = DefaultPackageIdReplace,
+            string? packageIdReplace = DefaultPackageIdReplace,
             string? versionSuffix = DefaultVersionSuffix,
             NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
             bool noVersionSuffix = DefaultNoVersionSuffix,
@@ -228,7 +229,7 @@ namespace Altemiq.SemanticVersioning
             }
 
             var version = await ProcessProjectOrSolution(
-                new ConsoleLogger(console, output.HasFlag(OutputTypes.Diagnostic)),
+                new ConsoleLogger(console, output),
                 projectOrSolution,
                 configuration,
                 platform,
@@ -241,8 +242,7 @@ namespace Altemiq.SemanticVersioning
                 previous,
                 noVersionSuffix,
                 noCache,
-                directDownload,
-                output).ConfigureAwait(false);
+                directDownload).ConfigureAwait(false);
 
             // write out the version and the suffix
             if (output.HasFlag(OutputTypes.TeamCity))
@@ -296,7 +296,6 @@ namespace Altemiq.SemanticVersioning
         /// <param name="noVersionSuffix">Set to <see langword="true"/> to force there to be no version suffix.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <param name="output">The output type.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
             Microsoft.Extensions.Logging.ILogger logger,
@@ -307,13 +306,12 @@ namespace Altemiq.SemanticVersioning
             System.Collections.Generic.IEnumerable<string> packageId,
             System.Collections.Generic.IEnumerable<string> exclude,
             string? packageIdRegex,
-            string packageIdReplace,
+            string? packageIdReplace,
             string? versionSuffix,
             NuGet.Versioning.SemanticVersion? previous,
             bool noVersionSuffix,
             bool noCache,
-            bool directDownload,
-            OutputTypes output)
+            bool directDownload)
         {
             var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
@@ -334,7 +332,6 @@ namespace Altemiq.SemanticVersioning
                     regex,
                     packageIdReplace,
                     logger,
-                    output,
                     previous,
                     noCache,
                     directDownload,
@@ -486,7 +483,6 @@ namespace Altemiq.SemanticVersioning
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="output">The output type.</param>
         /// <param name="previous">The previous version.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
@@ -497,9 +493,8 @@ namespace Altemiq.SemanticVersioning
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
-            string packageIdReplace,
+            string? packageIdReplace,
             Microsoft.Extensions.Logging.ILogger logger,
-            OutputTypes output,
             NuGet.Versioning.SemanticVersion? previous,
             bool noCache,
             bool directDownload,
@@ -517,7 +512,6 @@ namespace Altemiq.SemanticVersioning
                 packageIdRegex,
                 packageIdReplace,
                 logger,
-                output,
                 previous,
                 noCache,
                 directDownload,

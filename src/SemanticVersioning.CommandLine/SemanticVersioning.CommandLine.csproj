@@ -4,8 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net5.0;netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>$(Company).$(Title)</RootNamespace>
-    
-    <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
+
+    <NoWarn>$(NoWarn);CA1801;CA1812;MA0051;RCS1096</NoWarn>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 
     <PackageId>$(RootNamespace)</PackageId>
