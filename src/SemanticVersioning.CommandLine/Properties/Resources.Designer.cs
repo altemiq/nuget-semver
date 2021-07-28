@@ -77,5 +77,32 @@ namespace Mondo.SemanticVersioning.Properties {
                 return ResourceManager.GetString("Logo", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify which project or solution file to use because this folder contains more than one project or solution file..
+        /// </summary>
+        internal static string MultipleInCurrentFolder {
+            get {
+                return ResourceManager.GetString("MultipleInCurrentFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify which project or solution file to use because the folder &quot;{0}&quot; contains for than one project or solution file..
+        /// </summary>
+        internal static string MultipleInSpecifiedFolder {
+            get {
+                return ResourceManager.GetString("MultipleInSpecifiedFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Project file does not exist..
+        /// </summary>
+        internal static string ProjectFileDoesNotExist {
+            get {
+                return ResourceManager.GetString("ProjectFileDoesNotExist", resourceCulture);
+            }
+        }
     }
 }

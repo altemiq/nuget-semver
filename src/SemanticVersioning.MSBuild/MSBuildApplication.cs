@@ -16,263 +16,7 @@ namespace Mondo.SemanticVersioning
     /// </summary>
     public static class MSBuildApplication
     {
-        private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
-
-        private const string IsPackablePropertyName = "IsPackable";
-
-        private const string MSBuildProjectNamePropertyName = "MSBuildProjectName";
-
-        private const string AssemblyNamePropertyName = "AssemblyName";
-
-        private const string PackageIdPropertyName = "PackageId";
-
-        private const string TargetExtPropertyName = "TargetExt";
-
         private static readonly NuGet.Versioning.SemanticVersion Empty = new(0, 0, 0);
-
-        /// <summary>
-        /// The process project of solution.
-        /// </summary>
-        /// <param name="logger">The logger.</param>
-        /// <param name="projectOrSolution">The project or solution.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="platform">The platform.</param>
-        /// <param name="source">The NuGet source.</param>
-        /// <param name="packageId">The package ID.</param>
-        /// <param name="exclude">The values to exclude.</param>
-        /// <param name="packageIdRegex">The package ID regex.</param>
-        /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="versionSuffix">The version suffix.</param>
-        /// <param name="previous">The previous version.</param>
-        /// <param name="noVersionSuffix">Set to <see langword="true"/> to force there to be no version suffix.</param>
-        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
-        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <param name="output">The output type.</param>
-        /// <returns>The task.</returns>
-        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
-            ILogger logger,
-            System.IO.FileSystemInfo projectOrSolution,
-            string? configuration,
-            string? platform,
-            System.Collections.Generic.IEnumerable<string> source,
-            System.Collections.Generic.IEnumerable<string> packageId,
-            System.Collections.Generic.IEnumerable<string> exclude,
-            string? packageIdRegex,
-            string packageIdReplace,
-            string? versionSuffix,
-            NuGet.Versioning.SemanticVersion? previous,
-            bool noVersionSuffix,
-            bool noCache,
-            bool directDownload,
-            OutputTypes output)
-        {
-            var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
-
-            var packageIds = packageId ?? Enumerable.Empty<string>();
-            var regex = string.IsNullOrEmpty(packageIdRegex)
-                ? null
-                : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
-            using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
-            foreach (var project in projectCollection.LoadedProjects.Where(project =>
-                IsPackable(project)
-                && !ShouldDisableSemanticVersioning(project)
-                && !ShouldExclude(project, exclude)))
-            {
-                var calculatedVersion = await ProcessProject(
-                    project,
-                    source,
-                    packageIds,
-                    regex,
-                    packageIdReplace,
-                    logger,
-                    output,
-                    previous,
-                    noCache,
-                    directDownload,
-                    GetVersionSuffix).ConfigureAwait(false);
-                globalVersion = Max(globalVersion, calculatedVersion);
-            }
-
-            return globalVersion;
-
-            static bool IsPackable(Microsoft.Build.Evaluation.Project project)
-            {
-                return bool.TryParse(project.GetPropertyValue(IsPackablePropertyName), out var isPackable) && isPackable;
-            }
-
-            static bool ShouldDisableSemanticVersioning(Microsoft.Build.Evaluation.Project project)
-            {
-                return bool.TryParse(project.GetPropertyValue(DisableSemanticVersioningPropertyName), out var excludeFromSemanticVersioning) && excludeFromSemanticVersioning;
-            }
-
-            static bool ShouldExclude(Microsoft.Build.Evaluation.Project project, System.Collections.Generic.IEnumerable<string> excludes)
-            {
-                return excludes?.Contains(project.GetPropertyValue(PackageIdPropertyName), StringComparer.Ordinal) == true;
-            }
-
-            static Microsoft.Build.Evaluation.ProjectCollection GetProjects(System.IO.FileSystemInfo projectOrSolution, string? configuration, string? platform)
-            {
-                var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-                var projectOrSolutionPath = GetPath(projectOrSolution ?? new System.IO.DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
-                var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
-                    ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
-                    : default;
-
-                System.Collections.Generic.IEnumerable<string> projectPaths = solution is null
-                    ? new string[] { projectOrSolutionPath.FullName }
-                    : solution.ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
-
-                foreach (var projectPath in projectPaths)
-                {
-                    System.Diagnostics.Debug.WriteLine(projectPath);
-                    var (configurationName, platformName, includeInBuild) = GetBuildConfiguration(projectPath);
-                    if (!includeInBuild)
-                    {
-                        continue;
-                    }
-
-                    var globalProperties = default(System.Collections.Generic.IDictionary<string, string>?)
-                        .AddProperty("Configuration", configurationName)
-                        .AddProperty("Platform", platformName);
-
-                    projectCollection.LoadProject(projectPath, globalProperties, projectCollection.DefaultToolsVersion);
-                }
-
-                return projectCollection;
-
-                (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
-                {
-                    if (solution is null)
-                    {
-                        return (configuration, platform, IncludeInBuild: true);
-                    }
-
-                    // get the project in solution
-                    var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
-                    var configurationName = configuration ?? solution.GetDefaultConfigurationName();
-                    var platformName = platform ?? solution.GetDefaultPlatformName();
-
-                    var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
-
-                    var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
-
-                    return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
-                }
-
-                static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)
-                {
-                    if (!path.Exists)
-                    {
-                        throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
-                    }
-
-                    // If a directory was passed in, search for a .sln or .csproj file
-                    switch (path)
-                    {
-                        case System.IO.DirectoryInfo directoryInfo:
-                            // Search for solution(s)
-                            var solutionFiles = directoryInfo.GetFiles("*.sln");
-                            if (solutionFiles.Length == 1)
-                            {
-                                return solutionFiles[0];
-                            }
-
-                            if (solutionFiles.Length > 1)
-                            {
-                                if (currentDirectory)
-                                {
-                                    throw new System.IO.FileLoadException(Properties.Resources.MultipleInCurrentFolder);
-                                }
-
-                                throw new System.IO.FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
-                            }
-
-                            // We did not find any solutions, so try and find individual projects
-                            var projectFiles = directoryInfo.EnumerateFiles("*.csproj")
-                                .Concat(directoryInfo.EnumerateFiles("*.fsproj"))
-                                .Concat(directoryInfo.EnumerateFiles("*.vbproj"))
-                                .ToArray();
-                            if (projectFiles.Length == 1)
-                            {
-                                return projectFiles[0];
-                            }
-
-                            if (projectFiles.Length > 1)
-                            {
-                                if (currentDirectory)
-                                {
-                                    throw new System.IO.FileLoadException(Properties.Resources.MultipleInCurrentFolder);
-                                }
-
-                                throw new System.IO.FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
-                            }
-
-                            // At this point the path contains no solutions or projects, so throw an exception
-                            throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
-                        case System.IO.FileInfo fileInfo when
-                            string.Equals(fileInfo.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
-                                || string.Equals(fileInfo.Extension, ".csproj", StringComparison.OrdinalIgnoreCase)
-                                || string.Equals(fileInfo.Extension, ".vbproj", StringComparison.OrdinalIgnoreCase)
-                                || string.Equals(fileInfo.Extension, ".fsproj", StringComparison.OrdinalIgnoreCase):
-                            return fileInfo;
-                    }
-
-                    // At this point, we know the file passed in is not a valid project or solution
-                    throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
-                }
-            }
-
-            string? GetVersionSuffix(string? previousVersionRelease = default)
-            {
-                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
-            }
-        }
-
-        /// <summary>
-        /// The process project.
-        /// </summary>
-        /// <param name="project">The project.</param>
-        /// <param name="source">The NuGet source.</param>
-        /// <param name="packageIds">The package ID.</param>
-        /// <param name="packageIdRegex">The package ID regex.</param>
-        /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="logger">The logger.</param>
-        /// <param name="output">The output type.</param>
-        /// <param name="previous">The previous version.</param>
-        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
-        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <param name="getVersionSuffix">The function to get the version suffix.</param>
-        /// <returns>The task.</returns>
-        public static Task<NuGet.Versioning.SemanticVersion> ProcessProject(
-            Microsoft.Build.Evaluation.Project project,
-            System.Collections.Generic.IEnumerable<string> source,
-            System.Collections.Generic.IEnumerable<string> packageIds,
-            System.Text.RegularExpressions.Regex? packageIdRegex,
-            string packageIdReplace,
-            ILogger logger,
-            OutputTypes output,
-            NuGet.Versioning.SemanticVersion? previous,
-            bool noCache,
-            bool directDownload,
-            Func<string?, string?> getVersionSuffix) =>
-            ProcessProject(
-                project.GetPropertyValue(MSBuildProjectNamePropertyName),
-                project.DirectoryPath,
-                project.GetPropertyValue(AssemblyNamePropertyName),
-                project.GetPropertyValue(PackageIdPropertyName),
-                project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll",
-                project.GetPropertyValue("BuildOutputTargetFolder"),
-                project.GetPropertyValue("PackageOutputPath"),
-                source,
-                packageIds,
-                packageIdRegex,
-                packageIdReplace,
-                logger,
-                output,
-                previous,
-                noCache,
-                directDownload,
-                getVersionSuffix);
 
         /// <summary>
         /// The process project.
@@ -364,11 +108,10 @@ namespace Mondo.SemanticVersioning
                 }
 
                 var searchPattern = assemblyName + targetExt;
-                var searchOptions =
 #if NETFRAMEWORK
-                                System.IO.SearchOption.TopDirectoryOnly;
+                const System.IO.SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
 #else
-                                new System.IO.EnumerationOptions { RecurseSubdirectories = false };
+                var searchOptions = new System.IO.EnumerationOptions { RecurseSubdirectories = false };
 #endif
                 foreach (var currentDll in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
                 {
@@ -379,7 +122,7 @@ namespace Mondo.SemanticVersioning
                                 .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder, StringComparison.CurrentCulture);
 #endif
                     (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
-                    calculatedVersion = Max(calculatedVersion, version);
+                    calculatedVersion = calculatedVersion.Max(version);
                     WriteChanges(output, differences);
                 }
 
@@ -562,33 +305,6 @@ namespace Mondo.SemanticVersioning
                     }
                 }
             }
-        }
-
-        private static NuGet.Versioning.SemanticVersion Max(NuGet.Versioning.SemanticVersion first, NuGet.Versioning.SemanticVersion? second)
-        {
-            if (second is null)
-            {
-                return first;
-            }
-
-            return NuGet.Versioning.VersionComparer.VersionRelease.Compare(first, second) > 0
-                ? first
-                : second;
-        }
-
-        private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
-            this System.Collections.Generic.IDictionary<string, string>? properties,
-            string name,
-            string? value)
-        {
-            if (value is null)
-            {
-                return properties;
-            }
-
-            properties ??= new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
-            properties.Add(name, value);
-            return properties;
         }
     }
 }
