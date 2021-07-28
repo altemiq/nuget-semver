@@ -1,26 +1,26 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Application.TeamCity.cs" company="Altemiq">
+// <copyright file="ConsoleApplication.TeamCity.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
 namespace Altemiq.SemanticVersioning
 {
-    using Microsoft.Extensions.Logging;
+    using System.CommandLine.IO;
 
     /// <content>
     /// Application class for writing the TeamCity version.
     /// </content>
-    public static partial class Application
+    internal static partial class ConsoleApplication
     {
         /// <summary>
         /// Writes the team city version.
         /// </summary>
-        /// <param name="logger">The logger.</param>
+        /// <param name="console">The console.</param>
         /// <param name="version">The version.</param>
         /// <param name="buildNumberParameter">The build number parameter.</param>
         /// <param name="versionSuffixParameter">The version suffix parameter.</param>
-        public static void WriteTeamCityVersion(ILogger logger, NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
+        public static void WriteTeamCityVersion(System.CommandLine.IConsole console, NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
         {
             if (buildNumberParameter
 #if NETSTANDARD2_0
@@ -29,14 +29,14 @@ namespace Altemiq.SemanticVersioning
                 .Contains(".", System.StringComparison.Ordinal))
 #endif
             {
-                logger.LogInformation(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version));
+                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version));
             }
             else
             {
-                logger.LogInformation(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version));
+                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version));
             }
 
-            logger.LogInformation(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
+            console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
         }
     }
 }

@@ -79,10 +79,6 @@ namespace Altemiq.SemanticVersioning
                 var difference = new AssemblyDiffCollection();
 
                 var typeQuery = new TypeQuery(TypeQueryMode.ApiRelevant);
-                
-                //var results = assembly.Modules
-                //    .SelectMany(module => module.Types)
-                //    .Where(type => type.IsPublic)
                 var results = typeQuery.GetTypes(assembly)
                     .Select(type => new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded)));
                 difference.AddedRemovedTypes.AddRange(results);

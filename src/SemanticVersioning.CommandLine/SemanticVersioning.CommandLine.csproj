@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -26,23 +26,39 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Update="ConsoleApplication.*.cs" DependentUpon="ConsoleApplication.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="IsExternalInit" Version="1.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21216.1" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.21216.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Downgrades">
+    <PackageReference Include="System.IO.FileSystem" Version="$(SystemVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.Debug" Version="$(SystemVersion)" />
-    <PackageReference Include="System.IO.FileSystem.Primitives" Version="$(SystemVersion)" />
-    <PackageReference Include="System.Text.Encoding.Extensions" Version="$(SystemVersion)" />
-    <PackageReference Include="System.Threading" Version="$(SystemVersion)" />
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
