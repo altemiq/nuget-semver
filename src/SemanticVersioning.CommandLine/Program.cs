@@ -15,7 +15,7 @@ var fileCommandBuilder = new CommandBuilder(new Command("file", "Calculated the 
     .AddArgument(new Argument<System.IO.FileInfo>("second") { Description = "The second assembly" })
     .AddOption(new Option<string>(new string[] { "-b", "--build" }, "Ths build label"));
 
-var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new MSBuildApplication.ProcessProjectOrSolutionDelegate(MSBuildApplication.ProcessProjectOrSolution)) })
+var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new MSBuildApplication.ProcessProjectOrSolutionDelegate(ConsoleApplication.ProcessProjectOrSolution)) })
     .AddArgument(new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
     .AddOption(new Option<string?>(new string[] { "--configuration", "-c" }, () => MSBuildApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
     .AddOption(new Option<string?>("--platform", () => MSBuildApplication.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
