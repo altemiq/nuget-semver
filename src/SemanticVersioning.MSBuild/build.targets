@@ -1,9 +1,9 @@
 ﻿<Project>
 
   <Target Name="SemanticVersioning" AfterTargets="BeforeBuild">
-    <Mondo.SemanticVersioning.SemanticVersioningTask>
+    <Altemiq.SemanticVersioning.SemanticVersioningTask>
     
-    </Mondo.SemanticVersioning.SemanticVersioningTask>
+    </Altemiq.SemanticVersioning.SemanticVersioningTask>
   </Target>
 
 </Project>

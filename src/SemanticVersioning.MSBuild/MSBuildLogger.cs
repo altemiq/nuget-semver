@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="MSBuildLogger.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="MSBuildLogger.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Altemiq.SemanticVersioning
 {
     using System;
     using Microsoft.Extensions.Logging;

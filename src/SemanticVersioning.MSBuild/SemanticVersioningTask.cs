@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="SemanticVersioningTask.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="SemanticVersioningTask.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Altemiq.SemanticVersioning
 {
     using System;
     using Microsoft.Build.Framework;
@@ -15,12 +15,6 @@ namespace Mondo.SemanticVersioning
     /// </summary>
     public class SemanticVersioningTask : Task
     {
-        /// <summary>
-        /// Gets or sets the project name.
-        /// </summary>
-        [Required]
-        public string ProjectName { get; set; } = default!;
-
         /// <summary>
         /// Gets or sets the project directory.
         /// </summary>
@@ -130,7 +124,6 @@ namespace Mondo.SemanticVersioning
             var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
 
             var version = MSBuildApplication.ProcessProject(
-                this.ProjectName,
                 this.ProjectDir,
                 this.AssemblyName,
                 this.PackageId,

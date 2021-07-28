@@ -6,6 +6,6 @@
     <TaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(TaskFolder)\$(MSBuildThisFileName).dll</TaskAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(TaskAssembly)" />
+  <UsingTask TaskName="Altemiq.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(TaskAssembly)" />
 
 </Project>
