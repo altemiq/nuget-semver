@@ -92,6 +92,11 @@ namespace Altemiq.SemanticVersioning
         public string? VersionSuffix { get; set; }
 
         /// <summary>
+        /// Gets or sets the commit.
+        /// </summary>
+        public string? Commit { get; set; }
+
+        /// <summary>
         /// Gets the calculated semantic version.
         /// </summary>
         [Output]
@@ -122,7 +127,7 @@ namespace Altemiq.SemanticVersioning
 
             var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
 
-            var (version, differences) = MSBuildApplication.ProcessProject(
+            var (version, differences, published) = MSBuildApplication.ProcessProject(
                 this.ProjectDir,
                 this.AssemblyName,
                 this.PackageId,
@@ -134,6 +139,7 @@ namespace Altemiq.SemanticVersioning
                 regex,
                 this.PackageReplaceRegex,
                 previousVersion,
+                this.Commit,
                 this.NoCache,
                 this.DirectDownload,
                 GetVersionSuffix).Result;

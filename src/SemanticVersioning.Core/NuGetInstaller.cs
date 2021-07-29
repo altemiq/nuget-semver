@@ -70,6 +70,22 @@ namespace Altemiq.SemanticVersioning
 
             throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), version: null));
 
+            static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!packageIdentity.HasVersion)
+                {
+                    return false;
+                }
+
+                return await repositories
+                    .ToAsyncEnumerable()
+                    .SelectMany(repository => GetVersions(repository, packageIdentity.Id, log, cancellationToken))
+                    .AnyAsync(info => info.Listed && NuGet.Versioning.VersionComparer.Default.Equals(info.Version, packageIdentity.Version), cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             static async Task<SourcePackageDependencyInfo?> GetLatestPackage(
                 IEnumerable<string> sources,
                 string packageId,
@@ -120,12 +136,50 @@ namespace Altemiq.SemanticVersioning
                 // Package installation
                 log.LogInformation($"Installing package {package} to {localInstallPath}");
 
-                var tempInstallPath = await InstallToTemp(package, packageReader, log, cancellationToken).ConfigureAwait(false);
+                var tempInstallPath = await InstallToTemp(packageReader, log, cancellationToken: cancellationToken).ConfigureAwait(false);
                 CopyFiles(log, tempInstallPath, localInstallPath);
                 System.IO.Directory.Delete(tempInstallPath, recursive: true);
 
                 log.LogInformation($"Package {package} installation complete");
                 return System.IO.Path.GetFullPath(localInstallPath);
+            }
+        }
+
+        /// <summary>
+        /// Gets the manifest for the specified package and version.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="sources">The sources.</param>
+        /// <param name="log">The log.</param>
+        /// <param name="root">The root.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The manifest.</returns>
+        public static async Task<Manifest?> GetManifest(
+            PackageIdentity package,
+            IEnumerable<string>? sources = default,
+            NuGet.Common.ILogger? log = default,
+            string? root = default,
+            System.Threading.CancellationToken cancellationToken = default)
+        {
+            log ??= NuGet.Common.NullLogger.Instance;
+            var settings = Settings.LoadDefaultSettings(root);
+            var packageReader = package is SourcePackageDependencyInfo info
+                ? await DownloadPackage(info, info.Source, settings, useCache: true, addToCache: false, log, cancellationToken).ConfigureAwait(false)
+                : await DownloadPackage(package, sources ?? Enumerable.Empty<string>(), settings, useCache: true, addToCache: false, log, cancellationToken).ConfigureAwait(false);
+
+            var installDir = await InstallToTemp(packageReader, log, PackageSaveMode.Nuspec, XmlDocFileSaveMode.None, cancellationToken).ConfigureAwait(false);
+
+            var manifest = GetManifest(installDir);
+
+            System.IO.Directory.Delete(installDir, recursive: true);
+
+            return manifest;
+
+            static Manifest GetManifest(string path, string? name = "*")
+            {
+                var file = System.IO.Directory.EnumerateFiles(path, name + PackagingCoreConstants.NuspecExtension).Single();
+                using var stream = System.IO.File.OpenRead(file);
+                return Manifest.ReadFrom(stream, validateSchema: true);
             }
         }
 
@@ -138,7 +192,7 @@ namespace Altemiq.SemanticVersioning
         /// <param name="root">The settings root.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet versions.</returns>
-        public static async IAsyncEnumerable<NuGet.Versioning.NuGetVersion> GetLatestVersionsAsync(
+        public static async IAsyncEnumerable<PackageIdentity> GetLatestAsync(
             IEnumerable<string> packageNames,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
@@ -150,8 +204,7 @@ namespace Altemiq.SemanticVersioning
                 .ToAsyncEnumerable()
                 .SelectMany(packageName => GetVersionsFromSources(sources, packageName, log ?? NuGet.Common.NullLogger.Instance, settings, cancellationToken))
                 .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion)
-                .Select(info => info.Version)
-                .GroupBy(version => (version.Version.Major, version.Version.Minor, version.IsPrerelease))
+                .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease))
                 .ConfigureAwait(false)
                 .WithCancellation(cancellationToken))
             {
@@ -193,35 +246,6 @@ namespace Altemiq.SemanticVersioning
             }
         }
 
-        private static async Task<SourcePackageDependencyInfo?> GetPackage(
-            IEnumerable<string> sources,
-            string packageId,
-            NuGet.Versioning.SemanticVersion version,
-            NuGet.Common.ILogger log,
-            ISettings settings,
-            System.Threading.CancellationToken cancellationToken)
-        {
-            foreach (var repository in GetRepositories(settings, sources))
-            {
-                var package = await GetPackage(repository, packageId, version, log, cancellationToken).ConfigureAwait(false);
-                if (package is null)
-                {
-                    continue;
-                }
-
-                return package;
-            }
-
-            return default;
-
-            static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
-            {
-                return await GetVersions(source, packageId, log, cancellationToken)
-                    .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-        }
-
         private static async IAsyncEnumerable<SourcePackageDependencyInfo> GetVersions(
             SourceRepository source,
             string packageId,
@@ -254,23 +278,14 @@ namespace Altemiq.SemanticVersioning
             }
         }
 
-        private static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (!packageIdentity.HasVersion)
-            {
-                return false;
-            }
-
-            return await repositories
-                .ToAsyncEnumerable()
-                .SelectMany(repository => GetVersions(repository, packageIdentity.Id, log, cancellationToken))
-                .AnyAsync(info => info.Listed && NuGet.Versioning.VersionComparer.Default.Equals(info.Version, packageIdentity.Version), cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        private static async Task<PackageReaderBase> DownloadPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, bool useCache, bool addToCache, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+        private static async Task<PackageReaderBase> DownloadPackage(
+            PackageIdentity package,
+            IEnumerable<string> sources,
+            ISettings settings,
+            bool useCache,
+            bool addToCache,
+            NuGet.Common.ILogger logger,
+            System.Threading.CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -288,83 +303,87 @@ namespace Altemiq.SemanticVersioning
             {
                 foreach (var repository in GetRepositories(settings, sources))
                 {
-                    var findPackagesByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
-                    using var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, sourceCacheContext, logger, cancellationToken).ConfigureAwait(false);
-
-                    if (packageDownloder is null)
+                    var packageReader = await DownloadPackage(package, repository, sourceCacheContext, settings, addToCache, logger, cancellationToken).ConfigureAwait(false);
+                    if (packageReader is not null)
                     {
-                        logger.LogWarning($"Package {package} not found in repository {repository}");
-                        continue;
+                        return packageReader;
                     }
-
-                    logger.LogInformation($"Getting {package} from {repository}");
-
-                    var tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
-                    var downloaded = await packageDownloder.CopyNupkgFileToAsync(tempFile, cancellationToken).ConfigureAwait(false);
-
-                    if (!downloaded)
-                    {
-                        throw new InvalidOperationException($"Failed to fetch package {package} from source {repository}");
-                    }
-
-                    if (addToCache)
-                    {
-                        var stream = System.IO.File.OpenRead(tempFile);
-#if NETSTANDARD2_1_OR_GREATER
-                        await
-#endif
-                        using (stream)
-                        {
-                            var downloadCacheContext = new PackageDownloadContext(sourceCacheContext);
-                            var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
-                            using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
-                        }
-                    }
-
-                    return new PackageArchiveReader(tempFile);
                 }
             }
 
             throw new PackageNotFoundProtocolException(package);
         }
 
-        private static async Task<string> InstallToTemp(PackageIdentity package, PackageReaderBase reader, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+        private static async Task<PackageReaderBase> DownloadPackage(
+            PackageIdentity package,
+            SourceRepository repository,
+            ISettings settings,
+            bool useCache,
+            bool addToCache,
+            NuGet.Common.ILogger logger,
+            System.Threading.CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var tempInstallPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
-            var versionFolderPathResolver = new VersionFolderPathResolver(tempInstallPath, isLowercase: true);
-
-            var hashFileName = versionFolderPathResolver.GetHashFileName(package.Id, package.Version);
-            var packageFiles = (await reader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).Where(file => ShouldInclude(file, hashFileName)).ToList();
-            var packageFileExtractor = new PackageFileExtractor(packageFiles, XmlDocFileSaveMode.None);
-
-            await reader.CopyFilesAsync(tempInstallPath, packageFiles, packageFileExtractor.ExtractPackageFile, logger, cancellationToken).ConfigureAwait(false);
-
-            return tempInstallPath;
-        }
-
-        private static bool ShouldInclude(string fullName, string hashFileName)
-        {
-            // Not all the files from a zip file are needed
-            // So, files such as '.rels' and '[Content_Types].xml' are not extracted
-            var fileName = System.IO.Path.GetFileName(fullName);
-            if (fileName is not null)
+            if (useCache)
             {
-                if (string.Equals(fileName, ".rels", StringComparison.OrdinalIgnoreCase))
+                var globalPackage = GlobalPackagesFolderUtility.GetPackage(package, SettingsUtility.GetGlobalPackagesFolder(settings));
+                if (globalPackage is not null)
                 {
-                    return false;
-                }
-
-                if (string.Equals(fileName, "[Content_Types].xml", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
+                    logger.LogInformation($"Found {package} in global package folder");
+                    return globalPackage.PackageReader;
                 }
             }
 
-            return !string.Equals(System.IO.Path.GetExtension(fullName), ".psmdcp", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(fullName, hashFileName, StringComparison.OrdinalIgnoreCase)
-                && (!PackageHelper.IsRoot(fullName) || (!PackageHelper.IsNuspec(fullName) && !fullName.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase)));
+            using var sourceCacheContext = new SourceCacheContext();
+
+            return await DownloadPackage(package, repository, sourceCacheContext, settings, addToCache, logger, cancellationToken).ConfigureAwait(false)
+                ?? throw new PackageNotFoundProtocolException(package);
+        }
+
+        private static async Task<PackageReaderBase?> DownloadPackage(
+            PackageIdentity package,
+            SourceRepository repository,
+            SourceCacheContext cacheContext,
+            ISettings settings,
+            bool addToCache,
+            NuGet.Common.ILogger logger,
+            System.Threading.CancellationToken cancellationToken)
+        {
+            var findPackagesByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
+            using var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, cacheContext, logger, cancellationToken).ConfigureAwait(false);
+
+            if (packageDownloder is null)
+            {
+                logger.LogWarning($"Package {package} not found in repository {repository}");
+                return default;
+            }
+
+            logger.LogInformation($"Getting {package} from {repository}");
+
+            var tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+            var downloaded = await packageDownloder.CopyNupkgFileToAsync(tempFile, cancellationToken).ConfigureAwait(false);
+
+            if (!downloaded)
+            {
+                throw new InvalidOperationException($"Failed to fetch package {package} from source {repository}");
+            }
+
+            if (addToCache)
+            {
+                var stream = System.IO.File.OpenRead(tempFile);
+#if NETSTANDARD2_1_OR_GREATER
+                await
+#endif
+                        using (stream)
+                {
+                    var downloadCacheContext = new PackageDownloadContext(cacheContext);
+                    var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
+                    using var downloadResourceResult = await GlobalPackagesFolderUtility.AddPackageAsync(repository.PackageSource.Source, package, stream, SettingsUtility.GetGlobalPackagesFolder(settings), downloadCacheContext.ParentId, clientPolicy, logger, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            return new PackageArchiveReader(tempFile);
         }
 
         private static void CopyFiles(NuGet.Common.ILogger logger, string source, string destination)
@@ -401,6 +420,68 @@ namespace Altemiq.SemanticVersioning
                 }
 
                 logger.LogDebug($"Installed file {relativePath} to {destinationPath}");
+
+                static bool ValidateFileInstallation(string sourceFile, string source, string destination)
+                {
+                    var relativePath = MakeRelativePath(source, sourceFile);
+                    var destinationFile = System.IO.Path.Combine(destination, relativePath);
+
+                    // check to see if this file is in the destination
+                    if (!System.IO.File.Exists(destinationFile))
+                    {
+                        return false;
+                    }
+
+                    return FilesContentsAreEqual(new System.IO.FileInfo(sourceFile), new System.IO.FileInfo(destinationFile));
+
+                    static bool FilesContentsAreEqual(System.IO.FileInfo first, System.IO.FileInfo second)
+                    {
+                        if (first.Length != second.Length)
+                        {
+                            return false;
+                        }
+
+                        var firstFileStream = first.OpenRead();
+                        var secondFileStream = second.OpenRead();
+                        var result = StreamsContentsAreEqual(firstFileStream, secondFileStream);
+                        firstFileStream?.Dispose();
+                        secondFileStream?.Dispose();
+                        return result;
+
+                        static bool StreamsContentsAreEqual(System.IO.Stream first, System.IO.Stream second)
+                        {
+                            const int sizeOfLong = sizeof(long);
+                            const int bufferSize = 1024 * sizeOfLong;
+                            var firstBuffer = new byte[bufferSize];
+                            var secondBuffer = new byte[bufferSize];
+
+                            while (true)
+                            {
+                                var firstCount = first.Read(firstBuffer, 0, bufferSize);
+                                var secondCount = second.Read(secondBuffer, 0, bufferSize);
+
+                                if (firstCount != secondCount)
+                                {
+                                    return false;
+                                }
+
+                                if (firstCount == 0)
+                                {
+                                    return true;
+                                }
+
+                                var iterations = (int)Math.Ceiling((double)firstCount / sizeOfLong);
+                                for (var i = 0; i < iterations; i++)
+                                {
+                                    if (BitConverter.ToInt64(firstBuffer, i * sizeOfLong) != BitConverter.ToInt64(secondBuffer, i * sizeOfLong))
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -427,66 +508,47 @@ namespace Altemiq.SemanticVersioning
                 : relativePath;
         }
 
-        private static bool ValidateFileInstallation(string sourceFile, string source, string destination)
+        private static async Task<SourcePackageDependencyInfo?> GetPackage(
+            IEnumerable<string> sources,
+            string packageId,
+            NuGet.Versioning.SemanticVersion version,
+            NuGet.Common.ILogger log,
+            ISettings settings,
+            System.Threading.CancellationToken cancellationToken)
         {
-            var relativePath = MakeRelativePath(source, sourceFile);
-            var destinationFile = System.IO.Path.Combine(destination, relativePath);
-
-            // check to see if this file is in the destination
-            if (!System.IO.File.Exists(destinationFile))
+            foreach (var repository in GetRepositories(settings, sources))
             {
-                return false;
+                var package = await GetPackage(repository, packageId, version, log, cancellationToken).ConfigureAwait(false);
+                if (package is null)
+                {
+                    continue;
+                }
+
+                return package;
             }
 
-            return FilesContentsAreEqual(new System.IO.FileInfo(sourceFile), new System.IO.FileInfo(destinationFile));
+            return default;
+
+            static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+            {
+                return await GetVersions(source, packageId, log, cancellationToken)
+                    .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
-        private static bool FilesContentsAreEqual(System.IO.FileInfo first, System.IO.FileInfo second)
+        private static async Task<string> InstallToTemp(PackageReaderBase reader, NuGet.Common.ILogger logger, PackageSaveMode packageSaveMode = PackageSaveMode.Files, XmlDocFileSaveMode xmlDocFileSaveMode = default, System.Threading.CancellationToken cancellationToken = default)
         {
-            if (first.Length != second.Length)
-            {
-                return false;
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
-            var firstFileStream = first.OpenRead();
-            var secondFileStream = second.OpenRead();
-            var result = StreamsContentsAreEqual(firstFileStream, secondFileStream);
-            firstFileStream?.Dispose();
-            secondFileStream?.Dispose();
-            return result;
-        }
+            var tempInstallPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
 
-        private static bool StreamsContentsAreEqual(System.IO.Stream first, System.IO.Stream second)
-        {
-            const int sizeOfLong = sizeof(long);
-            const int bufferSize = 1024 * sizeOfLong;
-            var firstBuffer = new byte[bufferSize];
-            var secondBuffer = new byte[bufferSize];
+            var packageFiles = (await reader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).Where(file => PackageHelper.IsPackageFile(file, packageSaveMode)).ToList();
+            var packageFileExtractor = new PackageFileExtractor(packageFiles, xmlDocFileSaveMode);
 
-            while (true)
-            {
-                var firstCount = first.Read(firstBuffer, 0, bufferSize);
-                var secondCount = second.Read(secondBuffer, 0, bufferSize);
+            await reader.CopyFilesAsync(tempInstallPath, packageFiles, packageFileExtractor.ExtractPackageFile, logger, cancellationToken).ConfigureAwait(false);
 
-                if (firstCount != secondCount)
-                {
-                    return false;
-                }
-
-                if (firstCount == 0)
-                {
-                    return true;
-                }
-
-                var iterations = (int)Math.Ceiling((double)firstCount / sizeOfLong);
-                for (var i = 0; i < iterations; i++)
-                {
-                    if (BitConverter.ToInt64(firstBuffer, i * sizeOfLong) != BitConverter.ToInt64(secondBuffer, i * sizeOfLong))
-                    {
-                        return false;
-                    }
-                }
-            }
+            return tempInstallPath;
         }
     }
 }

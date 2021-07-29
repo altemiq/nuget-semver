@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;netstandard2.0;net461</TargetFrameworks>
     <RootNamespace>$(Company).$(Title)</RootNamespace>
+    <NoWarn>$(NoWarn);MA0051</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="Packaging">

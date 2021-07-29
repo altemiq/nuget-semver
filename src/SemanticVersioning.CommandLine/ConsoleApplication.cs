@@ -493,8 +493,9 @@ namespace Altemiq.SemanticVersioning
         {
             var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
             console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName), OutputTypes.Diagnostic);
+            var commit = GetCommit(project.DirectoryPath);
 
-            var (version, results) = await MSBuildApplication.ProcessProject(
+            (var version, var results, var published) = await MSBuildApplication.ProcessProject(
                 project.DirectoryPath,
                 project.GetPropertyValue(AssemblyNamePropertyName),
                 project.GetPropertyValue(PackageIdPropertyName),
@@ -506,6 +507,7 @@ namespace Altemiq.SemanticVersioning
                 packageIdRegex,
                 packageIdReplace,
                 previous,
+                commit,
                 noCache,
                 directDownload,
                 getVersionSuffix).ConfigureAwait(false);
@@ -518,6 +520,51 @@ namespace Altemiq.SemanticVersioning
             console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
 
             return version;
+
+            static string? GetCommit(string projectDir)
+            {
+                var path = System.IO.Path.GetFullPath(projectDir);
+                if (path is null)
+                {
+                    return default;
+                }
+
+                var baseDir = GetBaseDirectory(path);
+                if (baseDir is null)
+                {
+                    return default;
+                }
+
+                using (var repository = new LibGit2Sharp.Repository(baseDir))
+                {
+                    var relativePath = path
+                        .Substring(baseDir.Length + 1)
+                        .Replace("\\", "/", StringComparison.Ordinal);
+
+                    if (repository.Commits.QueryBy(relativePath).Take(1).FirstOrDefault() is LibGit2Sharp.LogEntry logEntry)
+                    {
+                        return logEntry.Commit.Sha;
+                    }
+                }
+
+                return default;
+
+                static string? GetBaseDirectory(string? directory)
+                {
+                    while (directory is not null)
+                    {
+                        var git = System.IO.Path.Combine(directory, ".git");
+                        if (System.IO.Directory.Exists(git))
+                        {
+                            return directory;
+                        }
+
+                        directory = System.IO.Path.GetDirectoryName(directory);
+                    }
+
+                    return default;
+                }
+            }
         }
 
         private static void WriteHeader(System.CommandLine.IConsole console)
