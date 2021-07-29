@@ -9,7 +9,6 @@ namespace Altemiq.SemanticVersioning
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// The MSBuild application.
@@ -31,13 +30,12 @@ namespace Altemiq.SemanticVersioning
         /// <param name="packageIds">The package ID.</param>
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="previous">The previous version.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
         /// <returns>The task.</returns>
-        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+        public static async Task<(NuGet.Versioning.SemanticVersion Version, System.Collections.Generic.IEnumerable<ProjectResult> Results)> ProcessProject(
             string projectDirectory,
             string assemblyName,
             string projectPackageId,
@@ -48,7 +46,6 @@ namespace Altemiq.SemanticVersioning
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
             string? packageIdReplace,
-            ILogger logger,
             NuGet.Versioning.SemanticVersion? previous,
             bool noCache,
             bool directDownload,
@@ -66,6 +63,7 @@ namespace Altemiq.SemanticVersioning
                 ? NuGetInstaller.GetLatestVersionsAsync(projectPackageIds, source, root: projectDirectory)
                 : CreateAsyncEnumerable(previous);
             var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
+            var results = new System.Collections.Generic.List<ProjectResult>();
 
             if (installDir is null)
             {
@@ -112,15 +110,18 @@ namespace Altemiq.SemanticVersioning
 #else
                         .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder);
 #endif
-                    (var version, _, var differences) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
+                    (var version, _, var diff) = LibraryComparison.Analyze(oldDll, currentDll, previousStringVersions, getVersionSuffix(default));
                     calculatedVersion = calculatedVersion.Max(version);
-                    logger.Log(LogLevel.Information, 0, differences, default, (_, __) => string.Empty);
+                    if (version is not null && diff is not null)
+                    {
+                        results.Add(new ProjectResult(version, diff));
+                    }
                 }
 
                 System.IO.Directory.Delete(installDir, recursive: true);
             }
 
-            return calculatedVersion;
+            return (calculatedVersion, results);
 
             bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
             {

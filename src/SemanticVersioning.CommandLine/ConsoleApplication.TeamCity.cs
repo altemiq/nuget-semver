@@ -20,7 +20,7 @@ namespace Altemiq.SemanticVersioning
         /// <param name="version">The version.</param>
         /// <param name="buildNumberParameter">The build number parameter.</param>
         /// <param name="versionSuffixParameter">The version suffix parameter.</param>
-        public static void WriteTeamCityVersion(System.CommandLine.IConsole console, NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
+        public static void WriteTeamCityVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
         {
             if (buildNumberParameter
 #if NETSTANDARD2_0
@@ -29,14 +29,14 @@ namespace Altemiq.SemanticVersioning
                 .Contains(".", System.StringComparison.Ordinal))
 #endif
             {
-                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version));
+                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version), OutputTypes.TeamCity);
             }
             else
             {
-                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version));
+                console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[{0} '{1:x.y.z}']", buildNumberParameter, version), OutputTypes.TeamCity);
             }
 
-            console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version));
+            console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:R}']", versionSuffixParameter, version), OutputTypes.TeamCity);
         }
     }
 }

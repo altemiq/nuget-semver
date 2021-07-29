@@ -112,7 +112,6 @@ namespace Altemiq.SemanticVersioning
         /// <inheritdoc/>
         public override bool Execute()
         {
-            var logger = new MSBuildLogger(this.Log);
             var regex = this.PackageReplaceRegex is null
                 ? null
                 : new System.Text.RegularExpressions.Regex(this.PackageReplaceRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
@@ -123,7 +122,7 @@ namespace Altemiq.SemanticVersioning
 
             var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
 
-            var version = MSBuildApplication.ProcessProject(
+            var (version, differences) = MSBuildApplication.ProcessProject(
                 this.ProjectDir,
                 this.AssemblyName,
                 this.PackageId,
@@ -134,7 +133,6 @@ namespace Altemiq.SemanticVersioning
                 new[] { this.PackageId },
                 regex,
                 this.PackageReplaceRegex,
-                logger,
                 previousVersion,
                 this.NoCache,
                 this.DirectDownload,

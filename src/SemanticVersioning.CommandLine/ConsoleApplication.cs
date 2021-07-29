@@ -12,7 +12,6 @@ namespace Altemiq.SemanticVersioning
     using System.CommandLine.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// The console application.
@@ -175,6 +174,7 @@ namespace Altemiq.SemanticVersioning
             string versionSuffixParameter = DefaultVersionSuffixParameter,
             bool noLogo = DefaultNoLogo)
         {
+            var consoleWithOutput = new ConsoleWithOutput(console, output);
             if (!noLogo)
             {
                 WriteHeader(console);
@@ -182,18 +182,11 @@ namespace Altemiq.SemanticVersioning
 
             (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
 
-            ConsoleLogger.WriteChanges(console, output, differences);
+            WriteChanges(consoleWithOutput, differences);
             if (version is not null)
             {
-                if (output.HasFlag(OutputTypes.TeamCity))
-                {
-                    WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
-                }
-
-                if (output.HasFlag(OutputTypes.Json))
-                {
-                    WriteJsonVersion(console, version);
-                }
+                WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
+                WriteJsonVersion(consoleWithOutput, version);
             }
         }
 
@@ -224,17 +217,16 @@ namespace Altemiq.SemanticVersioning
             }
 
             var instance = RegisterMSBuild(projectOrSolution);
-            if (output.HasFlag(OutputTypes.Diagnostic))
-            {
-                console.Out.WriteLine($"Using {instance.Name} {instance.Version}");
-            }
+
+            var consoleWithOutput = new ConsoleWithOutput(console, output);
+            consoleWithOutput.Out.WriteLine($"Using {instance.Name} {instance.Version}", OutputTypes.Diagnostic);
 
             var regex = string.IsNullOrEmpty(packageIdRegex)
                 ? null
                 : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
             var version = await ProcessProjectOrSolution(
-                new ConsoleLogger(console, output),
+                consoleWithOutput,
                 projectOrSolution,
                 configuration,
                 platform,
@@ -250,15 +242,8 @@ namespace Altemiq.SemanticVersioning
                 directDownload).ConfigureAwait(false);
 
             // write out the version and the suffix
-            if (output.HasFlag(OutputTypes.TeamCity))
-            {
-                WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
-            }
-
-            if (output.HasFlag(OutputTypes.Json))
-            {
-                WriteJsonVersion(console, version);
-            }
+            WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
+            WriteJsonVersion(consoleWithOutput, version);
 
             return 0;
 
@@ -287,7 +272,7 @@ namespace Altemiq.SemanticVersioning
         /// <summary>
         /// The process project of solution.
         /// </summary>
-        /// <param name="logger">The logger.</param>
+        /// <param name="console">The console.</param>
         /// <param name="projectOrSolution">The project or solution.</param>
         /// <param name="configuration">The configuration.</param>
         /// <param name="platform">The platform.</param>
@@ -303,7 +288,7 @@ namespace Altemiq.SemanticVersioning
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
-            Microsoft.Extensions.Logging.ILogger logger,
+            IConsoleWithOutput console,
             System.IO.FileSystemInfo projectOrSolution,
             string? configuration,
             string? platform,
@@ -328,12 +313,12 @@ namespace Altemiq.SemanticVersioning
                 && !ShouldExclude(project, exclude)))
             {
                 var calculatedVersion = await ProcessProject(
+                    console,
                     project,
                     source,
                     packageIds,
                     packageIdRegex,
                     packageIdReplace,
-                    logger,
                     previous,
                     noCache,
                     directDownload,
@@ -479,33 +464,33 @@ namespace Altemiq.SemanticVersioning
         /// <summary>
         /// The process project.
         /// </summary>
+        /// <param name="console">The console.</param>
         /// <param name="project">The project.</param>
         /// <param name="source">The NuGet source.</param>
         /// <param name="packageIds">The package ID.</param>
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="logger">The logger.</param>
         /// <param name="previous">The previous version.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
         /// <returns>The task.</returns>
         public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+            IConsoleWithOutput console,
             Microsoft.Build.Evaluation.Project project,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
             string? packageIdReplace,
-            ILogger logger,
             NuGet.Versioning.SemanticVersion? previous,
             bool noCache,
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
         {
             var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
-            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName));
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName), OutputTypes.Diagnostic);
 
-            var calculatedVersion = await MSBuildApplication.ProcessProject(
+            var (version, results) = await MSBuildApplication.ProcessProject(
                 project.DirectoryPath,
                 project.GetPropertyValue(AssemblyNamePropertyName),
                 project.GetPropertyValue(PackageIdPropertyName),
@@ -516,15 +501,19 @@ namespace Altemiq.SemanticVersioning
                 packageIds,
                 packageIdRegex,
                 packageIdReplace,
-                logger,
                 previous,
                 noCache,
                 directDownload,
                 getVersionSuffix).ConfigureAwait(false);
 
-            logger.LogTrace(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, calculatedVersion));
+            foreach (var result in results)
+            {
+                WriteChanges(console, result.Differences);
+            }
 
-            return calculatedVersion;
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
+
+            return version;
         }
 
         private static void WriteHeader(System.CommandLine.IConsole console)

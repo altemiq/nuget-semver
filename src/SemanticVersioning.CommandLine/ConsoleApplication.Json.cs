@@ -18,7 +18,7 @@ namespace Altemiq.SemanticVersioning
         /// </summary>
         /// <param name="console">The console.</param>
         /// <param name="version">The version to write.</param>
-        public static void WriteJsonVersion(System.CommandLine.IConsole console, NuGet.Versioning.SemanticVersion version)
+        public static void WriteJsonVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion version)
         {
             // export these as environment variables
             var versions = new Versions
@@ -29,7 +29,7 @@ namespace Altemiq.SemanticVersioning
             };
 
             var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
-            console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options));
+            console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options), OutputTypes.Json);
         }
 
         private class Versions
