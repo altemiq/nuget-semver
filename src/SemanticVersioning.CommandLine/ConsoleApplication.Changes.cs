@@ -1,78 +1,28 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ConsoleLogger.cs" company="Mondo">
+// <copyright file="ConsoleApplication.Changes.cs" company="Mondo">
 // Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
 namespace Mondo.SemanticVersioning
 {
-    using System.CommandLine;
     using System.CommandLine.IO;
     using System.Linq;
-    using Microsoft.Extensions.Logging;
 
-    /// <summary>
-    /// The console logger.
-    /// </summary>
-    internal class ConsoleLogger : ILogger
+    /// <content>
+    /// Application class for writing the changes.
+    /// </content>
+    internal static partial class ConsoleApplication
     {
-        private readonly IConsole console;
-
-        private readonly LogLevel logLevel;
-
-        private readonly OutputTypes outputTypes;
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="ConsoleLogger"/> class.
-        /// </summary>
-        /// <param name="console">The console.</param>
-        /// <param name="outputTypes">The output types..</param>
-        public ConsoleLogger(IConsole console, OutputTypes outputTypes)
-        {
-            this.console = console;
-            this.outputTypes = outputTypes;
-            this.logLevel = outputTypes.HasFlag(OutputTypes.Diagnostic)
-                ? LogLevel.Trace
-                : LogLevel.Information;
-        }
-
-        /// <inheritdoc/>
-        public System.IDisposable BeginScope<TState>(TState state) => new DummyDisposable();
-
-        /// <inheritdoc/>
-        public bool IsEnabled(LogLevel logLevel) => logLevel <= this.logLevel;
-
-        /// <inheritdoc/>
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, System.Exception exception, System.Func<TState, System.Exception, string> formatter)
-        {
-            if (formatter(state, exception) is string { Length: > 0 } message)
-            {
-                GetWriter()(message);
-            }
-
-            if (state is Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
-            {
-                WriteChanges(this.console, this.outputTypes, differences);
-            }
-
-            System.Action<string> GetWriter()
-            {
-                return logLevel >= LogLevel.Error
-                    ? this.console.Error.WriteLine
-                    : this.console.Out.WriteLine;
-            }
-        }
-
         /// <summary>
         /// Writes the changes.
         /// </summary>
         /// <param name="console">The console.</param>
-        /// <param name="outputTypes">The output types.</param>
         /// <param name="differences">The differences.</param>
-        internal static void WriteChanges(IConsole console, OutputTypes outputTypes, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
+        public static void WriteChanges(IConsoleWithOutput console, Endjin.ApiChange.Api.Diff.AssemblyDiffCollection differences)
         {
-            var breakingChanges = outputTypes.HasFlag(OutputTypes.BreakingChanges);
-            var functionalChanges = outputTypes.HasFlag(OutputTypes.FunctionalChanges);
+            var breakingChanges = console.Output.HasFlag(OutputTypes.BreakingChanges);
+            var functionalChanges = console.Output.HasFlag(OutputTypes.FunctionalChanges);
             if (!breakingChanges
                 && !functionalChanges)
             {
@@ -204,14 +154,6 @@ namespace Mondo.SemanticVersioning
                         }
                     }
                 }
-            }
-        }
-
-        private sealed class DummyDisposable : System.IDisposable
-        {
-            void System.IDisposable.Dispose()
-            {
-                // Method intentionally left empty.
             }
         }
     }
