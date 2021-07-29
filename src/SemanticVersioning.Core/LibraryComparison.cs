@@ -20,16 +20,6 @@ namespace Mondo.SemanticVersioning
     public static class LibraryComparison
     {
         /// <summary>
-        /// The default alpha release.
-        /// </summary>
-        public const string DefaultAlphaRelease = "alpha";
-
-        /// <summary>
-        /// The default beta release.
-        /// </summary>
-        public const string DefaultBetaRelease = "beta";
-
-        /// <summary>
         /// Analyses the results.
         /// </summary>
         /// <param name="previousAssembly">The previous assembly.</param>
@@ -44,7 +34,7 @@ namespace Mondo.SemanticVersioning
             var resultsType = System.IO.File.Exists(previousAssembly)
                 ? GetMinimumAcceptableChange(differences)
                 : SemanticVersionChange.Major;
-            var calculatedVersion = CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
+            var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
             if (build is not null)
             {
                 calculatedVersion = calculatedVersion.With(metadata: build);
@@ -153,92 +143,6 @@ namespace Mondo.SemanticVersioning
                         (added ? md.Operation.IsAdded : md.Operation.IsRemoved))
                     .GroupBy(md => source.Properties.Single(p => p.GetMethod == md.ObjectV1 || p.SetMethod == md.ObjectV1))
                     .Select(g => g.Key);
-            }
-        }
-
-        /// <summary>
-        /// Calculates the version.
-        /// </summary>
-        /// <param name="semanticVersionChange">The semantic version change.</param>
-        /// <param name="previousVersions">The previous versions.</param>
-        /// <param name="prerelease">The prerelease tag.</param>
-        /// <returns>The semantic version.</returns>
-        public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IEnumerable<string> previousVersions, string? prerelease)
-        {
-            var previousSemanticVersions = previousVersions is null
-                ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
-                : WhereNotNull(previousVersions.Select(SafeParse)).ToArray();
-
-            return CalculateVersion(semanticVersionChange, previousSemanticVersions, prerelease);
-
-            static NuGet.Versioning.SemanticVersion? SafeParse(string lastVersion)
-            {
-                if (NuGet.Versioning.SemanticVersion.TryParse(lastVersion, out var version))
-                {
-                    return version;
-                }
-
-                return default;
-            }
-
-            static IEnumerable<T> WhereNotNull<T>(IEnumerable<T?> source)
-            {
-                foreach (var item in source)
-                {
-                    if (item is not null)
-                    {
-                        yield return item;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Calculates the version.
-        /// </summary>
-        /// <param name="semanticVersionChange">The semantic version change.</param>
-        /// <param name="previousVersions">The previous versions.</param>
-        /// <param name="prerelease">The prerelease tag.</param>
-        /// <returns>The semantic version.</returns>
-        public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, string? prerelease)
-        {
-            var previousVersion = previousVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? previousVersions.Max();
-            if (previousVersion is null)
-            {
-                throw new ArgumentException("Failed to find previous version", nameof(previousVersions));
-            }
-
-            return CalculateVersion(semanticVersionChange, previousVersions, previousVersion, prerelease);
-        }
-
-        /// <summary>
-        /// Calculates the version.
-        /// </summary>
-        /// <param name="semanticVersionChange">The semantic version change.</param>
-        /// <param name="previousVersions">The previous versions.</param>
-        /// <param name="previousVersion">The previous version.</param>
-        /// <param name="prerelease">The prerelease tag.</param>
-        /// <returns>The semantic version.</returns>
-        public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion previousVersion, string? prerelease)
-        {
-            return semanticVersionChange switch
-            {
-                SemanticVersionChange.Major => GetNextPatchVersion(previousVersions, previousVersion.With(major: previousVersion.Major + 1, minor: 0, patch: 0), prerelease),
-                SemanticVersionChange.Minor => GetNextPatchVersion(previousVersions, previousVersion.With(minor: previousVersion.Minor + 1, patch: 0), prerelease),
-                SemanticVersionChange.Patch => GetNextPatchVersion(previousVersions, previousVersion.With(patch: previousVersion.Patch + 1), prerelease),
-                _ => previousVersion,
-            };
-
-            static NuGet.Versioning.SemanticVersion GetNextPatchVersion(
-                IEnumerable<NuGet.Versioning.SemanticVersion> versions,
-                NuGet.Versioning.SemanticVersion previousVersion,
-                string? prerelease)
-            {
-                // find the one with the same major/minor
-                var patchedVersion = versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();
-                return patchedVersion is null
-                    ? previousVersion.With(releaseLabel: prerelease ?? "alpha")
-                    : patchedVersion.With(patch: patchedVersion.Patch + 1, releaseLabel: prerelease ?? patchedVersion.Release);
             }
         }
     }
