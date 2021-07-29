@@ -26,7 +26,7 @@
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
-      "workingDirectory": "$(UserProfile)\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Capio\\Capio.Core.Abstractions"
     },
     "Help": {
       "commandName": "Project",
@@ -34,7 +34,7 @@
     },
     "newProfile1": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution C:\\Users\\rsking\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\work\\altemiq\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
+      "commandLineArgs": "diff solution C:\\Users\\rsking\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
     }
   }
 }

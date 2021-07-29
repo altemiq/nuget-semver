@@ -6,6 +6,7 @@
 
 namespace Altemiq.SemanticVersioning
 {
+    using System;
     using System.CommandLine.IO;
 
     /// <content>
@@ -84,6 +85,48 @@ namespace Altemiq.SemanticVersioning
                     }
                 }
             }
+        }
+
+        private class TerminalWithOutput : ConsoleWithOutput, System.CommandLine.Rendering.ITerminal
+        {
+            private readonly System.CommandLine.Rendering.ITerminal terminal;
+
+            public TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output)
+                : base(terminal, output) => this.terminal = terminal;
+
+            public ConsoleColor BackgroundColor
+            {
+                get => this.terminal.BackgroundColor;
+                set => this.terminal.BackgroundColor = value;
+            }
+
+            public ConsoleColor ForegroundColor
+            {
+                get => this.terminal.ForegroundColor;
+                set => this.terminal.ForegroundColor = value;
+            }
+
+            public int CursorLeft
+            {
+                get => this.terminal.CursorLeft;
+                set => this.terminal.CursorLeft = value;
+            }
+
+            public int CursorTop
+            {
+                get => this.terminal.CursorTop;
+                set => this.terminal.CursorTop = value;
+            }
+
+            public void Clear() => this.terminal.Clear();
+
+            public void HideCursor() => this.terminal.HideCursor();
+
+            public void ResetColor() => this.terminal.ResetColor();
+
+            public void SetCursorPosition(int left, int top) => this.terminal.SetCursorPosition(left, top);
+
+            public void ShowCursor() => this.terminal.ShowCursor();
         }
     }
 }

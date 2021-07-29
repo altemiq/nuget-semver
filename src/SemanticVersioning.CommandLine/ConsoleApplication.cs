@@ -174,7 +174,9 @@ namespace Altemiq.SemanticVersioning
             string versionSuffixParameter = DefaultVersionSuffixParameter,
             bool noLogo = DefaultNoLogo)
         {
-            var consoleWithOutput = new ConsoleWithOutput(console, output);
+            var consoleWithOutput = console is System.CommandLine.Rendering.ITerminal terminal
+                ? new TerminalWithOutput(terminal, output)
+                : new ConsoleWithOutput(console, output);
             if (!noLogo)
             {
                 WriteHeader(console);
@@ -218,7 +220,9 @@ namespace Altemiq.SemanticVersioning
 
             var instance = RegisterMSBuild(projectOrSolution);
 
-            var consoleWithOutput = new ConsoleWithOutput(console, output);
+            var consoleWithOutput = console is System.CommandLine.Rendering.ITerminal terminal
+                ? new TerminalWithOutput(terminal, output)
+                : new ConsoleWithOutput(console, output);
             consoleWithOutput.Out.WriteLine($"Using {instance.Name} {instance.Version}", OutputTypes.Diagnostic);
 
             var regex = string.IsNullOrEmpty(packageIdRegex)
