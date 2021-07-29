@@ -26,7 +26,7 @@
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
-      "workingDirectory": "$(UserProfile)\\source\\repos\\bitbucket\\GTFIELD\\Capio.Core.Abstractions"
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\Capio\\Capio.Core.Abstractions"
     },
     "Help": {
       "commandName": "Project",
