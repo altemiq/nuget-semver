@@ -60,13 +60,23 @@ namespace Altemiq.SemanticVersioning
                 projectPackageIds = projectPackageIds.Union(new[] { packageIdRegex.Replace(projectPackageId, packageIdReplace) }, StringComparer.Ordinal);
             }
 
-            var installDir = await TryInstallAsync(projectPackageIds, projectDirectory).ConfigureAwait(false);
-            var previousPackages = IsNullOrEmpty(previous)
-                ? NuGetInstaller.GetLatestAsync(projectPackageIds, source, root: projectDirectory)
+            var packages = IsNullOrEmpty(previous)
+                ? NuGetInstaller.GetPackagesAsync(projectPackageIds, source, root: projectDirectory)
                 : CreateAsyncEnumerable(new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)));
+
+            if (commit is not null)
+            {
+                var commitPackage = await NuGetInstaller.GetPackageByCommit(commit, packages, source, root: projectDirectory).ConfigureAwait(false);
+                if (commitPackage is not null)
+                {
+                    return (commitPackage.Version, Enumerable.Empty<ProjectResult>(), Published: true);
+                }
+            }
+
+            var previousPackages = packages.GetLatestPackagesAsync();
+            var installDir = await TryInstallPackagesAsync(packages.ToEnumerable(), projectDirectory).ConfigureAwait(false);
             var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
             var results = new System.Collections.Generic.List<ProjectResult>();
-            var published = false;
 
             if (installDir is null)
             {
@@ -131,29 +141,35 @@ namespace Altemiq.SemanticVersioning
                 }
 
                 System.IO.Directory.Delete(installDir, recursive: true);
-
-                if (commit is not null && NuGetVersion.GetPatchPackage(previousPackagesArray, calculatedVersion) is NuGet.Packaging.Core.PackageIdentity package)
-                {
-                    // get the manifest for this version
-                    var manifest = await NuGetInstaller.GetManifest(package).ConfigureAwait(false);
-                    if (manifest?.Metadata?.Repository is not null
-                        && string.Equals(commit, manifest.Metadata.Repository.Commit, StringComparison.Ordinal))
-                    {
-                        // this is the same version
-                        calculatedVersion = package.Version;
-                        published = true;
-                    }
-                }
             }
 
-            return (calculatedVersion, results, published);
+            return (calculatedVersion, results, Published: false);
 
             bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
             {
                 return version?.Equals(Empty) != false;
             }
 
-            async Task<string?> TryInstallAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
+            async Task<string?> TryInstallPackagesAsync(System.Collections.Generic.IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages, string projectDirectory)
+            {
+                var previousVersion = IsNullOrEmpty(previous)
+                    ? default
+                    : previous;
+
+                NuGet.Common.ILogger? logger = default;
+                try
+                {
+                    return await NuGetInstaller.InstallAsync(packages, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
+                }
+                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
+                {
+                    logger?.LogError(ex.Message);
+                }
+
+                return default;
+            }
+
+            async Task<string?> TryInstallPackageIdsAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
             {
                 var previousVersion = IsNullOrEmpty(previous)
                     ? default
