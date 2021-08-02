@@ -18,7 +18,7 @@ namespace Altemiq.SemanticVersioning
         {
             private readonly System.CommandLine.IConsole console;
 
-            public ConsoleWithOutput(System.CommandLine.IConsole console, OutputTypes output)
+            protected ConsoleWithOutput(System.CommandLine.IConsole console, OutputTypes output)
             {
                 this.console = console;
                 this.Output = output;
@@ -41,6 +41,16 @@ namespace Altemiq.SemanticVersioning
             IStandardStreamWriter IStandardOut.Out => this.console.Out;
 
             IStandardStreamWriter IStandardError.Error => this.console.Error;
+
+            public static IConsoleWithOutput Create(System.CommandLine.IConsole console, OutputTypes outputTypes)
+            {
+                if (console is System.CommandLine.Rendering.ITerminal terminal)
+                {
+                    return new TerminalWithOutput(terminal, outputTypes);
+                }
+
+                return new ConsoleWithOutput(console, outputTypes);
+            }
 
             private class StandardStreamWriterWithOutput : IStandardStreamWriterWithOutput
             {

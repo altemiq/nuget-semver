@@ -7,6 +7,7 @@
 namespace Altemiq.SemanticVersioning
 {
     using System;
+    using System.Linq;
     using Microsoft.Build.Framework;
     using Microsoft.Build.Utilities;
 
@@ -92,9 +93,14 @@ namespace Altemiq.SemanticVersioning
         public string? VersionSuffix { get; set; }
 
         /// <summary>
-        /// Gets or sets the commit.
+        /// Gets or sets the project commits.
         /// </summary>
-        public string? Commit { get; set; }
+        public string? Commits { get; set; }
+
+        /// <summary>
+        /// Gets or sets the head commits.
+        /// </summary>
+        public string? HeadCommits { get; set; }
 
         /// <summary>
         /// Gets the calculated semantic version.
@@ -126,6 +132,13 @@ namespace Altemiq.SemanticVersioning
                 : NuGet.Versioning.SemanticVersion.Parse(this.Previous);
 
             var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
+            var projectCommmits = this.Commits?.Split(';') ?? Array.Empty<string>();
+            var headCommits = this.HeadCommits?.Split(';') ?? Array.Empty<string>();
+            if (projectCommmits.Length > 0)
+            {
+                var projectCommit = projectCommmits[0];
+                headCommits = headCommits.TakeWhile(commit => !string.Equals(commit, projectCommit, StringComparison.Ordinal)).ToArray();
+            }
 
             var (version, differences, published) = MSBuildApplication.ProcessProject(
                 this.ProjectDir,
@@ -139,7 +152,8 @@ namespace Altemiq.SemanticVersioning
                 regex,
                 this.PackageReplaceRegex,
                 previousVersion,
-                this.Commit,
+                projectCommmits,
+                headCommits,
                 this.NoCache,
                 this.DirectDownload,
                 GetVersionSuffix).Result;

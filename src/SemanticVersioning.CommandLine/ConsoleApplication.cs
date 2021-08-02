@@ -74,6 +74,11 @@ namespace Altemiq.SemanticVersioning
         public const bool DefaultDirectDownload = default;
 
         /// <summary>
+        /// The default for the commit count option.
+        /// </summary>
+        public const int DefaultCommitCount = 10;
+
+        /// <summary>
         /// The default for the configuration option.
         /// </summary>
         public const string? DefaultConfiguration = default;
@@ -137,6 +142,7 @@ namespace Altemiq.SemanticVersioning
         /// <param name="noVersionSuffix">Set to <see langword="true"/> to force there to be no version suffix.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
+        /// <param name="commitCount">The number of commits to get.</param>
         /// <param name="output">The output type.</param>
         /// <param name="buildNumberParameter">The parameter name for the build number.</param>
         /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
@@ -157,6 +163,7 @@ namespace Altemiq.SemanticVersioning
             bool noVersionSuffix = DefaultNoVersionSuffix,
             bool noCache = DefaultNoCache,
             bool directDownload = DefaultDirectDownload,
+            int commitCount = DefaultCommitCount,
             OutputTypes output = DefaultOutput,
             string buildNumberParameter = DefaultBuildNumberParameter,
             string versionSuffixParameter = DefaultVersionSuffixParameter,
@@ -174,9 +181,6 @@ namespace Altemiq.SemanticVersioning
             string versionSuffixParameter = DefaultVersionSuffixParameter,
             bool noLogo = DefaultNoLogo)
         {
-            var consoleWithOutput = console is System.CommandLine.Rendering.ITerminal terminal
-                ? new TerminalWithOutput(terminal, output)
-                : new ConsoleWithOutput(console, output);
             if (!noLogo)
             {
                 WriteHeader(console);
@@ -184,6 +188,7 @@ namespace Altemiq.SemanticVersioning
 
             (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build);
 
+            var consoleWithOutput = ConsoleWithOutput.Create(console, output);
             WriteChanges(consoleWithOutput, differences);
             if (version is not null)
             {
@@ -208,6 +213,7 @@ namespace Altemiq.SemanticVersioning
             bool noVersionSuffix = DefaultNoVersionSuffix,
             bool noCache = DefaultNoCache,
             bool directDownload = DefaultDirectDownload,
+            int commitCount = DefaultCommitCount,
             OutputTypes output = DefaultOutput,
             string buildNumberParameter = DefaultBuildNumberParameter,
             string versionSuffixParameter = DefaultVersionSuffixParameter,
@@ -220,16 +226,14 @@ namespace Altemiq.SemanticVersioning
 
             var instance = RegisterMSBuild(projectOrSolution);
 
-            var consoleWithOutput = console is System.CommandLine.Rendering.ITerminal terminal
-                ? new TerminalWithOutput(terminal, output)
-                : new ConsoleWithOutput(console, output);
+            var consoleWithOutput = ConsoleWithOutput.Create(console, output);
             consoleWithOutput.Out.WriteLine($"Using {instance.Name} {instance.Version}", OutputTypes.Diagnostic);
 
             var regex = string.IsNullOrEmpty(packageIdRegex)
                 ? null
                 : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
-            var version = await ProcessProjectOrSolution(
+            var version = await ProcessProjectOrSolutionCore(
                 consoleWithOutput,
                 projectOrSolution,
                 configuration,
@@ -243,55 +247,17 @@ namespace Altemiq.SemanticVersioning
                 previous,
                 noVersionSuffix,
                 noCache,
-                directDownload).ConfigureAwait(false);
+                directDownload,
+                commitCount).ConfigureAwait(false);
 
             // write out the version and the suffix
             WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
             WriteJsonVersion(consoleWithOutput, version);
 
             return 0;
-
-            static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(System.IO.FileSystemInfo projectOrSolution)
-            {
-                var finder = new VisualStudioInstanceFinder(GetInstances());
-                var instance = finder.GetVisualStudioInstance(projectOrSolution);
-                if (!isRegistered)
-                {
-                    isRegistered = true;
-                    Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
-                }
-
-                return instance;
-
-                static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
-                {
-                    return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
-                    {
-                        DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
-                    });
-                }
-            }
         }
 
-        /// <summary>
-        /// The process project of solution.
-        /// </summary>
-        /// <param name="console">The console.</param>
-        /// <param name="projectOrSolution">The project or solution.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="platform">The platform.</param>
-        /// <param name="source">The NuGet source.</param>
-        /// <param name="packageId">The package ID.</param>
-        /// <param name="exclude">The values to exclude.</param>
-        /// <param name="packageIdRegex">The package ID regex.</param>
-        /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="versionSuffix">The version suffix.</param>
-        /// <param name="previous">The previous version.</param>
-        /// <param name="noVersionSuffix">Set to <see langword="true"/> to force there to be no version suffix.</param>
-        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
-        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <returns>The task.</returns>
-        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolution(
+        private static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolutionCore(
             IConsoleWithOutput console,
             System.IO.FileSystemInfo projectOrSolution,
             string? configuration,
@@ -305,16 +271,13 @@ namespace Altemiq.SemanticVersioning
             NuGet.Versioning.SemanticVersion? previous,
             bool noVersionSuffix,
             bool noCache,
-            bool directDownload)
+            bool directDownload,
+            int commitCount)
         {
             var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
             var packageIds = packageId ?? Enumerable.Empty<string>();
-            using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
-            foreach (var project in projectCollection.LoadedProjects.Where(project =>
-                IsPackable(project)
-                && !ShouldDisableSemanticVersioning(project)
-                && !ShouldExclude(project, exclude)))
+            foreach (var project in GetProjects(projectOrSolution, configuration, platform, exclude))
             {
                 var calculatedVersion = await ProcessProject(
                     console,
@@ -326,11 +289,172 @@ namespace Altemiq.SemanticVersioning
                     previous,
                     noCache,
                     directDownload,
+                    commitCount,
                     GetVersionSuffix).ConfigureAwait(false);
                 globalVersion = globalVersion.Max(calculatedVersion);
             }
 
             return globalVersion;
+
+            string? GetVersionSuffix(string? previousVersionRelease = default)
+            {
+                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
+            }
+        }
+
+        private static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+            IConsoleWithOutput console,
+            Microsoft.Build.Evaluation.Project project,
+            System.Collections.Generic.IEnumerable<string> source,
+            System.Collections.Generic.IEnumerable<string> packageIds,
+            System.Text.RegularExpressions.Regex? packageIdRegex,
+            string? packageIdReplace,
+            NuGet.Versioning.SemanticVersion? previous,
+            bool noCache,
+            bool directDownload,
+            int commitCount,
+            Func<string?, string?> getVersionSuffix)
+        {
+            var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName), OutputTypes.Diagnostic);
+            var folderCommits = GetCommits(project.DirectoryPath, commitCount).ToList();
+            var headCommits = GetHeadCommits(project.DirectoryPath, folderCommits[0]).ToList();
+
+            (var version, var results, var published) = await MSBuildApplication.ProcessProject(
+                project.DirectoryPath,
+                project.GetPropertyValue(AssemblyNamePropertyName),
+                project.GetPropertyValue(PackageIdPropertyName),
+                project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll",
+                project.GetPropertyValue("BuildOutputTargetFolder"),
+                project.GetPropertyValue("PackageOutputPath"),
+                source,
+                packageIds,
+                packageIdRegex,
+                packageIdReplace,
+                previous,
+                folderCommits,
+                headCommits,
+                noCache,
+                directDownload,
+                getVersionSuffix).ConfigureAwait(false);
+
+            foreach (var result in results)
+            {
+                WriteChanges(console, result.Differences);
+            }
+
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
+
+            return version;
+        }
+
+        private static void WriteHeader(System.CommandLine.IConsole console)
+        {
+            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Logo, VersionUtils.GetVersion()));
+            console.Out.WriteLine(Properties.Resources.Copyright);
+        }
+
+        private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
+            this System.Collections.Generic.IDictionary<string, string>? properties,
+            string name,
+            string? value)
+        {
+            if (value is null)
+            {
+                return properties;
+            }
+
+            properties ??= new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
+            properties.Add(name, value);
+            return properties;
+        }
+
+        private static System.Collections.Generic.IEnumerable<string> GetCommits(string projectDir, int count)
+        {
+            var path = System.IO.Path.GetFullPath(projectDir);
+            if (path is null)
+            {
+                yield break;
+            }
+
+            var baseDir = GetBaseDirectory(path);
+            if (baseDir is null)
+            {
+                yield break;
+            }
+
+            using (var repository = new LibGit2Sharp.Repository(baseDir))
+            {
+                var relativePath = path
+                    .Substring(baseDir.Length + 1)
+                    .Replace("\\", "/", StringComparison.Ordinal);
+
+                var logEntries = new FolderHistory(repository, relativePath) as System.Collections.Generic.IEnumerable<LibGit2Sharp.LogEntry>;
+
+                if (count > 0)
+                {
+                    logEntries = logEntries.Take(count);
+                }
+
+                foreach (var logEntry in logEntries)
+                {
+                    yield return logEntry.Commit.Sha;
+                }
+            }
+        }
+
+        private static System.Collections.Generic.IEnumerable<string> GetHeadCommits(string projectDir, string commit)
+        {
+            var path = System.IO.Path.GetFullPath(projectDir);
+            if (path is null)
+            {
+                yield break;
+            }
+
+            var baseDir = GetBaseDirectory(path);
+            if (baseDir is null)
+            {
+                yield break;
+            }
+
+            using var repository = new LibGit2Sharp.Repository(baseDir);
+            foreach (var c in repository.Commits.TakeWhile(c => !string.Equals(c.Sha, commit, StringComparison.Ordinal)))
+            {
+                yield return c.Sha;
+            }
+        }
+
+        private static string? GetBaseDirectory(string? directory)
+        {
+            while (directory is not null)
+            {
+                var git = System.IO.Path.Combine(directory, ".git");
+                if (System.IO.Directory.Exists(git))
+                {
+                    return directory;
+                }
+
+                directory = System.IO.Path.GetDirectoryName(directory);
+            }
+
+            return default;
+        }
+
+        private static System.Collections.Generic.IEnumerable<Microsoft.Build.Evaluation.Project> GetProjects(
+            System.IO.FileSystemInfo projectOrSolution,
+            string? configuration,
+            string? platform,
+            System.Collections.Generic.IEnumerable<string> exclude)
+        {
+            using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
+
+            foreach (var project in projectCollection.LoadedProjects.Where(project =>
+                IsPackable(project)
+                && !ShouldDisableSemanticVersioning(project)
+                && !ShouldExclude(project, exclude)))
+            {
+                yield return project;
+            }
 
             static bool IsPackable(Microsoft.Build.Evaluation.Project project)
             {
@@ -458,134 +582,27 @@ namespace Altemiq.SemanticVersioning
                     throw new System.IO.FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                 }
             }
-
-            string? GetVersionSuffix(string? previousVersionRelease = default)
-            {
-                return noVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
-            }
         }
 
-        /// <summary>
-        /// The process project.
-        /// </summary>
-        /// <param name="console">The console.</param>
-        /// <param name="project">The project.</param>
-        /// <param name="source">The NuGet source.</param>
-        /// <param name="packageIds">The package ID.</param>
-        /// <param name="packageIdRegex">The package ID regex.</param>
-        /// <param name="packageIdReplace">The package ID replacement value.</param>
-        /// <param name="previous">The previous version.</param>
-        /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
-        /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
-        /// <param name="getVersionSuffix">The function to get the version suffix.</param>
-        /// <returns>The task.</returns>
-        public static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
-            IConsoleWithOutput console,
-            Microsoft.Build.Evaluation.Project project,
-            System.Collections.Generic.IEnumerable<string> source,
-            System.Collections.Generic.IEnumerable<string> packageIds,
-            System.Text.RegularExpressions.Regex? packageIdRegex,
-            string? packageIdReplace,
-            NuGet.Versioning.SemanticVersion? previous,
-            bool noCache,
-            bool directDownload,
-            Func<string?, string?> getVersionSuffix)
+        private static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(System.IO.FileSystemInfo projectOrSolution)
         {
-            var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
-            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName), OutputTypes.Diagnostic);
-            var commit = GetCommit(project.DirectoryPath);
-
-            (var version, var results, var published) = await MSBuildApplication.ProcessProject(
-                project.DirectoryPath,
-                project.GetPropertyValue(AssemblyNamePropertyName),
-                project.GetPropertyValue(PackageIdPropertyName),
-                project.GetProperty(TargetExtPropertyName)?.EvaluatedValue ?? ".dll",
-                project.GetPropertyValue("BuildOutputTargetFolder"),
-                project.GetPropertyValue("PackageOutputPath"),
-                source,
-                packageIds,
-                packageIdRegex,
-                packageIdReplace,
-                previous,
-                commit,
-                noCache,
-                directDownload,
-                getVersionSuffix).ConfigureAwait(false);
-
-            foreach (var result in results)
+            var finder = new VisualStudioInstanceFinder(GetInstances());
+            var instance = finder.GetVisualStudioInstance(projectOrSolution);
+            if (!isRegistered)
             {
-                WriteChanges(console, result.Differences);
+                isRegistered = true;
+                Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
             }
 
-            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
+            return instance;
 
-            return version;
-
-            static string? GetCommit(string projectDir)
+            static System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
             {
-                var path = System.IO.Path.GetFullPath(projectDir);
-                if (path is null)
+                return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
                 {
-                    return default;
-                }
-
-                var baseDir = GetBaseDirectory(path);
-                if (baseDir is null)
-                {
-                    return default;
-                }
-
-                using (var repository = new LibGit2Sharp.Repository(baseDir))
-                {
-                    var relativePath = path
-                        .Substring(baseDir.Length + 1)
-                        .Replace("\\", "/", StringComparison.Ordinal);
-
-                    if (repository.Commits.QueryBy(relativePath).Take(1).FirstOrDefault() is LibGit2Sharp.LogEntry logEntry)
-                    {
-                        return logEntry.Commit.Sha;
-                    }
-                }
-
-                return default;
-
-                static string? GetBaseDirectory(string? directory)
-                {
-                    while (directory is not null)
-                    {
-                        var git = System.IO.Path.Combine(directory, ".git");
-                        if (System.IO.Directory.Exists(git))
-                        {
-                            return directory;
-                        }
-
-                        directory = System.IO.Path.GetDirectoryName(directory);
-                    }
-
-                    return default;
-                }
+                    DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
+                });
             }
-        }
-
-        private static void WriteHeader(System.CommandLine.IConsole console)
-        {
-            console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Logo, VersionUtils.GetVersion()));
-            console.Out.WriteLine(Properties.Resources.Copyright);
-        }
-
-        private static System.Collections.Generic.IDictionary<string, string>? AddProperty(
-            this System.Collections.Generic.IDictionary<string, string>? properties,
-            string name,
-            string? value)
-        {
-            if (value is null)
-            {
-                return properties;
-            }
-
-            properties ??= new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
-            properties.Add(name, value);
-            return properties;
         }
     }
 }
