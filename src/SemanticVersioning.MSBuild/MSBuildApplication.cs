@@ -31,7 +31,8 @@ namespace Mondo.SemanticVersioning
         /// <param name="packageIdRegex">The package ID regex.</param>
         /// <param name="packageIdReplace">The package ID replacement value.</param>
         /// <param name="previous">The previous version.</param>
-        /// <param name="commit">The commit.</param>
+        /// <param name="folderCommits">The commits for the folder.</param>
+        /// <param name="headCommits">The commits for the head.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
@@ -48,7 +49,8 @@ namespace Mondo.SemanticVersioning
             System.Text.RegularExpressions.Regex? packageIdRegex,
             string? packageIdReplace,
             NuGet.Versioning.SemanticVersion? previous,
-            string? commit,
+            System.Collections.Generic.IEnumerable<string> folderCommits,
+            System.Collections.Generic.IEnumerable<string> headCommits,
             bool noCache,
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
@@ -64,9 +66,11 @@ namespace Mondo.SemanticVersioning
                 ? NuGetInstaller.GetPackagesAsync(projectPackageIds, source, root: projectDirectory)
                 : CreateAsyncEnumerable(new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)));
 
-            if (commit is not null)
+            var folderCommitsList = folderCommits.ToList();
+            var headCommitsList = headCommits.ToList();
+            if (folderCommitsList.Count > 0)
             {
-                var commitPackage = await NuGetInstaller.GetPackageByCommit(commit, packages, source, root: projectDirectory).ConfigureAwait(false);
+                var commitPackage = await NuGetInstaller.GetPackageByCommit(folderCommitsList, headCommitsList, packages, source, root: projectDirectory).ConfigureAwait(false);
                 if (commitPackage is not null)
                 {
                     return (commitPackage.Version, Enumerable.Empty<ProjectResult>(), Published: true);
@@ -160,24 +164,6 @@ namespace Mondo.SemanticVersioning
                 try
                 {
                     return await NuGetInstaller.InstallAsync(packages, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
-                }
-                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
-                {
-                    logger?.LogError(ex.Message);
-                }
-
-                return default;
-            }
-
-            async Task<string?> TryInstallPackageIdsAsync(System.Collections.Generic.IEnumerable<string> packageIds, string projectDirectory)
-            {
-                var previousVersion = IsNullOrEmpty(previous)
-                    ? default
-                    : previous;
-                NuGet.Common.ILogger? logger = default;
-                try
-                {
-                    return await NuGetInstaller.InstallAsync(packageIds, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
                 }
                 catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {

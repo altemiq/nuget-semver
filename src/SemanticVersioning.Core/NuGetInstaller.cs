@@ -233,7 +233,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="root">The root.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The manifest.</returns>
-        public static async Task<Manifest?> GetManifest(
+        public static async Task<Manifest?> GetManifestAsync(
             PackageIdentity package,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
@@ -294,7 +294,8 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// Gets the latest packages.
         /// </summary>
-        /// <param name="commit">The commit.</param>
+        /// <param name="folderCommits">The commits for the package.</param>
+        /// <param name="headCommits">The commits for the head.</param>
         /// <param name="packageNames">The package names.</param>
         /// <param name="sources">The sources.</param>
         /// <param name="log">The log.</param>
@@ -302,13 +303,15 @@ namespace Mondo.SemanticVersioning
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet packages.</returns>
         public static Task<PackageIdentity?> GetPackageByCommit(
-            string commit,
+            IList<string> folderCommits,
+            IList<string> headCommits,
             IEnumerable<string> packageNames,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
             string? root = default,
             System.Threading.CancellationToken cancellationToken = default) => GetPackageByCommit(
-                commit,
+                folderCommits,
+                headCommits,
                 GetPackagesAsync(packageNames, sources, log, root, cancellationToken),
                 sources,
                 log,
@@ -318,7 +321,8 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// Gets the latest packages.
         /// </summary>
-        /// <param name="commit">The commit.</param>
+        /// <param name="folderCommits">The commits for the package.</param>
+        /// <param name="headCommits">The commits for the head.</param>
         /// <param name="packages">The packages.</param>
         /// <param name="sources">The sources.</param>
         /// <param name="log">The log.</param>
@@ -326,7 +330,8 @@ namespace Mondo.SemanticVersioning
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The latest NuGet packages.</returns>
         public static async Task<PackageIdentity?> GetPackageByCommit(
-            string commit,
+            IList<string> folderCommits,
+            IList<string> headCommits,
             IAsyncEnumerable<PackageIdentity> packages,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
@@ -343,9 +348,28 @@ namespace Mondo.SemanticVersioning
                 .ConfigureAwait(false))
             {
                 var manifest = await GetManifest(package, sourceRepositories, cacheContext, log, cancellationToken).ConfigureAwait(false);
-                if (manifest?.Metadata?.Repository is not null
-                    && string.Equals(commit, manifest.Metadata.Repository.Commit, StringComparison.Ordinal))
+                if (manifest?.Metadata?.Repository is RepositoryMetadata repository)
                 {
+                    if (headCommits.Contains(repository.Commit, StringComparer.Ordinal))
+                    {
+                        // this is in the head commits, so let this through
+                        return package;
+                    }
+
+                    // see where this is in the folder commits
+                    var index = folderCommits.IndexOf(repository.Commit);
+                    if (index < 0)
+                    {
+                        // not found.
+                        break;
+                    }
+
+                    if (index > 0)
+                    {
+                        // this is before the latest commit
+                        continue;
+                    }
+
                     // this is the same commit
                     return package;
                 }

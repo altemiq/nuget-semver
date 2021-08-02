@@ -16,30 +16,47 @@ var fileCommandBuilder = new CommandBuilder(new Command("file", "Calculated the 
     .AddArgument(new Argument<System.IO.FileInfo>("second") { Description = "The second assembly" })
     .AddOption(new Option<string>(new string[] { "-b", "--build" }, "Ths build label"));
 
-var solutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new ConsoleApplication.ProcessProjectOrSolutionDelegate(ConsoleApplication.ProcessProjectOrSolution)) })
-    .AddArgument(new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." })
-    .AddOption(new Option<string?>(new string[] { "--configuration", "-c" }, () => ConsoleApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'."))
-    .AddOption(new Option<string?>("--platform", () => ConsoleApplication.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'."))
-    .AddOption(new Option<string?>("--source", "Specifies the server URL.", ArgumentArity.OneOrMore).WithAlias("-s"))
+var projectOrSolutionArgument = new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." };
+
+var configurationOption = new Option<string?>(new string[] { "--configuration", "-c" }, () => ConsoleApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'.");
+
+var platformOption = new Option<string?>("--platform", () => ConsoleApplication.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'.");
+
+var sourceOption = new Option<string?>("--source", "Specifies the server URL.", ArgumentArity.OneOrMore).WithAlias("-s");
+
+var packageIdRegexOption = new Option<string?>("--package-id-regex", () => ConsoleApplication.DefaultPackageIdRegex, "The regular expression to match in the package id.");
+
+var packageIdReplaceOption = new Option<string?>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex");
+
+var packageIdOption = new Option<string?>("--package-id", "The package ID to check for previous versions", ArgumentArity.OneOrMore);
+
+var excludeOption = new Option<string?>("--exclude", "A package ID to check exclude from analysis", ArgumentArity.OneOrMore);
+
+var diffSolutionCommandBuilder = new CommandBuilder(new Command("solution", "Calculates the version based on a solution file") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new ConsoleApplication.ProcessProjectOrSolutionDelegate(ConsoleApplication.ProcessProjectOrSolution)) })
+    .AddArgument(projectOrSolutionArgument)
+    .AddOption(configurationOption)
+    .AddOption(platformOption)
+    .AddOption(sourceOption)
     .AddOption(new Option<bool>("--no-version-suffix", () => ConsoleApplication.DefaultNoVersionSuffix, "Forces there to be no version suffix. This overrides --version-suffix"))
     .AddOption(new Option<string?>("--version-suffix", () => ConsoleApplication.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used."))
     .AddOption(new Option<bool>("--no-cache", () => ConsoleApplication.DefaultNoCache, "Disable using the machine cache as the first package source."))
     .AddOption(new Option<bool>("--direct-download", () => ConsoleApplication.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries."))
-    .AddOption(new Option<string?>("--package-id-regex", () => ConsoleApplication.DefaultPackageIdRegex, "The regular expression to match in the package id."))
-    .AddOption(new Option<string?>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex"))
-    .AddOption(new Option<string?>("--package-id", "The package ID to check for previous versions", ArgumentArity.OneOrMore))
-    .AddOption(new Option<string?>("--exclude", "A package ID to check exclude from analysis", ArgumentArity.OneOrMore));
+    .AddOption(new Option<int>("--commit-count", () => ConsoleApplication.DefaultCommitCount, "The number of commits to analyse for equivalent packages"))
+    .AddOption(packageIdRegexOption)
+    .AddOption(packageIdReplaceOption)
+    .AddOption(packageIdOption)
+    .AddOption(excludeOption);
 
 var diffCommandBuilder = new CommandBuilder(new Command("diff", "Calculates the differences"))
     .AddCommand(fileCommandBuilder.Command)
-    .AddCommand(solutionCommandBuilder.Command)
+    .AddCommand(diffSolutionCommandBuilder.Command)
     .AddGlobalOption(new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, ParseVersion, isDefault: true, description: "The previous version"))
     .AddGlobalOption(new Option<string>("--build-number-parameter", () => ConsoleApplication.DefaultBuildNumberParameter, "The parameter name for the build number"))
     .AddGlobalOption(new Option<string>("--version-suffix-parameter", () => ConsoleApplication.DefaultVersionSuffixParameter, "The parameter name for the version suffix"))
-    .AddGlobalOption(new Option<OutputTypes>("--output", () => ConsoleApplication.DefaultOutput, "The output type"))
-    .AddGlobalOption(new Option<bool>(new string[] { "/nologo", "--nologo" }, () => ConsoleApplication.DefaultNoLogo, "Do not display the startup banner or the copyright message."));
+    .AddGlobalOption(new Option<OutputTypes>("--output", () => ConsoleApplication.DefaultOutput, "The output type"));
 
 var commandLineBuilder = new CommandLineBuilder(new RootCommand(description: "Semantic Version generator"))
+    .AddGlobalOption(new Option<bool>(new string[] { "/nologo", "--nologo" }, () => ConsoleApplication.DefaultNoLogo, "Do not display the startup banner or the copyright message."))
     .UseDefaults()
     .UseAnsiTerminalWhenAvailable()
     .AddCommand(diffCommandBuilder.Command);
