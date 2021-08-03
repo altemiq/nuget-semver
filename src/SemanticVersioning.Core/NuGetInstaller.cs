@@ -189,7 +189,7 @@ namespace Mondo.SemanticVersioning
             static PackageIdentity? GetLatestPackage(IEnumerable<PackageIdentity> packages, bool includePrerelease)
             {
                 return packages
-                    .Where(package => (package is not SourcePackageDependencyInfo info || info.Listed) && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
+                    .Where(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && (!package.Version.IsPrerelease || includePrerelease))
                     .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
                     .FirstOrDefault();
             }
@@ -631,7 +631,7 @@ namespace Mondo.SemanticVersioning
 #if NETSTANDARD2_1_OR_GREATER
                 await
 #endif
-                        using (stream)
+                using (stream)
                 {
                     var downloadCacheContext = new PackageDownloadContext(cacheContext);
                     var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
