@@ -6,12 +6,10 @@
 
 namespace Mondo.SemanticVersioning
 {
-    using System.Linq;
-
     /// <summary>
     /// Gets the head commits after the project commits.
     /// </summary>
-    public class GetHeadCommits : GitLogTask
+    public sealed class GetHeadCommits : GitLogTask
     {
         /// <summary>
         /// Initialises a new instance of the <see cref="GetHeadCommits"/> class.
