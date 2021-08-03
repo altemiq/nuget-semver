@@ -15,7 +15,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// Gets the latest commit for a set of paths.
     /// </summary>
-    public class GetLatestCommit : Microsoft.Build.Utilities.Task
+    public sealed class GetLatestCommit : Microsoft.Build.Utilities.Task
     {
         private readonly GetProjectCommits task = new();
 
@@ -66,7 +66,7 @@ namespace Altemiq.SemanticVersioning
             }
 
             this.Commit = commit?.Sha;
-            return this.Commit is not null;
+            return true;
         }
     }
 }

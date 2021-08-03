@@ -14,7 +14,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The GIT log task.
     /// </summary>
-    public class GetProjectCommits : GitLogTask
+    public sealed class GetProjectCommits : GitLogTask
     {
         /// <summary>
         /// Gets or sets the project dir.
