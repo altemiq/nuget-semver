@@ -376,12 +376,16 @@ namespace Mondo.SemanticVersioning
 
                     path = System.IO.Path.GetFullPath(path);
 
-                    var referencedProject = project.ProjectCollection.LoadedProjects.Single(p => string.Equals(p.FullPath, path, StringComparison.Ordinal));
-                    yield return referencedProject;
-
-                    foreach (var subproject in GetProjects(referencedProject))
+                    var referencedProject = project.ProjectCollection.LoadedProjects.SingleOrDefault(p => string.Equals(p.FullPath, path, StringComparison.Ordinal))
+                        ?? LoadProject(project.ProjectCollection, path, default, default, default);
+                    if (referencedProject is not null)
                     {
-                        yield return subproject;
+                        yield return referencedProject;
+
+                        foreach (var subproject in GetProjects(referencedProject))
+                        {
+                            yield return subproject;
+                        }
                     }
                 }
             }
@@ -528,39 +532,10 @@ namespace Mondo.SemanticVersioning
                 foreach (var projectPath in projectPaths)
                 {
                     System.Diagnostics.Debug.WriteLine(projectPath);
-                    var (configurationName, platformName, includeInBuild) = GetBuildConfiguration(projectPath);
-                    if (!includeInBuild)
-                    {
-                        continue;
-                    }
-
-                    var globalProperties = default(System.Collections.Generic.IDictionary<string, string>?)
-                        .AddProperty("Configuration", configurationName)
-                        .AddProperty("Platform", platformName);
-
-                    projectCollection.LoadProject(projectPath, globalProperties, projectCollection.DefaultToolsVersion);
+                    LoadProject(projectCollection, projectPath, solution, configuration, platform);
                 }
 
                 return projectCollection;
-
-                (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
-                {
-                    if (solution is null)
-                    {
-                        return (configuration, platform, IncludeInBuild: true);
-                    }
-
-                    // get the project in solution
-                    var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
-                    var configurationName = configuration ?? solution.GetDefaultConfigurationName();
-                    var platformName = platform ?? solution.GetDefaultPlatformName();
-
-                    var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
-
-                    var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
-
-                    return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
-                }
 
                 static System.IO.FileInfo GetPath(System.IO.FileSystemInfo path, bool currentDirectory)
                 {
@@ -644,6 +619,45 @@ namespace Mondo.SemanticVersioning
                 {
                     DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
                 });
+            }
+        }
+
+        private static Microsoft.Build.Evaluation.Project? LoadProject(
+            Microsoft.Build.Evaluation.ProjectCollection projectCollection,
+            string projectPath,
+            Microsoft.Build.Construction.SolutionFile? solution,
+            string? configuration,
+            string? platform)
+        {
+            var (configurationName, platformName, includeInBuild) = GetBuildConfiguration(projectPath);
+            if (!includeInBuild)
+            {
+                return default;
+            }
+
+            var globalProperties = default(System.Collections.Generic.IDictionary<string, string>?)
+                .AddProperty("Configuration", configurationName)
+                .AddProperty("Platform", platformName);
+
+            return projectCollection.LoadProject(projectPath, globalProperties, projectCollection.DefaultToolsVersion);
+
+            (string? ConfigurationName, string? PlatformName, bool IncludeInBuild) GetBuildConfiguration(string path)
+            {
+                if (solution is null)
+                {
+                    return (configuration, platform, IncludeInBuild: true);
+                }
+
+                // get the project in solution
+                var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
+                var configurationName = configuration ?? solution.GetDefaultConfigurationName();
+                var platformName = platform ?? solution.GetDefaultPlatformName();
+
+                var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
+
+                var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
+
+                return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
             }
         }
     }
