@@ -58,9 +58,9 @@ namespace Mondo.SemanticVersioning
         public string? RestoreSources { get; set; }
 
         /// <summary>
-        /// Gets or sets the package replace regular expression.
+        /// Gets or sets the package ID regular expression.
         /// </summary>
-        public string? PackageReplaceRegex { get; set; }
+        public string? PackageIdRegex { get; set; }
 
         /// <summary>
         /// Gets or sets the package ID replace value.
@@ -103,6 +103,11 @@ namespace Mondo.SemanticVersioning
         public string? HeadCommits { get; set; }
 
         /// <summary>
+        /// Gets or sets the latest reference commit.
+        /// </summary>
+        public string? ReferenceCommit { get; set; }
+
+        /// <summary>
         /// Gets the calculated semantic version.
         /// </summary>
         [Output]
@@ -123,9 +128,9 @@ namespace Mondo.SemanticVersioning
         /// <inheritdoc/>
         public override bool Execute()
         {
-            var regex = this.PackageReplaceRegex is null
+            var regex = this.PackageIdRegex is null
                 ? null
-                : new System.Text.RegularExpressions.Regex(this.PackageReplaceRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
+                : new System.Text.RegularExpressions.Regex(this.PackageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
             var previousVersion = this.Previous is null
                 ? default
@@ -150,10 +155,11 @@ namespace Mondo.SemanticVersioning
                 restoreSources,
                 new[] { this.PackageId },
                 regex,
-                this.PackageReplaceRegex,
+                this.PackageIdReplace,
                 previousVersion,
                 projectCommmits,
                 headCommits,
+                this.ReferenceCommit,
                 this.NoCache,
                 this.DirectDownload,
                 GetVersionSuffix).Result;

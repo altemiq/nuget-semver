@@ -1,0 +1,69 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="GetHeadCommits.cs" company="Mondo">
+// Copyright (c) Mondo. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace Mondo.SemanticVersioning
+{
+    using System.Linq;
+
+    /// <summary>
+    /// Gets the head commits after the project commits.
+    /// </summary>
+    public class GetHeadCommits : GitLogTask
+    {
+        /// <summary>
+        /// Initialises a new instance of the <see cref="GetHeadCommits"/> class.
+        /// </summary>
+        public GetHeadCommits() => this.MaxCount = 25;
+
+        /// <summary>
+        /// Gets or sets the project dir.
+        /// </summary>
+        [Microsoft.Build.Framework.Required]
+        public string ProjectDir { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the project commits.
+        /// </summary>
+        public string? ProjectCommits { get; set; }
+
+        /// <inheritdoc/>
+        public override bool Execute()
+        {
+            if (base.Execute())
+            {
+                if (this.ProjectCommits is not null)
+                {
+                    var projectCommit = this.ProjectCommits.Split(';')[0];
+
+                    var index = -1;
+                    for (int i = 0; i < this.GitCommits.Count; i++)
+                    {
+                        if (string.Equals(this.GitCommits[i].Sha, projectCommit, System.StringComparison.Ordinal))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    while (this.GitCommits.Count > index)
+                    {
+                        this.GitCommits.RemoveAt(index);
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        protected override string? GetWorkingDirectory() => GetBaseDirectory(this.ProjectDir);
+
+        /// <inheritdoc/>
+        protected override Microsoft.Build.Framework.ITaskItem? GetPath() => default;
+    }
+}

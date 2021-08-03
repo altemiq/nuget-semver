@@ -33,6 +33,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="previous">The previous version.</param>
         /// <param name="folderCommits">The commits for the folder.</param>
         /// <param name="headCommits">The commits for the head.</param>
+        /// <param name="referenceCommit">The reference commit.</param>
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
@@ -51,6 +52,7 @@ namespace Mondo.SemanticVersioning
             NuGet.Versioning.SemanticVersion? previous,
             System.Collections.Generic.IEnumerable<string> folderCommits,
             System.Collections.Generic.IEnumerable<string> headCommits,
+            string? referenceCommit,
             bool noCache,
             bool directDownload,
             Func<string?, string?> getVersionSuffix)
@@ -68,7 +70,10 @@ namespace Mondo.SemanticVersioning
 
             var folderCommitsList = folderCommits.ToList();
             var headCommitsList = headCommits.ToList();
-            if (folderCommitsList.Count > 0)
+
+            // if we have commits, and a reference does not have a newer commit
+            if (folderCommitsList.Count > 0
+                && (referenceCommit is null || !headCommitsList.Contains(referenceCommit, StringComparer.Ordinal)))
             {
                 var commitPackage = await NuGetInstaller.GetPackageByCommit(folderCommitsList, headCommitsList, packages, source, root: projectDirectory).ConfigureAwait(false);
                 if (commitPackage is not null)

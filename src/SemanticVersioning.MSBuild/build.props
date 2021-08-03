@@ -1,4 +1,5 @@
-﻿<Project TreatAsLocalProperty="TaskFolder;TaskAssembly">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project TreatAsLocalProperty="TaskFolder;TaskAssembly">
 
   <PropertyGroup>
     <TaskFolder Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netstandard2.0</TaskFolder>
@@ -6,6 +7,9 @@
     <TaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(TaskFolder)\$(MSBuildThisFileName).dll</TaskAssembly>
   </PropertyGroup>
 
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommits" AssemblyFile="$(TasksAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommits" AssemblyFile="$(TasksAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommit" AssemblyFile="$(TasksAssembly)"/>
   <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(TaskAssembly)" />
 
 </Project>

@@ -9,8 +9,6 @@ namespace Mondo.SemanticVersioning
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using LibGit2Sharp;
 
     /// <summary>
@@ -51,8 +49,8 @@ namespace Mondo.SemanticVersioning
         /// Initialises a new instance of the <see cref="FolderHistory"/> class.
         /// The given <see cref="CommitFilter"/> instance specifies the commit
         /// sort strategies and range of commits to be considered.
-        /// Only the time (corresponding to <code>--date-order</code>) and topological
-        /// (coresponding to <code>--topo-order</code>) sort strategies are supported.
+        /// Only the time (corresponding to <c>--date-order</c>) and topological
+        /// (coresponding to <c>--topo-order</c>) sort strategies are supported.
         /// </summary>
         /// <param name="repo">The repository.</param>
         /// <param name="path">The file's path relative to the repository's root.</param>
@@ -90,20 +88,13 @@ namespace Mondo.SemanticVersioning
         }
 
         /// <summary>
-        /// Gets the <see cref="IEnumerator{LogEntry}"/> that enumerates the
-        /// <see cref="LogEntry"/> instances representing the file's history,
-        /// including renames (as in <code>git log --follow</code>).
+        /// Gets the <see cref="IEnumerator{LogEntry}"/> that enumerates the <see cref="LogEntry"/> instances representing the file's history, including renames (as in <c>git log --follow</c>).
         /// </summary>
         /// <returns>A <see cref="IEnumerator{LogEntry}"/>.</returns>
-        public IEnumerator<LogEntry> GetEnumerator()
-        {
-            return FullHistory(repo, path, queryFilter).GetEnumerator();
-        }
+        public IEnumerator<LogEntry> GetEnumerator() => FullHistory(this.repo, this.path, this.queryFilter).GetEnumerator();
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        /// <inheritdoc/>
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         /// <summary>
         /// Gets the relevant commits in which the given file was created, changed, or renamed.
@@ -176,13 +167,9 @@ namespace Mondo.SemanticVersioning
 
         private static string ParentPath(IRepository repo, Commit currentCommit, string currentPath, Commit parentCommit)
         {
-            using (var treeChanges = repo.Diff.Compare<TreeChanges>(parentCommit.Tree, currentCommit.Tree))
-            {
-                var treeEntryChanges = treeChanges.FirstOrDefault(c => c.Path == currentPath);
-                return treeEntryChanges != null && treeEntryChanges.Status == ChangeKind.Renamed
-                    ? treeEntryChanges.OldPath
-                    : currentPath;
-            }
+            using var treeChanges = repo.Diff.Compare<TreeChanges>(parentCommit.Tree, currentCommit.Tree);
+            var treeEntryChanges = treeChanges.FirstOrDefault(c => string.Equals(c.Path, currentPath, StringComparison.Ordinal));
+            return treeEntryChanges?.Status == ChangeKind.Renamed ? treeEntryChanges.OldPath : currentPath;
         }
     }
 }

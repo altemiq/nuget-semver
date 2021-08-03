@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="build.*" PackagePath="%(Filename)/$(PackageId)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="build.*" PackagePath="%(Filename)/$(PackageId)%(Extension)" />
     <Content Include="buildMultiTargeting.*" PackagePath="%(Filename)/$(PackageId)%(Extension)" />
   </ItemGroup>
 
