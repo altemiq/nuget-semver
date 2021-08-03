@@ -317,8 +317,22 @@ namespace Altemiq.SemanticVersioning
         {
             var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
             console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Checking, projectName), OutputTypes.Diagnostic);
-            var folderCommits = GetCommits(project.DirectoryPath, commitCount).ToList();
-            var headCommits = GetHeadCommits(project.DirectoryPath, folderCommits[0]).ToList();
+
+            System.Collections.Generic.IList<string>? folderCommits = default;
+            System.Collections.Generic.IList<string>? headCommits = default;
+            string? referenceCommit = default;
+            var baseDir = GetBaseDirectory(project.DirectoryPath);
+            if (baseDir is not null)
+            {
+                using var repository = new LibGit2Sharp.Repository(baseDir);
+                folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
+                headCommits = GetHeadCommits(repository, folderCommits[0]).ToList();
+                var referencePaths = GetProjects(project)
+                    .Select(reference => reference.DirectoryPath)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+                referenceCommit = GetLatestCommit(repository, referencePaths);
+            }
 
             (var version, var results, var published) = await MSBuildApplication.ProcessProject(
                 project.DirectoryPath,
@@ -332,8 +346,9 @@ namespace Altemiq.SemanticVersioning
                 packageIdRegex,
                 packageIdReplace,
                 previous,
-                folderCommits,
-                headCommits,
+                folderCommits ?? Array.Empty<string>(),
+                headCommits ?? Array.Empty<string>(),
+                referenceCommit,
                 noCache,
                 directDownload,
                 getVersionSuffix).ConfigureAwait(false);
@@ -346,6 +361,30 @@ namespace Altemiq.SemanticVersioning
             console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
 
             return version;
+
+            static System.Collections.Generic.IEnumerable<Microsoft.Build.Evaluation.Project> GetProjects(Microsoft.Build.Evaluation.Project project)
+            {
+                var projectReferences = project.Items.Where(projectItem => string.Equals(projectItem.ItemType, "ProjectReference", StringComparison.Ordinal));
+
+                foreach (var projectReference in projectReferences)
+                {
+                    var path = projectReference.EvaluatedInclude;
+                    if (!System.IO.Path.IsPathRooted(path))
+                    {
+                        path = System.IO.Path.Combine(project.DirectoryPath, path);
+                    }
+
+                    path = System.IO.Path.GetFullPath(path);
+
+                    var referencedProject = project.ProjectCollection.LoadedProjects.Single(p => string.Equals(p.FullPath, path, StringComparison.Ordinal));
+                    yield return referencedProject;
+
+                    foreach (var subproject in GetProjects(referencedProject))
+                    {
+                        yield return subproject;
+                    }
+                }
+            }
         }
 
         private static void WriteHeader(System.CommandLine.IConsole console)
@@ -369,7 +408,7 @@ namespace Altemiq.SemanticVersioning
             return properties;
         }
 
-        private static System.Collections.Generic.IEnumerable<string> GetCommits(string projectDir, int count)
+        private static System.Collections.Generic.IEnumerable<string> GetCommits(LibGit2Sharp.Repository repository, string projectDir, int count)
         {
             var path = System.IO.Path.GetFullPath(projectDir);
             if (path is null)
@@ -377,47 +416,50 @@ namespace Altemiq.SemanticVersioning
                 yield break;
             }
 
-            var baseDir = GetBaseDirectory(path);
-            if (baseDir is null)
+            string baseDir = repository.Info.WorkingDirectory;
+            var relativePath = path
+                .Substring(baseDir.Length)
+                .Replace("\\", "/", StringComparison.Ordinal)
+                .TrimStart('/');
+
+            var logEntries = new FolderHistory(repository, relativePath) as System.Collections.Generic.IEnumerable<LibGit2Sharp.LogEntry>;
+
+            if (count > 0)
             {
-                yield break;
+                logEntries = logEntries.Take(count);
             }
 
-            using (var repository = new LibGit2Sharp.Repository(baseDir))
+            foreach (var logEntry in logEntries)
             {
-                var relativePath = path
-                    .Substring(baseDir.Length + 1)
-                    .Replace("\\", "/", StringComparison.Ordinal);
-
-                var logEntries = new FolderHistory(repository, relativePath) as System.Collections.Generic.IEnumerable<LibGit2Sharp.LogEntry>;
-
-                if (count > 0)
-                {
-                    logEntries = logEntries.Take(count);
-                }
-
-                foreach (var logEntry in logEntries)
-                {
-                    yield return logEntry.Commit.Sha;
-                }
+                yield return logEntry.Commit.Sha;
             }
         }
 
-        private static System.Collections.Generic.IEnumerable<string> GetHeadCommits(string projectDir, string commit)
+        private static string? GetLatestCommit(LibGit2Sharp.Repository repository, System.Collections.Generic.IEnumerable<string> paths)
         {
-            var path = System.IO.Path.GetFullPath(projectDir);
-            if (path is null)
+            var baseDir = repository.Info.WorkingDirectory;
+            LibGit2Sharp.LogEntry? currentLogEntry = default;
+
+            foreach (var path in paths)
             {
-                yield break;
+                var relativePath = path
+                    .Substring(baseDir.Length)
+                    .Replace("\\", "/", StringComparison.Ordinal)
+                    .TrimStart('/');
+
+                foreach (var logEntry in new FolderHistory(repository, relativePath)
+                    .Take(1)
+                    .Where(logEntry => currentLogEntry is null || currentLogEntry.Commit.Author.When < logEntry.Commit.Author.When))
+                {
+                    currentLogEntry = logEntry;
+                }
             }
 
-            var baseDir = GetBaseDirectory(path);
-            if (baseDir is null)
-            {
-                yield break;
-            }
+            return currentLogEntry?.Commit.Sha;
+        }
 
-            using var repository = new LibGit2Sharp.Repository(baseDir);
+        private static System.Collections.Generic.IEnumerable<string> GetHeadCommits(LibGit2Sharp.Repository repository, string commit)
+        {
             foreach (var c in repository.Commits.TakeWhile(c => !string.Equals(c.Sha, commit, StringComparison.Ordinal)))
             {
                 yield return c.Sha;
