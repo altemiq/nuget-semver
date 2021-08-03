@@ -58,10 +58,14 @@ namespace Altemiq.SemanticVersioning
             Func<string?, string?> getVersionSuffix)
         {
             // install the NuGet package
-            var projectPackageIds = new[] { projectPackageId }.Union(packageIds, StringComparer.Ordinal);
+            var projectPackageIds = CreateEnumerable(projectPackageId)
+                .Union(packageIds, StringComparer.Ordinal)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
             if (packageIdRegex is not null)
             {
-                projectPackageIds = projectPackageIds.Union(new[] { packageIdRegex.Replace(projectPackageId, packageIdReplace) }, StringComparer.Ordinal);
+                projectPackageIds = projectPackageIds
+                    .Union(CreateEnumerable(packageIdRegex.Replace(projectPackageId, packageIdReplace)), StringComparer.Ordinal)
+                    .Distinct(StringComparer.OrdinalIgnoreCase);
             }
 
             var packages = IsNullOrEmpty(previous)
@@ -181,6 +185,11 @@ namespace Altemiq.SemanticVersioning
             static string TrimEndingDirectorySeparator(string path)
             {
                 return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            }
+
+            static System.Collections.Generic.IEnumerable<T> CreateEnumerable<T>(T value)
+            {
+                yield return value;
             }
 
             static async System.Collections.Generic.IAsyncEnumerable<T> CreateAsyncEnumerable<T>(T value)
