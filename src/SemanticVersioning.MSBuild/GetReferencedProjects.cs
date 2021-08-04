@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetReferencedProjects.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="GetReferencedProjects.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Altemiq.SemanticVersioning
 {
     using System;
     using System.Collections.Generic;
