@@ -1,12 +1,41 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
-  <Target Name="GetSemanticVersion"
-          BeforeTargets="CoreCompile"
-          Condition=" '$(SourceControlInformationFeatureSupported)' == 'true' And '$(DisableSemanticVersioning)' != 'true' And '$(ComputeSemanticVersion)' == 'true' ">
+  <PropertyGroup>
+    <SemanticVersion_IsOuterBuild Condition=" '$(SemanticVersion_IsOuterBuild)' == '' ">false</SemanticVersion_IsOuterBuild>
+  
+    <!-- Use DispatchToInnerBuilds if a multi-targetedBuild -->
+    <SemanticVersion_BeforeTargets>CoreCompile</SemanticVersion_BeforeTargets>
+    <SemanticVersion_BeforeTargets Condition="$(SemanticVersion_IsOuterBuild)">DispatchToInnerBuilds</SemanticVersion_BeforeTargets>
+  
+    <!-- to prevent targets from being run extra times,
+         enforce that only the outer build of a multi-targeted
+         project or a single-targeted build can run -->
+    <SemanticVersion_ShouldRunTarget>false</SemanticVersion_ShouldRunTarget>
+    <SemanticVersion_ShouldRunTarget Condition=" '$(TargetFrameworks)' == '' or $(SemanticVersion_IsOuterBuild) ">true</SemanticVersion_ShouldRunTarget>
+  </PropertyGroup>
 
+  <!-- Get the semantic version from the latest package and commit -->
+  <Target Name="GetSemanticVersion"
+          BeforeTargets="$(SemanticVersion_BeforeTargets)"
+          Condition=" '$(SemanticVersion_ShouldRunTarget)' == 'true' and '$(SourceControlInformationFeatureSupported)' == 'true' and '$(DisableSemanticVersioning)' != 'true' and '$(ComputeSemanticVersion)' == 'true' ">
+
+    <!-- Set the project DIR/PATH properties
+         These are not available before DispatchToInnerBuilds
+         so we need to use the well known properties -->
+    <PropertyGroup>
+      <SemanticVersion_ProjectDir>$(ProjectDir)</SemanticVersion_ProjectDir>
+      <SemanticVersion_ProjectDir Condition=" '$(SemanticVersion_ProjectDir)' == '' ">$(MSBuildProjectDirectory)</SemanticVersion_ProjectDir>
+      <SemanticVersion_ProjectPath>$(ProjectPath)</SemanticVersion_ProjectPath>
+      <SemanticVersion_ProjectPath Condition=" '$(SemanticVersion_ProjectPath)' == '' ">$(MSBuildProjectFullPath)</SemanticVersion_ProjectPath>
+    </PropertyGroup>
+
+    <!-- Get the commits for the project
+         This returns the specified maximum.
+         The latest package should be within the
+         maximum count to be able to be found -->
     <GetProjectCommits
-      ProjectDir="$(ProjectDir)"
+      ProjectDir="$(SemanticVersion_ProjectDir)"
       MaxCount="$(MaxCommitCount)">
       <Output TaskParameter="Commits" PropertyName="_Commits"/>
       <Output TaskParameter="Commit" PropertyName="_Commit"/>
@@ -15,8 +44,11 @@
     <Message Text="Commits: $(_Commits)" Importance="High" />
     <Message Text="Commit: $(_Commit)" Importance="High" />
 
+    <!-- Get the head commits for the repository
+         We can use this to see if a package has
+         a newer commit than the project commit -->
     <GetHeadCommits
-      ProjectDir="$(ProjectDir)"
+      ProjectDir="$(SemanticVersion_ProjectDir)"
       ProjectCommits="$(_Commits)"
       MaxCount="$(MaxCommitCount)">
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
@@ -24,11 +56,15 @@
 
     <Message Text="Head Commits: $(_HeadCommits)" Importance="High" />
 
+    <!-- Get the referenced project for the current project
+         This means we can check to see if any referenced projects
+         have a new commit -->
     <GetReferencedProjects
-      ProjectFileName="$(ProjectFileName)">
+      ProjectPath="$(SemanticVersion_ProjectPath)">
       <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
     </GetReferencedProjects>
 
+    <!-- Get the latest commit for the referenced projects -->
     <GetLatestCommit
       Paths="@(_ReferencedProjectDirs)">
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
@@ -36,27 +72,42 @@
 
     <Message Text="Reference Commit: $(_ReferenceCommit)" Importance="High" />
 
+    <!-- Set the version repository branch to use -->
     <PropertyGroup>
       <VersionRepositoryBranch Condition=" '$(VersionRepositoryBranch)' == '' ">$(RepositoryBranch)</VersionRepositoryBranch>
     </PropertyGroup>
     
+    <!-- Get the branch name if we haven't got it already -->
     <GetBranchName
-      ProjectDir="$(ProjectDir)"
+      ProjectDir="$(SemanticVersion_ProjectDir)"
       Condition=" '$(VersionRepositoryBranch)' == '' ">
       <Output TaskParameter="Branch" PropertyName="VersionRepositoryBranch" />
     </GetBranchName>
 
+    <!-- Set the output target folder, restore source, and whether we should calculate the version suffix -->
     <PropertyGroup>
       <VersionBuildOutputTargetFolder Condition=" '$(VersionBuildOutputTargetFolder)' == '' ">$(BuildOutputTargetFolder)</VersionBuildOutputTargetFolder>
       <VersionRestoreSources Condition=" '$(VersionRestoreSources)' == '' ">$(RestoreSources)</VersionRestoreSources>
-      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' And '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
+      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' and '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
     </PropertyGroup>
 
+    <!-- Calculate the target extension -->
+    <PropertyGroup>
+      <SemanticVersion_TargetExt>$(TargetExt)</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='exe'">.exe</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='winexe'">.exe</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='appcontainerexe'">.exe</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='library'">.dll</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='module'">.netmodule</SemanticVersion_TargetExt>
+      <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='winmdobj'">.winmdobj</SemanticVersion_TargetExt>
+    </PropertyGroup>
+
+    <!-- Calculate the semantic version -->
     <SemanticVersioningTask
-      ProjectDir="$(ProjectDir)"
+      ProjectDir="$(SemanticVersion_ProjectDir)"
       AssemblyName="$(AssemblyName)"
       PackageId="$(PackageId)"
-      TargetExt="$(TargetExt)"
+      TargetExt="$(SemanticVersion_TargetExt)"
       BuildOutputTargetFolder="$(VersionBuildOutputTargetFolder)"
       PackageOutputPath="$(PackageOutputPath)"
       RestoreSources="$(VersionRestoreSources)"
@@ -76,11 +127,27 @@
     </SemanticVersioningTask>
 
     <PropertyGroup>
-      <Version Condition=" '$(Version)' == '' ">$(_ComputedVersion)</Version>
-      <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</VersionPrefix>
-      <VersionSuffix Condition=" '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
-      <RepositoryCommit Condition=" '$(RepositoryCommit)' == '' ">$(_Commit)</RepositoryCommit>
+      <!-- set the properties for the version -->
+      <Version Condition=" $(ForceSemanticVersion) Or '$(Version)' == '' ">$(_ComputedVersion)</Version>
+      <VersionPrefix Condition=" $(ForceSemanticVersion) Or '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</VersionPrefix>
+      <VersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
+      <VersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
+      <PackageVersion Condition=" $(ForceSemanticVersion) Or '$(PackageVersion)' == '' ">$(_ComputedVersion)</PackageVersion>
+      <RepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_Commit)</RepositoryCommit>
+
+      <!-- create a properties property to hold the values for the inner build projects -->
+      <_Properties Condition=" '$(Version)' != '' ">$(_Properties);Version=$(Version)</_Properties>
+      <_Properties Condition=" '$(VersionPrefix)' != '' ">$(_Properties);VersionPrefix=$(VersionPrefix)</_Properties>
+      <_Properties Condition=" '$(VersionSuffix)' != '' ">$(_Properties);VersionSuffix=$(VersionSuffix)</_Properties>
+      <_Properties Condition=" '$(PackageVersion)' != '' ">$(_Properties);PackageVersion=$(PackageVersion)</_Properties>
+      <_Properties Condition=" '$(RepositoryCommit)' != '' ">$(_Properties);RepositoryCommit=$(RepositoryCommit)</_Properties>
     </PropertyGroup>
+
+    <ItemGroup>
+      <_InnerBuildProjects>
+        <Properties>$(Properties);$(_Properties)</Properties>
+      </_InnerBuildProjects>
+    </ItemGroup>
 
     <Message Text="Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)" Importance="High" />
 

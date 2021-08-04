@@ -18,10 +18,10 @@ namespace Altemiq.SemanticVersioning
     public sealed class GetReferencedProjects : Task
     {
         /// <summary>
-        /// Gets or sets the project.
+        /// Gets or sets the project path.
         /// </summary>
         [Required]
-        public string? ProjectFileName { get; set; }
+        public string? ProjectPath { get; set; }
 
         /// <summary>
         /// Gets the referenced projects.
@@ -32,9 +32,9 @@ namespace Altemiq.SemanticVersioning
         /// <inheritdoc/>
         public override bool Execute()
         {
-            if (this.ProjectFileName is not null && System.IO.File.Exists(this.ProjectFileName))
+            if (this.ProjectPath is not null && System.IO.File.Exists(this.ProjectPath))
             {
-                this.ReferencedProjectDirs = GetProjects(this.ProjectFileName)
+                this.ReferencedProjectDirs = GetProjects(this.ProjectPath)
                     .Select(project => System.IO.Path.GetDirectoryName(project))
                     .Distinct(StringComparer.Ordinal)
                     .Select(projectDir => new TaskItem(projectDir))
