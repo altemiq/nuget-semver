@@ -16,7 +16,8 @@
   <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>
-    <ComputeSemanticVersion>true</ComputeSemanticVersion>
+    <ComputeSemanticVersion>false</ComputeSemanticVersion>
+    <ForceSemanticVersion>true</ForceSemanticVersion>
   </PropertyGroup>
 
 </Project>

@@ -1,4 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <Import Project="..\build\$(MSBuildThisFileName).props"/>
+
+  <PropertyGroup>
+    <!-- this file only executes in the "outer" build of a
+         multi-targeted project, so we set this variable to
+         keep track of that information -->
+    <SemanticVersion_IsOuterBuild>true</SemanticVersion_IsOuterBuild>
+  </PropertyGroup>
+
+  <Import Project="..\build\$(MSBuildThisFileName).props" />
+
 </Project>
