@@ -46,9 +46,12 @@ namespace Altemiq.SemanticVersioning
                         }
                     }
 
-                    while (this.GitCommits.Count > index)
+                    if (index >= 0)
                     {
-                        this.GitCommits.RemoveAt(index);
+                        while (this.GitCommits.Count > index)
+                        {
+                            this.GitCommits.RemoveAt(index);
+                        }
                     }
                 }
 
