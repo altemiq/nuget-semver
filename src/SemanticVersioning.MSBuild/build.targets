@@ -1,10 +1,89 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
-  <Target Name="SemanticVersioning" AfterTargets="BeforeBuild">
-    <Mondo.SemanticVersioning.SemanticVersioningTask>
+  <Target Name="GetSemanticVersion"
+          BeforeTargets="CoreCompile"
+          Condition=" '$(SourceControlInformationFeatureSupported)' == 'true' And '$(DisableSemanticVersioning)' != 'true' And '$(ComputeSemanticVersion)' == 'true' ">
+
+    <GetProjectCommits
+      ProjectDir="$(ProjectDir)"
+      MaxCount="$(MaxCommitCount)">
+      <Output TaskParameter="Commits" PropertyName="_Commits"/>
+      <Output TaskParameter="Commit" PropertyName="_Commit"/>
+    </GetProjectCommits>
+
+    <Message Text="Commits: $(_Commits)" Importance="High" />
+    <Message Text="Commit: $(_Commit)" Importance="High" />
+
+    <GetHeadCommits
+      ProjectDir="$(ProjectDir)"
+      ProjectCommits="$(_Commits)"
+      MaxCount="$(MaxCommitCount)">
+      <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
+    </GetHeadCommits>
+
+    <Message Text="Head Commits: $(_HeadCommits)" Importance="High" />
+
+    <GetReferencedProjects
+      ProjectFileName="$(ProjectFileName)">
+      <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
+    </GetReferencedProjects>
+
+    <GetLatestCommit
+      Paths="@(_ReferencedProjectDirs)">
+      <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
+    </GetLatestCommit>
+
+    <Message Text="Reference Commit: $(_ReferenceCommit)" Importance="High" />
+
+    <PropertyGroup>
+      <VersionRepositoryBranch Condition=" '$(VersionRepositoryBranch)' == '' ">$(RepositoryBranch)</VersionRepositoryBranch>
+    </PropertyGroup>
     
-    </Mondo.SemanticVersioning.SemanticVersioningTask>
+    <GetBranchName
+      ProjectDir="$(ProjectDir)"
+      Condition=" '$(VersionRepositoryBranch)' == '' ">
+      <Output TaskParameter="Branch" PropertyName="VersionRepositoryBranch" />
+    </GetBranchName>
+
+    <PropertyGroup>
+      <VersionBuildOutputTargetFolder Condition=" '$(VersionBuildOutputTargetFolder)' == '' ">$(BuildOutputTargetFolder)</VersionBuildOutputTargetFolder>
+      <VersionRestoreSources Condition=" '$(VersionRestoreSources)' == '' ">$(RestoreSources)</VersionRestoreSources>
+      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' And '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
+    </PropertyGroup>
+
+    <SemanticVersioningTask
+      ProjectDir="$(ProjectDir)"
+      AssemblyName="$(AssemblyName)"
+      PackageId="$(PackageId)"
+      TargetExt="$(TargetExt)"
+      BuildOutputTargetFolder="$(VersionBuildOutputTargetFolder)"
+      PackageOutputPath="$(PackageOutputPath)"
+      RestoreSources="$(VersionRestoreSources)"
+      PackageIdRegex="$(PackageIdRegex)"
+      PackageIdReplace="$(PackageIdReplace)"
+      Previous="$(Previous)"
+      NoCache="$(NoCache)"
+      DirectDownload="$(DirectDownload)"
+      NoVersionSuffix="$(NoVersionSuffix)"
+      VersionSuffix="$(VersionRepositoryBranch)"
+      Commits="$(_Commits)"
+      HeadCommits="$(_HeadCommits)"
+      ReferenceCommit="$(_ReferenceCommit)">
+      <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
+      <Output TaskParameter="ComputedVersionPrefix" PropertyName="_ComputedVersionPrefix" />
+      <Output TaskParameter="ComputedVersionSuffix" PropertyName="_ComputedVersionSuffix" />
+    </SemanticVersioningTask>
+
+    <PropertyGroup>
+      <Version Condition=" '$(Version)' == '' ">$(_ComputedVersion)</Version>
+      <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</VersionPrefix>
+      <VersionSuffix Condition=" '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
+      <RepositoryCommit Condition=" '$(RepositoryCommit)' == '' ">$(_Commit)</RepositoryCommit>
+    </PropertyGroup>
+
+    <Message Text="Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)" Importance="High" />
+
   </Target>
 
 </Project>

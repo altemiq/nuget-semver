@@ -1,15 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project TreatAsLocalProperty="TaskFolder;TaskAssembly">
+<Project>
 
-  <PropertyGroup>
-    <TaskFolder Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netstandard2.0</TaskFolder>
-    <TaskFolder Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net461</TaskFolder>
-    <TaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(TaskFolder)\$(MSBuildThisFileName).dll</TaskAssembly>
+  <PropertyGroup Condition=" '$(VersioningTaskAssembly)' == '' ">
+    <_RuntimeFolder Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netstandard2.0</_RuntimeFolder >
+    <_RuntimeFolder  Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net461</_RuntimeFolder >
+    <VersioningTaskDirectory>$(MSBuildThisFileDirectory)..\tasks\$(_RuntimeFolder)\</VersioningTaskDirectory>
+    <VersioningTaskAssembly>$(VersioningTaskDirectory)$(MSBuildThisFileName).dll</VersioningTaskAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommits" AssemblyFile="$(TasksAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommits" AssemblyFile="$(TasksAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommit" AssemblyFile="$(TasksAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(TaskAssembly)" />
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetReferencedProjects" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommit" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetBranchName" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+
+  <PropertyGroup>
+    <ComputeSemanticVersion>true</ComputeSemanticVersion>
+  </PropertyGroup>
 
 </Project>
