@@ -34,12 +34,12 @@
          This returns the specified maximum.
          The latest package should be within the
          maximum count to be able to be found -->
-    <GetProjectCommits
+    <GetProjectCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
       MaxCount="$(MaxCommitCount)">
       <Output TaskParameter="Commits" PropertyName="_Commits"/>
       <Output TaskParameter="Commit" PropertyName="_Commit"/>
-    </GetProjectCommits>
+    </GetProjectCommitsTask>
 
     <Message Text="Commits: $(_Commits)" Importance="High" />
     <Message Text="Commit: $(_Commit)" Importance="High" />
@@ -47,28 +47,28 @@
     <!-- Get the head commits for the repository
          We can use this to see if a package has
          a newer commit than the project commit -->
-    <GetHeadCommits
+    <GetHeadCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
       ProjectCommits="$(_Commits)"
       MaxCount="$(MaxCommitCount)">
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
-    </GetHeadCommits>
+    </GetHeadCommitsTask>
 
     <Message Text="Head Commits: $(_HeadCommits)" Importance="High" />
 
     <!-- Get the referenced project for the current project
          This means we can check to see if any referenced projects
          have a new commit -->
-    <GetReferencedProjects
+    <GetReferencedProjectsTask
       ProjectPath="$(SemanticVersion_ProjectPath)">
       <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
-    </GetReferencedProjects>
+    </GetReferencedProjectsTask>
 
     <!-- Get the latest commit for the referenced projects -->
-    <GetLatestCommit
+    <GetLatestCommitTask
       Paths="@(_ReferencedProjectDirs)">
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
-    </GetLatestCommit>
+    </GetLatestCommitTask>
 
     <Message Text="Reference Commit: $(_ReferenceCommit)" Importance="High" />
 
@@ -78,11 +78,11 @@
     </PropertyGroup>
     
     <!-- Get the branch name if we haven't got it already -->
-    <GetBranchName
+    <GetBranchNameTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
       Condition=" '$(VersionRepositoryBranch)' == '' ">
       <Output TaskParameter="Branch" PropertyName="VersionRepositoryBranch" />
-    </GetBranchName>
+    </GetBranchNameTask>
 
     <!-- Set the output target folder, restore source, and whether we should calculate the version suffix -->
     <PropertyGroup>

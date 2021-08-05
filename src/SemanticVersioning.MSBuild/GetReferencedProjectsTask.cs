@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetReferencedProjects.cs" company="Mondo">
+// <copyright file="GetReferencedProjectsTask.cs" company="Mondo">
 // Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,7 +15,7 @@ namespace Mondo.SemanticVersioning
     /// <summary>
     /// Gets the referenced projects.
     /// </summary>
-    public sealed class GetReferencedProjects : Task
+    public sealed class GetReferencedProjectsTask : Task
     {
         /// <summary>
         /// Gets or sets the project path.

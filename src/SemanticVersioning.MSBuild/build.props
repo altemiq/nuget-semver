@@ -8,11 +8,11 @@
     <VersioningTaskAssembly>$(VersioningTaskDirectory)$(MSBuildThisFileName).dll</VersioningTaskAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetReferencedProjects" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommit" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetBranchName" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetReferencedProjectsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>

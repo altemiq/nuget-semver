@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetLatestCommit.cs" company="Mondo">
+// <copyright file="GetLatestCommitTask.cs" company="Mondo">
 // Copyright (c) Mondo. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,9 +15,9 @@ namespace Mondo.SemanticVersioning
     /// <summary>
     /// Gets the latest commit for a set of paths.
     /// </summary>
-    public sealed class GetLatestCommit : Microsoft.Build.Utilities.Task
+    public sealed class GetLatestCommitTask : Microsoft.Build.Utilities.Task
     {
-        private readonly GetProjectCommits task = new();
+        private readonly GetProjectCommitsTask task = new();
 
         /// <summary>
         /// Gets or sets the project dir.
