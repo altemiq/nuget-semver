@@ -8,11 +8,11 @@
     <VersioningTaskAssembly>$(VersioningTaskDirectory)$(MSBuildThisFileName).dll</VersioningTaskAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="Altemiq.SemanticVersioning.GetProjectCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Altemiq.SemanticVersioning.GetHeadCommits" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Altemiq.SemanticVersioning.GetReferencedProjects" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Altemiq.SemanticVersioning.GetLatestCommit" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Altemiq.SemanticVersioning.GetBranchName" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.GetProjectCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.GetHeadCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.GetReferencedProjectsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Altemiq.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>

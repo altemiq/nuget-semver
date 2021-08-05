@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetBranchName.cs" company="Altemiq">
+// <copyright file="GetBranchNameTask.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -9,7 +9,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// Get the branch name.
     /// </summary>
-    public sealed class GetBranchName : GitTask
+    public sealed class GetBranchNameTask : GitTask
     {
         /// <summary>
         /// Gets or sets the project dir.
@@ -26,6 +26,7 @@ namespace Altemiq.SemanticVersioning
         /// <inheritdoc/>
         protected override string GenerateCommandLineCommands()
         {
+            ////System.Diagnostics.Debugger.Launch();
             var builder = new Microsoft.Build.Utilities.CommandLineBuilder();
             builder.AppendSwitch("branch");
             builder.AppendSwitch("--show-current");

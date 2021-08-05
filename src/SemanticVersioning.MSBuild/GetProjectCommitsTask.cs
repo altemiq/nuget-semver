@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetProjectCommits.cs" company="Altemiq">
+// <copyright file="GetProjectCommitsTask.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -14,8 +14,13 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// The GIT log task.
     /// </summary>
-    public sealed class GetProjectCommits : GitLogTask
+    public sealed class GetProjectCommitsTask : GitLogTask
     {
+        /// <summary>
+        /// Initialises a new instance of the <see cref="GetProjectCommitsTask"/> class.
+        /// </summary>
+        public GetProjectCommitsTask() => this.MaxCount = 10;
+
         /// <summary>
         /// Gets or sets the project dir.
         /// </summary>

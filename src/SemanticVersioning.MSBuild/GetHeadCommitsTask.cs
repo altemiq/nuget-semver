@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetHeadCommits.cs" company="Altemiq">
+// <copyright file="GetHeadCommitsTask.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -9,12 +9,12 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// Gets the head commits after the project commits.
     /// </summary>
-    public sealed class GetHeadCommits : GitLogTask
+    public sealed class GetHeadCommitsTask : GitLogTask
     {
         /// <summary>
-        /// Initialises a new instance of the <see cref="GetHeadCommits"/> class.
+        /// Initialises a new instance of the <see cref="GetHeadCommitsTask"/> class.
         /// </summary>
-        public GetHeadCommits() => this.MaxCount = 25;
+        public GetHeadCommitsTask() => this.MaxCount = 25;
 
         /// <summary>
         /// Gets or sets the project dir.

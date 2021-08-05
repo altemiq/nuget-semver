@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetReferencedProjects.cs" company="Altemiq">
+// <copyright file="GetReferencedProjectsTask.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,7 +15,7 @@ namespace Altemiq.SemanticVersioning
     /// <summary>
     /// Gets the referenced projects.
     /// </summary>
-    public sealed class GetReferencedProjects : Task
+    public sealed class GetReferencedProjectsTask : Task
     {
         /// <summary>
         /// Gets or sets the project path.
