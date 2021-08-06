@@ -15,6 +15,12 @@
 
     <!-- forces SDK to copy dependencies into build output to make packing easier -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- set this as a development dependency -->
+    <DevelopmentDependency>true</DevelopmentDependency>
+
+    <!-- supress having dependencies -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +28,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="$(MicrosoftBuildVersion)">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="Nullable" Version="1.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -39,12 +47,24 @@
   </ItemGroup>
 
   <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
+    
+    <PropertyGroup>
+      <_PackageFilesSearchPath>bin\$(Configuration)\*\</_PackageFilesSearchPath>
+      <_PackageFilesToInclude>$(_PackageFilesSearchPath)Altemiq.SemanticVersioning.Core.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.AsyncInterfaces.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Mono.Cecil*.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Newtonsoft.*.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)NuGet.*.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)System.Threading.Tasks.Extensions.dll</_PackageFilesToInclude>
+    </PropertyGroup>
+
     <!--
     The include needs to happen after output has been copied to build output folder
     but before NuGet generates a nuspec. See https://github.com/NuGet/Home/issues/4704.
     -->
     <ItemGroup>
-      <_PackageFiles Include="bin\$(Configuration)\*\Altemiq.SemanticVersioning.Core.dll;bin\$(Configuration)\*\Endjin.ApiChange.dll">
+      <_PackageFiles Include="$(_PackageFilesToInclude)">
         <PackagePath>$(BuildOutputTargetFolder)\%(RecursiveDir)</PackagePath>
         <Visible>false</Visible>
         <BuildAction>Content</BuildAction>
