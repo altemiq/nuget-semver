@@ -71,8 +71,8 @@ namespace Mondo.SemanticVersioning
             }
 
             var packages = IsNullOrEmpty(previous)
-                ? NuGetInstaller.GetPackagesAsync(projectPackageIds, source, log: logger, root: projectDirectory)
-                : CreateAsyncEnumerable(new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)));
+                ? await NuGetInstaller.GetPackagesAsync(projectPackageIds, source, log: logger, root: projectDirectory).ToArrayAsync().ConfigureAwait(false)
+                : new[] { new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)) };
 
             var folderCommitsList = folderCommits.ToList();
             var headCommitsList = headCommits.ToList();
@@ -94,14 +94,14 @@ namespace Mondo.SemanticVersioning
                 }
             }
 
-            var previousPackages = packages.GetLatestPackagesAsync();
-            var installDir = await TryInstallPackagesAsync(packages.ToEnumerable(), projectDirectory, logger).ConfigureAwait(false);
+            var previousPackages = packages.GetLatestPackages().ToArray();
+            var installDir = await TryInstallPackagesAsync(packages, projectDirectory, logger).ConfigureAwait(false);
             var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
             var results = new System.Collections.Generic.List<ProjectResult>();
 
             if (installDir is null)
             {
-                var previousVersion = await previousPackages.Select(package => package.Version).MaxAsync().ConfigureAwait(false);
+                var previousVersion = previousPackages.Max(package => package.Version);
                 calculatedVersion = previousVersion is null
                     ? new NuGet.Versioning.SemanticVersion(1, 0, 0, getVersionSuffix(NuGetVersion.DefaultAlphaRelease)) // have this as being a 0.1.0 release
                     : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, getVersionSuffix(previousVersion.Release));
@@ -109,8 +109,6 @@ namespace Mondo.SemanticVersioning
             else
             {
                 var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, buildOutputTargetFolder));
-
-                var previousPackagesArray = await previousPackages.ToArrayAsync().ConfigureAwait(false);
 
                 // Get the package output path
                 var fullPackageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(projectDirectory, packageOutputPath.Replace('\\', System.IO.Path.DirectorySeparatorChar)));
@@ -122,15 +120,15 @@ namespace Mondo.SemanticVersioning
                 if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                 {
                     // we have removed frameworks, this is a breaking change
-                    calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousPackagesArray.Select(package => package.Version), getVersionSuffix(default));
+                    calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousPackages.Select(package => package.Version), getVersionSuffix(default));
                 }
                 else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
                 {
                     // we have added frameworks, this is a feature change
-                    calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousPackagesArray.Select(package => package.Version), getVersionSuffix(default));
+                    calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousPackages.Select(package => package.Version), getVersionSuffix(default));
                 }
 
-                var releasePackage = NuGetVersion.GetReleasePackage(previousPackagesArray);
+                var releasePackage = NuGetVersion.GetReleasePackage(previousPackages);
 
                 var searchPattern = assemblyName + targetExt;
 #if NETSTANDARD2_1_OR_GREATER
@@ -150,7 +148,7 @@ namespace Mondo.SemanticVersioning
                     var resultsType = System.IO.File.Exists(oldAssembly)
                         ? LibraryComparison.GetMinimumAcceptableChange(differences)
                         : SemanticVersionChange.Major;
-                    var lastPackage = NuGetVersion.GetLastestPackage(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousPackagesArray, releasePackage);
+                    var lastPackage = NuGetVersion.GetLastestPackage(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousPackages, releasePackage);
 
                     var version = NuGetVersion.CalculateNextVersion(releasePackage.Version, lastPackage?.Version, getVersionSuffix(default));
                     if (version is not null && differences is not null)
@@ -181,7 +179,7 @@ namespace Mondo.SemanticVersioning
                 {
                     return await NuGetInstaller.InstallAsync(packages, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
                 }
-                catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
+                catch (InvalidOperationException ex)
                 {
                     logger?.LogWarning(ex.Message);
                 }
@@ -196,12 +194,6 @@ namespace Mondo.SemanticVersioning
 
             static System.Collections.Generic.IEnumerable<T> CreateEnumerable<T>(T value)
             {
-                yield return value;
-            }
-
-            static async System.Collections.Generic.IAsyncEnumerable<T> CreateAsyncEnumerable<T>(T value)
-            {
-                await Task.CompletedTask.ConfigureAwait(false);
                 yield return value;
             }
         }

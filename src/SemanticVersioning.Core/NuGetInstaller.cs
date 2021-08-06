@@ -312,7 +312,7 @@ namespace Mondo.SemanticVersioning
             System.Threading.CancellationToken cancellationToken = default) => GetPackageByCommit(
                 folderCommits,
                 headCommits,
-                GetPackagesAsync(packageNames, sources, log, root, cancellationToken),
+                GetPackagesAsync(packageNames, sources, log, root, cancellationToken).ToEnumerable(),
                 sources,
                 log,
                 root,
@@ -332,7 +332,7 @@ namespace Mondo.SemanticVersioning
         public static async Task<PackageIdentity?> GetPackageByCommit(
             IList<string> folderCommits,
             IList<string> headCommits,
-            IAsyncEnumerable<PackageIdentity> packages,
+            IEnumerable<PackageIdentity> packages,
             IEnumerable<string>? sources = default,
             NuGet.Common.ILogger? log = default,
             string? root = default,
@@ -343,9 +343,7 @@ namespace Mondo.SemanticVersioning
             IEnumerable<SourceRepository> sourceRepositories = GetRepositories(settings, sources);
 
             using var cacheContext = new SourceCacheContext { IgnoreFailedSources = true };
-            await foreach (var package in packages
-                .WithCancellation(cancellationToken)
-                .ConfigureAwait(false))
+            foreach (var package in packages)
             {
                 var manifest = await GetManifest(package, sourceRepositories, cacheContext, log, cancellationToken).ConfigureAwait(false);
                 if (manifest?.Metadata?.Repository is RepositoryMetadata repository)
@@ -470,6 +468,21 @@ namespace Mondo.SemanticVersioning
                 .WithCancellation(cancellationToken))
             {
                 yield return await group.MaxAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Gets the latest packages.
+        /// </summary>
+        /// <param name="packages">The packages.</param>
+        /// <returns>The latest NuGet packages.</returns>
+        public static IEnumerable<PackageIdentity> GetLatestPackages(
+            this IEnumerable<PackageIdentity> packages)
+        {
+            foreach (var group in packages
+                .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease)))
+            {
+                yield return group.Max();
             }
         }
 
