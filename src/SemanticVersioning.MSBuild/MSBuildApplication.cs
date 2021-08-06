@@ -37,6 +37,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
         /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
         /// <param name="getVersionSuffix">The function to get the version suffix.</param>
+        /// <param name="logger">The logger.</param>
         /// <returns>The task.</returns>
         public static async Task<(NuGet.Versioning.SemanticVersion Version, System.Collections.Generic.IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
             string projectDirectory,
@@ -55,7 +56,8 @@ namespace Mondo.SemanticVersioning
             string? referenceCommit,
             bool noCache,
             bool directDownload,
-            Func<string?, string?> getVersionSuffix)
+            Func<string?, string?> getVersionSuffix,
+            NuGet.Common.ILogger? logger = default)
         {
             // install the NuGet package
             var projectPackageIds = CreateEnumerable(projectPackageId)
@@ -69,7 +71,7 @@ namespace Mondo.SemanticVersioning
             }
 
             var packages = IsNullOrEmpty(previous)
-                ? NuGetInstaller.GetPackagesAsync(projectPackageIds, source, root: projectDirectory)
+                ? NuGetInstaller.GetPackagesAsync(projectPackageIds, source, log: logger, root: projectDirectory)
                 : CreateAsyncEnumerable(new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)));
 
             var folderCommitsList = folderCommits.ToList();
@@ -79,7 +81,13 @@ namespace Mondo.SemanticVersioning
             if (folderCommitsList.Count > 0
                 && (referenceCommit is null || !headCommitsList.Contains(referenceCommit, StringComparer.Ordinal)))
             {
-                var commitPackage = await NuGetInstaller.GetPackageByCommit(folderCommitsList, headCommitsList, packages, source, root: projectDirectory).ConfigureAwait(false);
+                var commitPackage = await NuGetInstaller.GetPackageByCommit(
+                    folderCommitsList,
+                    headCommitsList,
+                    packages,
+                    source,
+                    log: logger,
+                    root: projectDirectory).ConfigureAwait(false);
                 if (commitPackage is not null)
                 {
                     return (commitPackage.Version, Enumerable.Empty<ProjectResult>(), Published: true);
@@ -87,7 +95,7 @@ namespace Mondo.SemanticVersioning
             }
 
             var previousPackages = packages.GetLatestPackagesAsync();
-            var installDir = await TryInstallPackagesAsync(packages.ToEnumerable(), projectDirectory).ConfigureAwait(false);
+            var installDir = await TryInstallPackagesAsync(packages.ToEnumerable(), projectDirectory, logger).ConfigureAwait(false);
             var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
             var results = new System.Collections.Generic.List<ProjectResult>();
 
@@ -163,13 +171,12 @@ namespace Mondo.SemanticVersioning
                 return version?.Equals(Empty) != false;
             }
 
-            async Task<string?> TryInstallPackagesAsync(System.Collections.Generic.IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages, string projectDirectory)
+            async Task<string?> TryInstallPackagesAsync(System.Collections.Generic.IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages, string projectDirectory, NuGet.Common.ILogger? logger = default)
             {
                 var previousVersion = IsNullOrEmpty(previous)
                     ? default
                     : previous;
 
-                NuGet.Common.ILogger? logger = default;
                 try
                 {
                     return await NuGetInstaller.InstallAsync(packages, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);

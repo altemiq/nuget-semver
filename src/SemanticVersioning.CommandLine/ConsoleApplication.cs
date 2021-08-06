@@ -351,7 +351,8 @@ namespace Mondo.SemanticVersioning
                 referenceCommit,
                 noCache,
                 directDownload,
-                getVersionSuffix).ConfigureAwait(false);
+                getVersionSuffix,
+                new NuGetConsole(console)).ConfigureAwait(false);
 
             foreach (var result in results)
             {

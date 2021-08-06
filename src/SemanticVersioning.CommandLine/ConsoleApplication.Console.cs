@@ -138,5 +138,75 @@ namespace Mondo.SemanticVersioning
 
             public void ShowCursor() => this.terminal.ShowCursor();
         }
+
+        private class NuGetConsole : NuGet.Common.ILogger
+        {
+            private readonly System.CommandLine.IConsole console;
+
+            public NuGetConsole(System.CommandLine.IConsole console) => this.console = console;
+
+            public void Log(NuGet.Common.LogLevel level, string data)
+            {
+                switch (level)
+                {
+                    case NuGet.Common.LogLevel.Debug:
+                        this.LogDebug(data);
+                        break;
+                    case NuGet.Common.LogLevel.Verbose:
+                        this.LogVerbose(data);
+                        break;
+                    case NuGet.Common.LogLevel.Information:
+                        this.LogInformation(data);
+                        break;
+                    case NuGet.Common.LogLevel.Minimal:
+                        this.LogMinimal(data);
+                        break;
+                    case NuGet.Common.LogLevel.Warning:
+                        this.LogWarning(data);
+                        break;
+                    case NuGet.Common.LogLevel.Error:
+                        this.LogError(data);
+                        break;
+                }
+            }
+
+            public void Log(NuGet.Common.ILogMessage message) => this.Log(message.Level, message.Message);
+
+            public System.Threading.Tasks.Task LogAsync(NuGet.Common.LogLevel level, string data) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(level, data));
+
+            public System.Threading.Tasks.Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
+
+            public void LogDebug(string data) => this.WriteLine(System.ConsoleColor.Blue, data);
+
+            public void LogError(string data) => this.console.Error.WriteLine(data);
+
+            public void LogInformation(string data) => this.WriteLine(default, data);
+
+            public void LogInformationSummary(string data) => this.WriteLine(default, data);
+
+            public void LogMinimal(string data) => this.WriteLine(System.ConsoleColor.DarkGray, data);
+
+            public void LogVerbose(string data) => this.WriteLine(System.ConsoleColor.Gray, data);
+
+            public void LogWarning(string data) => this.WriteLine(System.ConsoleColor.DarkYellow, data);
+
+            private void WriteLine(System.ConsoleColor? consoleColor, string value)
+            {
+                if (this.console is System.CommandLine.Rendering.ITerminal terminal)
+                {
+                    if (consoleColor.HasValue)
+                    {
+                        terminal.ForegroundColor = consoleColor.Value;
+                    }
+
+                    terminal.Out.WriteLine(value);
+                    terminal.ResetColor();
+                }
+                else
+                {
+                    this.console.Out.WriteLine(value);
+                }
+            }
+        }
     }
 }

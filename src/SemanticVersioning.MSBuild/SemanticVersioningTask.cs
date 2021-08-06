@@ -162,7 +162,8 @@ namespace Mondo.SemanticVersioning
                 this.ReferenceCommit,
                 this.NoCache,
                 this.DirectDownload,
-                GetVersionSuffix).Result;
+                GetVersionSuffix,
+                new MSBuildNuGetLogger(this.Log)).Result;
 
             this.ComputedVersion = version.ToString();
             this.ComputedVersionPrefix = version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance);
