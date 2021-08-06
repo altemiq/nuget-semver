@@ -183,7 +183,7 @@ namespace Mondo.SemanticVersioning
                 }
                 catch (NuGet.Protocol.PackageNotFoundProtocolException ex)
                 {
-                    logger?.LogError(ex.Message);
+                    logger?.LogWarning(ex.Message);
                 }
 
                 return default;
