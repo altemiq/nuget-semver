@@ -7,7 +7,6 @@
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Deterministic>true</Deterministic>
-    <ReactiveExtensionsDir>..\..\ext\reactive\Ix.NET\Source</ReactiveExtensionsDir>
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
@@ -16,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(ReactiveExtensionsDir)\System.Linq.Async\System\**\*.cs" Link="System.Linq.Async/System/%(RecursiveDir)/%(FileName)%(Extension)" />
+    <Compile Include="..\..\ext\reactive\Ix.NET\Source\System.Linq.Async\System\**\*.cs" Link="System.Linq.Async/System/%(RecursiveDir)/%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
