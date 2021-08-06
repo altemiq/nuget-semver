@@ -173,7 +173,7 @@ namespace Altemiq.SemanticVersioning
 
             if (package is null)
             {
-                throw new PackageNotFoundProtocolException(packages.FirstOrDefault());
+                throw new InvalidOperationException($"Failed to find any release version of {string.Join(" or ", packages.Select(package => package.Id).Distinct(StringComparer.OrdinalIgnoreCase))}");
             }
 
             return await InstallPackage(
