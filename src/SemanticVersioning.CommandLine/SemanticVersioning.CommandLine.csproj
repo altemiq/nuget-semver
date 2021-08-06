@@ -19,10 +19,7 @@
   <PropertyGroup Condition=" '$(PublishDir)' != '' ">
     <PublishSingleFile>true</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
-  </PropertyGroup>
-
-  <PropertyGroup Label="Versions">
-    <SystemVersion>4.3.0</SystemVersion>
+    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,10 +36,6 @@
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
     <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.21216.1" />
-  </ItemGroup>
-
-  <ItemGroup Label="Downgrades">
-    <PackageReference Include="System.IO.FileSystem" Version="$(SystemVersion)" />
   </ItemGroup>
 
   <ItemGroup>

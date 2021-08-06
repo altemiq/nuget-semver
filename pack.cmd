@@ -1,10 +1,18 @@
+SET Configuration=Release
+SET Version=%1
+SET ContinuousIntegration=true
+
 REM dotnet tool
 dotnet pack ^
- .\src\SemanticVersioning\SemanticVersioning.csproj ^
- --configuration Release ^
- --output .\nupkg ^
- -property:Version=%1 ^
- -property:ContinuousIntegration=true
+ .\src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj ^
+ --output .\nupkg
+ 
+REM MSBuild Tasks
+dotnet pack ^
+ .\src\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj ^
+ --output .\nupkg
+
+SET TargetFramework=netcoreapp3.1
 
 REM TeamCity Tool
 MKDIR pack
@@ -12,8 +20,8 @@ CD pack
 MKDIR win-x64
 MKDIR linux-x64
 
-COPY ..\src\SemanticVersioning\bin\Release\netcoreapp3.0\win-x64\publish\* win-x64\
-COPY ..\src\SemanticVersioning\bin\Release\netcoreapp3.0\linux-x64\publish\* linux-x64\
+COPY ..\src\SemanticVersioning.Commandline\bin\%Configuration%\%TargetFramework%\win-x64\publish\* win-x64\
+COPY ..\src\SemanticVersioning.Commandline\bin\%Configuration%\%TargetFramework%\linux-x64\publish\* linux-x64\
 COPY ..\src\teamcity-plugin.xml
 ..\7za.exe a ..\SemanticVersioning.DEFAULT.zip
 

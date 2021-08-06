@@ -23,6 +23,10 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
+  <PropertyGroup Label="Versions">
+    <SystemVersion>4.3.0</SystemVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="IsExternalInit" Version="1.0.1">
       <PrivateAssets>all</PrivateAssets>
@@ -35,6 +39,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Label="Downgrades">
+    <PackageReference Include="System.IO.FileSystem" Version="$(SystemVersion)" />
   </ItemGroup>
 
   <ItemGroup>
