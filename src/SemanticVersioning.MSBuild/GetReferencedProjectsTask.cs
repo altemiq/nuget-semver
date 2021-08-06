@@ -68,7 +68,12 @@ namespace Mondo.SemanticVersioning
             {
                 foreach (var path in GetIncludes(projectReference))
                 {
-                    var evaluatedPath = path;
+                    var evaluatedPath = path
+#if NETSTANDARD2_1_OR_GREATER
+                        .Replace("\\", "/", StringComparison.Ordinal);
+#else
+                        .Replace("\\", "/");
+#endif
                     if (!System.IO.Path.IsPathRooted(evaluatedPath))
                     {
                         evaluatedPath = System.IO.Path.Combine(projectDir, evaluatedPath);
