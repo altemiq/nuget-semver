@@ -23,12 +23,24 @@ namespace Altemiq.SemanticVersioning
         /// Gets the commits.
         /// </summary>
         [Microsoft.Build.Framework.Output]
-        public string Commits => string.Join(";", this.GitCommits.Select(commit => commit.Sha));
+        public string[] Commits { get; private set; } = System.Array.Empty<string>();
 
         /// <summary>
         /// Gets the git commits.
         /// </summary>
         internal IList<GitCommit> GitCommits { get; } = new List<GitCommit>();
+
+        /// <inheritdoc/>
+        public override bool Execute()
+        {
+            if (base.Execute())
+            {
+                this.Commits = this.GitCommits.Select(commit => commit.Sha).ToArray();
+                return true;
+            }
+
+            return false;
+        }
 
         /// <inheritdoc/>
         protected override string GenerateCommandLineCommands()
