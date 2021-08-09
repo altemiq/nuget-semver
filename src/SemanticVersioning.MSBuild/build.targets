@@ -20,10 +20,12 @@
           BeforeTargets="$(SemanticVersion_BeforeTargets)"
           Condition=" '$(SemanticVersion_ShouldRunTarget)' == 'true' and '$(SourceControlInformationFeatureSupported)' == 'true' and '$(DisableSemanticVersioning)' != 'true' and '$(ComputeSemanticVersion)' == 'true' ">
 
-    <!-- Set the project DIR/PATH properties
+    <!-- Set the project NAME/DIR/PATH properties
          These are not available before DispatchToInnerBuilds
          so we need to use the well known properties -->
     <PropertyGroup>
+      <SemanticVersion_ProjectName>$(ProjectName)</SemanticVersion_ProjectName>
+      <SemanticVersion_ProjectName Condition=" '$(SemanticVersion_ProjectName)' == '' ">$(MSBuildProjectName)</SemanticVersion_ProjectName>
       <SemanticVersion_ProjectDir>$(ProjectDir)</SemanticVersion_ProjectDir>
       <SemanticVersion_ProjectDir Condition=" '$(SemanticVersion_ProjectDir)' == '' ">$(MSBuildProjectDirectory)</SemanticVersion_ProjectDir>
       <SemanticVersion_ProjectPath>$(ProjectPath)</SemanticVersion_ProjectPath>
@@ -41,8 +43,8 @@
       <Output TaskParameter="Commit" PropertyName="_Commit"/>
     </GetProjectCommitsTask>
 
-    <Message Text="Commits: $(_Commits)" Importance="High" />
-    <Message Text="Commit: $(_Commit)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Commits: $(_Commits)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Commit: $(_Commit)" Importance="High" />
 
     <!-- Get the head commits for the repository
          We can use this to see if a package has
@@ -54,7 +56,7 @@
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
     </GetHeadCommitsTask>
 
-    <Message Text="Head Commits: $(_HeadCommits)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Head Commits: $(_HeadCommits)" Importance="High" />
 
     <!-- Get the referenced project for the current project
          This means we can check to see if any referenced projects
@@ -70,7 +72,7 @@
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
     </GetLatestCommitTask>
 
-    <Message Text="Reference Commit: $(_ReferenceCommit)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)" Importance="High" />
 
     <!-- Set the version repository branch to use -->
     <PropertyGroup>
@@ -109,7 +111,7 @@
       PackageId="$(PackageId)"
       TargetExt="$(SemanticVersion_TargetExt)"
       BuildOutputTargetFolder="$(VersionBuildOutputTargetFolder)"
-      PackageOutputPath="$(PackageOutputPath)"
+      OutputPath="$(OutputPath)"
       RestoreSources="$(VersionRestoreSources)"
       PackageIdRegex="$(PackageIdRegex)"
       PackageIdReplace="$(PackageIdReplace)"
@@ -149,7 +151,7 @@
       </_InnerBuildProjects>
     </ItemGroup>
 
-    <Message Text="Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)" Importance="High" />
 
   </Target>
 

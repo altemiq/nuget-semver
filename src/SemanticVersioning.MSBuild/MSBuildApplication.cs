@@ -25,7 +25,7 @@ namespace Mondo.SemanticVersioning
         /// <param name="projectPackageId">The project package ID.</param>
         /// <param name="targetExt">The target extension.</param>
         /// <param name="buildOutputTargetFolder">The build output target folder.</param>
-        /// <param name="packageOutputPath">The package output path.</param>
+        /// <param name="outputPath">The output path, without TFM.</param>
         /// <param name="source">The NuGet source.</param>
         /// <param name="packageIds">The package ID.</param>
         /// <param name="packageIdRegex">The package ID regex.</param>
@@ -45,7 +45,7 @@ namespace Mondo.SemanticVersioning
             string projectPackageId,
             string targetExt,
             string buildOutputTargetFolder,
-            string packageOutputPath,
+            string outputPath,
             System.Collections.Generic.IEnumerable<string> source,
             System.Collections.Generic.IEnumerable<string> packageIds,
             System.Text.RegularExpressions.Regex? packageIdRegex,
@@ -111,7 +111,7 @@ namespace Mondo.SemanticVersioning
                 var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, buildOutputTargetFolder));
 
                 // Get the package output path
-                var fullPackageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(projectDirectory, packageOutputPath.Replace('\\', System.IO.Path.DirectorySeparatorChar)));
+                var fullPackageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(projectDirectory, outputPath.Replace('\\', System.IO.Path.DirectorySeparatorChar)));
 
                 // check the frameworks
                 var currentFrameworks = System.IO.Directory.EnumerateDirectories(fullPackageOutputPath).Select(System.IO.Path.GetFileName).ToArray();

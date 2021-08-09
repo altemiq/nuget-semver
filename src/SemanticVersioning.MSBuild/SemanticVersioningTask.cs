@@ -47,10 +47,10 @@ namespace Mondo.SemanticVersioning
         public string BuildOutputTargetFolder { get; set; } = default!;
 
         /// <summary>
-        /// Gets or sets the package output path.
+        /// Gets or sets the output path without TFM.
         /// </summary>
         [Required]
-        public string PackageOutputPath { get; set; } = default!;
+        public string OutputPath { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the semicolon-delimited list of package sources.
@@ -151,7 +151,7 @@ namespace Mondo.SemanticVersioning
                 this.PackageId,
                 this.TargetExt,
                 this.BuildOutputTargetFolder,
-                this.PackageOutputPath,
+                this.OutputPath,
                 restoreSources,
                 new[] { this.PackageId },
                 regex,
