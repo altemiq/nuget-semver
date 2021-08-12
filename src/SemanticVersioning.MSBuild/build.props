@@ -14,6 +14,8 @@
   <UsingTask TaskName="Altemiq.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Altemiq.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Altemiq.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.ReadVersionFromFile" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altemiq.SemanticVersioning.WriteVersionToFile" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>
     <ComputeSemanticVersion>false</ComputeSemanticVersion>
