@@ -23,18 +23,18 @@ namespace Altemiq.SemanticVersioning
         public string ProjectDir { get; set; } = default!;
 
         /// <summary>
-        /// Gets or sets the project commits.
+        /// Gets or sets the project commit.
         /// </summary>
-        public string? ProjectCommits { get; set; }
+        public string? ProjectCommit { get; set; }
 
         /// <inheritdoc/>
         public override bool Execute()
         {
             if (base.Execute())
             {
-                if (this.ProjectCommits is not null)
+                if (this.ProjectCommit is not null)
                 {
-                    var projectCommit = this.ProjectCommits.Split(';')[0];
+                    var projectCommit = this.ProjectCommit;
 
                     var index = -1;
                     for (int i = 0; i < this.GitCommits.Count; i++)
