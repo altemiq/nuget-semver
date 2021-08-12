@@ -52,6 +52,8 @@ namespace Altemiq.SemanticVersioning
                         {
                             this.GitCommits.RemoveAt(index);
                         }
+
+                        this.UpdateCommits();
                     }
                 }
 

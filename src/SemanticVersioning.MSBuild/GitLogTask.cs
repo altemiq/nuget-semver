@@ -35,7 +35,7 @@ namespace Altemiq.SemanticVersioning
         {
             if (base.Execute())
             {
-                this.Commits = this.GitCommits.Select(commit => commit.Sha).ToArray();
+                this.UpdateCommits();
                 return true;
             }
 
@@ -70,5 +70,10 @@ namespace Altemiq.SemanticVersioning
             this.GitCommits.Add(GitCommit.Parse(singleLine));
             base.LogEventsFromTextOutput(singleLine, messageImportance);
         }
+
+        /// <summary>
+        /// Updates the <see cref="Commits"/> from <see cref="GitCommits"/>.
+        /// </summary>
+        protected void UpdateCommits() => this.Commits = this.GitCommits.Select(commit => commit.Sha).ToArray();
     }
 }
