@@ -52,6 +52,8 @@ namespace Mondo.SemanticVersioning
                         {
                             this.GitCommits.RemoveAt(index);
                         }
+
+                        this.UpdateCommits();
                     }
                 }
 
