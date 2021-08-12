@@ -55,7 +55,7 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// Gets or sets the semicolon-delimited list of package sources.
         /// </summary>
-        public string? RestoreSources { get; set; }
+        public string[] RestoreSources { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// Gets or sets the package ID regular expression.
@@ -95,12 +95,12 @@ namespace Mondo.SemanticVersioning
         /// <summary>
         /// Gets or sets the project commits.
         /// </summary>
-        public string? Commits { get; set; }
+        public string[] Commits { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// Gets or sets the head commits.
         /// </summary>
-        public string? HeadCommits { get; set; }
+        public string[] HeadCommits { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// Gets or sets the latest reference commit.
@@ -136,9 +136,9 @@ namespace Mondo.SemanticVersioning
                 ? default
                 : NuGet.Versioning.SemanticVersion.Parse(this.Previous);
 
-            var restoreSources = this.RestoreSources?.Split(';') ?? Array.Empty<string>();
-            var projectCommmits = this.Commits?.Split(';') ?? Array.Empty<string>();
-            var headCommits = this.HeadCommits?.Split(';') ?? Array.Empty<string>();
+            var restoreSources = this.RestoreSources ?? Array.Empty<string>();
+            var projectCommmits = this.Commits ?? Array.Empty<string>();
+            var headCommits = this.HeadCommits ?? Array.Empty<string>();
             if (projectCommmits.Length > 0)
             {
                 var projectCommit = projectCommmits[0];
