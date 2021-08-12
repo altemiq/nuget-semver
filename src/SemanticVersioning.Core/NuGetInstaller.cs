@@ -489,13 +489,12 @@ namespace Altemiq.SemanticVersioning
         private static IEnumerable<SourceRepository> GetRepositories(ISettings settings, IEnumerable<string>? sources)
         {
             var enabledSources = SettingsUtility.GetEnabledSources(settings);
-            var repositories = sources?.Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray() ?? Array.Empty<SourceRepository>();
-            if (repositories.Length == 0)
-            {
-                repositories = enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
-            }
-
-            return repositories;
+            var repositories = sources?
+                .Where(source => !string.IsNullOrEmpty(source))
+                .Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray();
+            return repositories is not null && repositories.Length > 0
+                ? repositories
+                : enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
 
             static PackageSource ResolveSource(IEnumerable<PackageSource> availableSources, string source)
             {
