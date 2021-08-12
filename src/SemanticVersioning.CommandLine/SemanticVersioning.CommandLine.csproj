@@ -21,6 +21,10 @@
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
+  <PropertyGroup Label="Versions">
+    <SystemVersion>5.0.0</SystemVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Update="ConsoleApplication.*.cs" DependentUpon="ConsoleApplication.cs" />
   </ItemGroup>
@@ -39,6 +43,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.21216.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Downgrades">
+    <PackageReference Include="Microsoft.Win32.Registry" Version="$(SystemVersion)" />
+    <PackageReference Include="System.CodeDom" Version="$(SystemVersion)" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="$(SystemVersion)" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemVersion)" />
   </ItemGroup>
 
   <ItemGroup>
