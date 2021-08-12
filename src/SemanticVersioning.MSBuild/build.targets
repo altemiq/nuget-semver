@@ -51,7 +51,7 @@
          a newer commit than the project commit -->
     <GetHeadCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
-      ProjectCommits="$(_Commits)"
+      ProjectCommit="$(_Commit)"
       MaxCount="$(MaxCommitCount)">
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
     </GetHeadCommitsTask>
