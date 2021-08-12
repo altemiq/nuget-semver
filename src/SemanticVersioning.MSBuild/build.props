@@ -14,6 +14,8 @@
   <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Mondo.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
   <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.ReadVersionFromFile" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Mondo.SemanticVersioning.WriteVersionToFile" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>
     <ComputeSemanticVersion>false</ComputeSemanticVersion>

@@ -3,11 +3,11 @@
 
   <PropertyGroup>
     <SemanticVersion_IsOuterBuild Condition=" '$(SemanticVersion_IsOuterBuild)' == '' ">false</SemanticVersion_IsOuterBuild>
-  
+
     <!-- Use DispatchToInnerBuilds if a multi-targetedBuild -->
     <SemanticVersion_BeforeTargets>CoreCompile</SemanticVersion_BeforeTargets>
     <SemanticVersion_BeforeTargets Condition="$(SemanticVersion_IsOuterBuild)">DispatchToInnerBuilds</SemanticVersion_BeforeTargets>
-  
+
     <!-- to prevent targets from being run extra times,
          enforce that only the outer build of a multi-targeted
          project or a single-targeted build can run -->
@@ -30,7 +30,21 @@
       <SemanticVersion_ProjectDir Condition=" '$(SemanticVersion_ProjectDir)' == '' ">$(MSBuildProjectDirectory)</SemanticVersion_ProjectDir>
       <SemanticVersion_ProjectPath>$(ProjectPath)</SemanticVersion_ProjectPath>
       <SemanticVersion_ProjectPath Condition=" '$(SemanticVersion_ProjectPath)' == '' ">$(MSBuildProjectFullPath)</SemanticVersion_ProjectPath>
+      <SemanticVersionOutputPath Condition=" '$(SemanticVersionOutputPath)' == '' ">$(IntermediateOutputPath)</SemanticVersionOutputPath>
+      <SemanticVersionOutputPath>$([MSBuild]::EnsureTrailingSlash('$(SemanticVersionOutputPath)'))</SemanticVersionOutputPath>
     </PropertyGroup>
+
+    <!-- set the version file -->
+    <ItemGroup>
+      <SemanticVersion_VersionFile Include="$(SemanticVersionOutputPath)$(SemanticVersion_ProjectName).version.txt" />
+    </ItemGroup>
+
+    <ReadVersionFromFile File="@(SemanticVersion_VersionFile)">
+      <Output TaskParameter="Version" PropertyName="_VersionFromFile" />
+      <Output TaskParameter="VersionPrefix" PropertyName="_VersionPrefixFromFile" />
+      <Output TaskParameter="VersionSuffix" PropertyName="_VersionSuffixFromFile" />
+      <Output TaskParameter="RepositoryCommit" PropertyName="_RepositoryCommitFromFile" />
+    </ReadVersionFromFile>
 
     <!-- Get the commits for the project
          This returns the specified maximum.
@@ -39,50 +53,66 @@
     <GetProjectCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
       MaxCount="$(MaxCommitCount)">
-      <Output TaskParameter="Commits" PropertyName="_Commits"/>
-      <Output TaskParameter="Commit" PropertyName="_Commit"/>
+      <Output TaskParameter="Commits" PropertyName="_RepositoryCommits"/>
+      <Output TaskParameter="Commit" PropertyName="_RepositoryCommit"/>
     </GetProjectCommitsTask>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Commits: $(_Commits)" Importance="High" />
-    <Message Text="$(SemanticVersion_ProjectName) -> Commit: $(_Commit)" Importance="High" />
+    <PropertyGroup Condition=" '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)'">
+      <_ComputedVersion>$(_VersionFromFile)</_ComputedVersion>
+      <_ComputedVersionPrefix>$(_VersionPrefixFromFile)</_ComputedVersionPrefix>
+      <_ComputedVersionSuffix>$(_VersionSuffixFromFile)</_ComputedVersionSuffix>
+      <_RepositoryCommit>$(_RepositoryCommitFromFile)</_RepositoryCommit>
+    </PropertyGroup>
+
+    <Message Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
+             Importance="Normal" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
+             Importance="Normal" />
 
     <!-- Get the head commits for the repository
          We can use this to see if a package has
          a newer commit than the project commit -->
     <GetHeadCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
-      ProjectCommit="$(_Commit)"
-      MaxCount="$(MaxCommitCount)">
+      ProjectCommit="$(_RepositoryCommit)"
+      MaxCount="$(MaxCommitCount)"
+      Condition=" '$(_ComputedVersion)' == '' ">
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
     </GetHeadCommitsTask>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Head Commits: $(_HeadCommits)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Head Commits: $(_HeadCommits)"
+             Condition=" '$(_HeadCommits)' != '' "
+             Importance="Normal" />
 
     <!-- Get the referenced project for the current project
          This means we can check to see if any referenced projects
          have a new commit -->
     <GetReferencedProjectsTask
-      ProjectPath="$(SemanticVersion_ProjectPath)">
+      ProjectPath="$(SemanticVersion_ProjectPath)"
+      Condition=" '$(_ComputedVersion)' == '' ">
       <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
     </GetReferencedProjectsTask>
 
     <!-- Get the latest commit for the referenced projects -->
     <GetLatestCommitTask
-      Paths="@(_ReferencedProjectDirs)">
+      Paths="@(_ReferencedProjectDirs)"
+      Condition=" '$(_ComputedVersion)' == '' ">
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
     </GetLatestCommitTask>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)"
+             Condition=" '$(_ReferenceCommit)' != '' "
+             Importance="Normal" />
 
     <!-- Set the version repository branch to use -->
     <PropertyGroup>
       <VersionRepositoryBranch Condition=" '$(VersionRepositoryBranch)' == '' ">$(RepositoryBranch)</VersionRepositoryBranch>
     </PropertyGroup>
-    
+
     <!-- Get the branch name if we haven't got it already -->
     <GetBranchNameTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
-      Condition=" '$(VersionRepositoryBranch)' == '' ">
+      Condition=" '$(VersionRepositoryBranch)' == '' and '$(_ComputedVersion)' == '' ">
       <Output TaskParameter="Branch" PropertyName="VersionRepositoryBranch" />
     </GetBranchNameTask>
 
@@ -120,9 +150,10 @@
       DirectDownload="$(DirectDownload)"
       NoVersionSuffix="$(NoVersionSuffix)"
       VersionSuffix="$(VersionRepositoryBranch)"
-      Commits="$(_Commits)"
+      Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
-      ReferenceCommit="$(_ReferenceCommit)">
+      ReferenceCommit="$(_ReferenceCommit)"
+      Condition=" '$(_ComputedVersion)' == '' ">
       <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
       <Output TaskParameter="ComputedVersionPrefix" PropertyName="_ComputedVersionPrefix" />
       <Output TaskParameter="ComputedVersionSuffix" PropertyName="_ComputedVersionSuffix" />
@@ -133,9 +164,8 @@
       <Version Condition=" $(ForceSemanticVersion) Or '$(Version)' == '' ">$(_ComputedVersion)</Version>
       <VersionPrefix Condition=" $(ForceSemanticVersion) Or '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</VersionPrefix>
       <VersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
-      <VersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
       <PackageVersion Condition=" $(ForceSemanticVersion) Or '$(PackageVersion)' == '' ">$(_ComputedVersion)</PackageVersion>
-      <RepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_Commit)</RepositoryCommit>
+      <RepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_RepositoryCommit)</RepositoryCommit>
 
       <!-- create a properties property to hold the values for the inner build projects -->
       <_Properties Condition=" '$(Version)' != '' ">$(_Properties);Version=$(Version)</_Properties>
@@ -151,7 +181,19 @@
       </_InnerBuildProjects>
     </ItemGroup>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)" Importance="High" />
+    <Message Text="$(SemanticVersion_ProjectName) -> Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)"
+             Importance="High" />
+
+    <WriteVersionToFile File="@(SemanticVersion_VersionFile)"
+                        Version="$(Version)"
+                        VersionPrefix="$(VersionPrefix)"
+                        VersionSuffix="$(VersionSuffix)"
+                        RepositoryCommit="$(RepositoryCommit)"
+                        WriteOnlyWhenDifferent="true" />
+
+    <ItemGroup>
+      <FileWrites Include="@(SemanticVersion_VersionFile)" />
+    </ItemGroup>
 
   </Target>
 
