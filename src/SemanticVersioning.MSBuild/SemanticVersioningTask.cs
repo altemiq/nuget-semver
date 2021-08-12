@@ -145,6 +145,9 @@ namespace Mondo.SemanticVersioning
                 headCommits = headCommits.TakeWhile(commit => !string.Equals(commit, projectCommit, StringComparison.Ordinal)).ToArray();
             }
 
+            var versionSuffix = this.VersionSuffix?
+                .Replace('/', '-');
+
             var (version, differences, published) = MSBuildApplication.ProcessProject(
                 this.ProjectDir,
                 this.AssemblyName,
@@ -173,7 +176,7 @@ namespace Mondo.SemanticVersioning
 
             string? GetVersionSuffix(string? previousVersionRelease = default)
             {
-                return this.NoVersionSuffix ? string.Empty : (this.VersionSuffix ?? previousVersionRelease);
+                return this.NoVersionSuffix ? string.Empty : (versionSuffix ?? previousVersionRelease);
             }
         }
     }
