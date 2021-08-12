@@ -2,3 +2,11 @@
 
 [*.{cs,csx,vb,vbx,h,cpp,idl}]
 dotnet_analyzer_diagnostic.severity = none
+dotnet_diagnostic.severity = none
+
+# turn off persistent FxCop diagnostics
+dotnet_diagnostic.CA1068.severity = none
+dotnet_diagnostic.CA1200.severity = none
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CA2016.severity = none
+dotnet_diagnostic.CS8602.severity = none
