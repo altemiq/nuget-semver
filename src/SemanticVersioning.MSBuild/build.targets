@@ -32,6 +32,7 @@
       <SemanticVersion_ProjectPath Condition=" '$(SemanticVersion_ProjectPath)' == '' ">$(MSBuildProjectFullPath)</SemanticVersion_ProjectPath>
       <SemanticVersionOutputPath Condition=" '$(SemanticVersionOutputPath)' == '' ">$(IntermediateOutputPath)</SemanticVersionOutputPath>
       <SemanticVersionOutputPath>$([MSBuild]::EnsureTrailingSlash('$(SemanticVersionOutputPath)'))</SemanticVersionOutputPath>
+      <_VersionsFromFile>false</_VersionsFromFile>
     </PropertyGroup>
 
     <!-- set the version file -->
@@ -58,6 +59,7 @@
     </GetProjectCommitsTask>
 
     <PropertyGroup Condition=" '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)'">
+      <_VersionsFromFile>true</_VersionsFromFile>
       <_ComputedVersion>$(_VersionFromFile)</_ComputedVersion>
       <_ComputedVersionPrefix>$(_VersionPrefixFromFile)</_ComputedVersionPrefix>
       <_ComputedVersionSuffix>$(_VersionSuffixFromFile)</_ComputedVersionSuffix>
@@ -76,7 +78,7 @@
       ProjectDir="$(SemanticVersion_ProjectDir)"
       ProjectCommit="$(_RepositoryCommit)"
       MaxCount="$(MaxCommitCount)"
-      Condition=" '$(_ComputedVersion)' == '' ">
+      Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
     </GetHeadCommitsTask>
 
@@ -89,14 +91,14 @@
          have a new commit -->
     <GetReferencedProjectsTask
       ProjectPath="$(SemanticVersion_ProjectPath)"
-      Condition=" '$(_ComputedVersion)' == '' ">
+      Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
     </GetReferencedProjectsTask>
 
     <!-- Get the latest commit for the referenced projects -->
     <GetLatestCommitTask
       Paths="@(_ReferencedProjectDirs)"
-      Condition=" '$(_ComputedVersion)' == '' ">
+      Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
     </GetLatestCommitTask>
 
@@ -112,7 +114,7 @@
     <!-- Get the branch name if we haven't got it already -->
     <GetBranchNameTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
-      Condition=" '$(VersionRepositoryBranch)' == '' and '$(_ComputedVersion)' == '' ">
+      Condition=" '$(VersionRepositoryBranch)' == '' and !$(_VersionsFromFile)">
       <Output TaskParameter="Branch" PropertyName="VersionRepositoryBranch" />
     </GetBranchNameTask>
 
@@ -153,7 +155,7 @@
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
       ReferenceCommit="$(_ReferenceCommit)"
-      Condition=" '$(_ComputedVersion)' == '' ">
+      Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
       <Output TaskParameter="ComputedVersionPrefix" PropertyName="_ComputedVersionPrefix" />
       <Output TaskParameter="ComputedVersionSuffix" PropertyName="_ComputedVersionSuffix" />
@@ -185,11 +187,12 @@
              Importance="High" />
 
     <WriteVersionToFile File="@(SemanticVersion_VersionFile)"
+                        Condition="!$(_VersionsFromFile)"
                         Version="$(Version)"
                         VersionPrefix="$(VersionPrefix)"
                         VersionSuffix="$(VersionSuffix)"
                         RepositoryCommit="$(RepositoryCommit)"
-                        WriteOnlyWhenDifferent="true" />
+                        Overwrite="true" />
 
     <ItemGroup>
       <FileWrites Include="@(SemanticVersion_VersionFile)" />
