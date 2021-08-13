@@ -5,17 +5,12 @@
     <SemanticVersion_IsOuterBuild Condition=" '$(SemanticVersion_IsOuterBuild)' == '' ">false</SemanticVersion_IsOuterBuild>
 
     <!-- Use DispatchToInnerBuilds if a multi-targetedBuild -->
-    <SemanticVersion_BeforeTargets>CoreCompile</SemanticVersion_BeforeTargets>
+    <SemanticVersion_BeforeTargets>PrepareForBuild</SemanticVersion_BeforeTargets>
     <SemanticVersion_BeforeTargets Condition="$(SemanticVersion_IsOuterBuild)">DispatchToInnerBuilds</SemanticVersion_BeforeTargets>
 
-    <!-- to prevent targets from being run extra times,
-         enforce that only the outer build of a multi-targeted
-         project or a single-targeted build can run -->
-    <SemanticVersion_ShouldRunTarget>false</SemanticVersion_ShouldRunTarget>
-    <SemanticVersion_ShouldRunTarget Condition=" '$(TargetFrameworks)' == '' or $(SemanticVersion_IsOuterBuild) ">true</SemanticVersion_ShouldRunTarget>
-    
     <!-- disable when this is not packable,
          and we only want to compute packable versions -->
+    <SemanticVersion_ShouldRunTarget>true</SemanticVersion_ShouldRunTarget>
     <SemanticVersion_ShouldRunTarget Condition=" '$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true' ">false</SemanticVersion_ShouldRunTarget>
   </PropertyGroup>
 
@@ -167,40 +162,42 @@
 
     <PropertyGroup>
       <!-- set the properties for the version -->
-      <Version Condition=" $(ForceSemanticVersion) Or '$(Version)' == '' ">$(_ComputedVersion)</Version>
-      <VersionPrefix Condition=" $(ForceSemanticVersion) Or '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</VersionPrefix>
-      <VersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</VersionSuffix>
-      <PackageVersion Condition=" $(ForceSemanticVersion) Or '$(PackageVersion)' == '' ">$(_ComputedVersion)</PackageVersion>
-      <RepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_RepositoryCommit)</RepositoryCommit>
-
-      <!-- create a properties property to hold the values for the inner build projects -->
-      <_Properties Condition=" '$(Version)' != '' ">$(_Properties);Version=$(Version)</_Properties>
-      <_Properties Condition=" '$(VersionPrefix)' != '' ">$(_Properties);VersionPrefix=$(VersionPrefix)</_Properties>
-      <_Properties Condition=" '$(VersionSuffix)' != '' ">$(_Properties);VersionSuffix=$(VersionSuffix)</_Properties>
-      <_Properties Condition=" '$(PackageVersion)' != '' ">$(_Properties);PackageVersion=$(PackageVersion)</_Properties>
-      <_Properties Condition=" '$(RepositoryCommit)' != '' ">$(_Properties);RepositoryCommit=$(RepositoryCommit)</_Properties>
+      <SemanticVersion Condition=" $(ForceSemanticVersion) Or '$(Version)' == '' ">$(_ComputedVersion)</SemanticVersion>
+      <SemanticVersionPrefix Condition=" $(ForceSemanticVersion) Or '$(VersionPrefix)' == '' ">$(_ComputedVersionPrefix)</SemanticVersionPrefix>
+      <SemanticVersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</SemanticVersionSuffix>
+      <SemanticPackageVersion Condition=" $(ForceSemanticVersion) Or '$(PackageVersion)' == '' ">$(_ComputedVersion)</SemanticPackageVersion>
+      <SemanticRepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_RepositoryCommit)</SemanticRepositoryCommit>
     </PropertyGroup>
 
-    <ItemGroup>
-      <_InnerBuildProjects>
-        <Properties>$(Properties);$(_Properties)</Properties>
-      </_InnerBuildProjects>
-    </ItemGroup>
-
-    <Message Text="$(SemanticVersion_ProjectName) -> Version: $(Version), VersionPrefix: $(VersionPrefix), VersionSuffix: $(VersionSuffix), RepositoryCommit: $(RepositoryCommit)"
+    <Message Text="$(SemanticVersion_ProjectName) -> SemanticVersion: $(SemanticVersion), SemanticVersionPrefix: $(SemanticVersionPrefix), SemanticVersionSuffix: $(SemanticVersionSuffix), SemanticRepositoryCommit: $(SemanticRepositoryCommit)"
              Importance="High" />
 
     <WriteVersionToFile File="@(SemanticVersion_VersionFile)"
                         Condition="!$(_VersionsFromFile)"
-                        Version="$(Version)"
-                        VersionPrefix="$(VersionPrefix)"
-                        VersionSuffix="$(VersionSuffix)"
-                        RepositoryCommit="$(RepositoryCommit)"
+                        Version="$(SemanticVersion)"
+                        VersionPrefix="$(SemanticVersionPrefix)"
+                        VersionSuffix="$(SemanticVersionSuffix)"
+                        RepositoryCommit="$(SemanticRepositoryCommit)"
                         Overwrite="true" />
 
     <ItemGroup>
       <FileWrites Include="@(SemanticVersion_VersionFile)" />
     </ItemGroup>
+
+  </Target>
+  
+  <Target Name="SetSemanticVersion"
+          BeforeTargets="GetAssemblyVersion">
+
+    <PropertyGroup>
+      <Version Condition=" '$(SemanticVersion)' != '' ">$(SemanticVersion)</Version>
+      <VersionPrefix Condition=" '$(SemanticVersionPrefix)' != '' ">$(SemanticVersionPrefix)</VersionPrefix>
+      <VersionSuffix Condition=" '$(SemanticVersionSuffix)' != '' ">$(SemanticVersionSuffix)</VersionSuffix>
+      <PackageVersion Condition=" '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</PackageVersion>
+      <RepositoryCommit Condition=" '$(SemanticRepositoryCommit)' != '' ">$(SemanticRepositoryCommit)</RepositoryCommit>
+      
+      <NuGetVersion Condition=" '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</NuGetVersion>
+    </PropertyGroup>
 
   </Target>
 
