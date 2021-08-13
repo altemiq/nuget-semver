@@ -12,6 +12,8 @@
          and we only want to compute packable versions -->
     <SemanticVersion_ShouldRunTarget>true</SemanticVersion_ShouldRunTarget>
     <SemanticVersion_ShouldRunTarget Condition=" '$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true' ">false</SemanticVersion_ShouldRunTarget>
+    
+    <GetPackageVersionDependsOn>GetSemanticVersion;SetSemanticVersion;$(GetPackageVersionDependsOn)</GetPackageVersionDependsOn>
   </PropertyGroup>
 
   <!-- Get the semantic version from the latest package and commit -->
