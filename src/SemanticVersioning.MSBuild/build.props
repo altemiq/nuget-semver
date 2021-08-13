@@ -20,6 +20,7 @@
   <PropertyGroup>
     <ComputeSemanticVersion>false</ComputeSemanticVersion>
     <ForceSemanticVersion>true</ForceSemanticVersion>
+    <OnlyComputeSemanticVersionForPackable>true</OnlyComputeSemanticVersionForPackable>
   </PropertyGroup>
 
 </Project>

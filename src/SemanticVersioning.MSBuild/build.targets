@@ -13,6 +13,10 @@
          project or a single-targeted build can run -->
     <SemanticVersion_ShouldRunTarget>false</SemanticVersion_ShouldRunTarget>
     <SemanticVersion_ShouldRunTarget Condition=" '$(TargetFrameworks)' == '' or $(SemanticVersion_IsOuterBuild) ">true</SemanticVersion_ShouldRunTarget>
+    
+    <!-- disable when this is not packable,
+         and we only want to compute packable versions -->
+    <SemanticVersion_ShouldRunTarget Condition=" '$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true' ">false</SemanticVersion_ShouldRunTarget>
   </PropertyGroup>
 
   <!-- Get the semantic version from the latest package and commit -->
