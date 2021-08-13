@@ -167,6 +167,10 @@
       <SemanticVersionSuffix Condition=" $(ForceSemanticVersion) Or '$(VersionSuffix)' == '' ">$(_ComputedVersionSuffix)</SemanticVersionSuffix>
       <SemanticPackageVersion Condition=" $(ForceSemanticVersion) Or '$(PackageVersion)' == '' ">$(_ComputedVersion)</SemanticPackageVersion>
       <SemanticRepositoryCommit Condition=" $(ForceSemanticVersion) Or '$(RepositoryCommit)' != '' ">$(_RepositoryCommit)</SemanticRepositoryCommit>
+      
+      <!-- set the package version here as well
+           when this is an outer build -->
+      <PackageVersion Condition=" $(SemanticVersion_IsOuterBuild) And '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</PackageVersion>
     </PropertyGroup>
 
     <Message Text="$(SemanticVersion_ProjectName) -> SemanticVersion: $(SemanticVersion), SemanticVersionPrefix: $(SemanticVersionPrefix), SemanticVersionSuffix: $(SemanticVersionSuffix), SemanticRepositoryCommit: $(SemanticRepositoryCommit)"
