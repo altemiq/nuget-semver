@@ -19,7 +19,11 @@
   <!-- Get the semantic version from the latest package and commit -->
   <Target Name="GetSemanticVersion"
           BeforeTargets="$(SemanticVersion_BeforeTargets)"
-          Condition=" '$(SemanticVersion_ShouldRunTarget)' == 'true' and '$(SourceControlInformationFeatureSupported)' == 'true' and '$(DisableSemanticVersioning)' != 'true' and '$(ComputeSemanticVersion)' == 'true' ">
+          Condition=" '$(SemanticVersion_ShouldRunTarget)' == 'true'
+                  and '$(SourceControlInformationFeatureSupported)' == 'true'
+                  and '$(DisableSemanticVersioning)' != 'true'
+                  and '$(ComputeSemanticVersion)' == 'true'
+                  and '$(SemanticVersion)' == '' ">
 
     <!-- Set the project NAME/DIR/PATH properties
          These are not available before DispatchToInnerBuilds
@@ -193,7 +197,13 @@
   </Target>
   
   <Target Name="SetSemanticVersion"
-          BeforeTargets="GetAssemblyVersion">
+          BeforeTargets="GetAssemblyVersion"
+          Condition=" '$(Version)' != '$(SemanticVersion)'
+                   or '$(VersionPrefix)' != '$(SemanticVersionPrefix)'
+                   or '$(VersionSuffix)' != '$(SemanticVersionSuffix)'
+                   or '$(PackageVersion)' != '$(SemanticPackageVersion)'
+                   or '$(RepositoryCommit)' != '$(SemanticRepositoryCommit)'
+                   or '$(NuGetVersion)' != '$(SemanticPackageVersion)' ">
 
     <PropertyGroup>
       <Version Condition=" '$(SemanticVersion)' != '' ">$(SemanticVersion)</Version>
