@@ -334,6 +334,10 @@ namespace Altemiq.SemanticVersioning
                 referenceCommit = GetLatestCommit(repository, referencePaths);
             }
 
+            var nugetLogger = console.Output.HasFlag(OutputTypes.Diagnostic)
+                ? new NuGetConsole(console)
+                : NuGet.Common.NullLogger.Instance;
+
             (var version, var results, var published) = await MSBuildApplication.ProcessProject(
                 project.DirectoryPath,
                 project.GetPropertyValue(AssemblyNamePropertyName),
@@ -352,7 +356,7 @@ namespace Altemiq.SemanticVersioning
                 noCache,
                 directDownload,
                 getVersionSuffix,
-                new NuGetConsole(console)).ConfigureAwait(false);
+                nugetLogger).ConfigureAwait(false);
 
             foreach (var result in results)
             {

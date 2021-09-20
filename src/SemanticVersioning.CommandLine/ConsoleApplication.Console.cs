@@ -6,7 +6,6 @@
 
 namespace Altemiq.SemanticVersioning
 {
-    using System;
     using System.CommandLine.IO;
 
     /// <content>
@@ -104,13 +103,13 @@ namespace Altemiq.SemanticVersioning
             public TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output)
                 : base(terminal, output) => this.terminal = terminal;
 
-            public ConsoleColor BackgroundColor
+            public System.ConsoleColor BackgroundColor
             {
                 get => this.terminal.BackgroundColor;
                 set => this.terminal.BackgroundColor = value;
             }
 
-            public ConsoleColor ForegroundColor
+            public System.ConsoleColor ForegroundColor
             {
                 get => this.terminal.ForegroundColor;
                 set => this.terminal.ForegroundColor = value;
