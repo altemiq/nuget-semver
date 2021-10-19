@@ -100,8 +100,6 @@ namespace Altemiq.SemanticVersioning
 
         private const string TargetExtPropertyName = "TargetExt";
 
-        private static bool isRegistered;
-
         /// <summary>
         /// The file function delegate.
         /// </summary>
@@ -371,16 +369,8 @@ namespace Altemiq.SemanticVersioning
             {
                 var projectReferences = project.Items.Where(projectItem => string.Equals(projectItem.ItemType, "ProjectReference", StringComparison.Ordinal));
 
-                foreach (var projectReference in projectReferences)
+                foreach (var path in projectReferences.Select(ProjectPath))
                 {
-                    var path = projectReference.EvaluatedInclude;
-                    if (!System.IO.Path.IsPathRooted(path))
-                    {
-                        path = System.IO.Path.Combine(project.DirectoryPath, path);
-                    }
-
-                    path = System.IO.Path.GetFullPath(path);
-
                     var referencedProject = project.ProjectCollection.LoadedProjects.SingleOrDefault(p => string.Equals(p.FullPath, path, StringComparison.Ordinal))
                         ?? LoadProject(project.ProjectCollection, path, default, default, default);
                     if (referencedProject is not null)
@@ -392,6 +382,17 @@ namespace Altemiq.SemanticVersioning
                             yield return subproject;
                         }
                     }
+                }
+
+                static string ProjectPath(Microsoft.Build.Evaluation.ProjectItem projectReference)
+                {
+                    var path = projectReference.EvaluatedInclude;
+                    if (!System.IO.Path.IsPathRooted(path))
+                    {
+                        path = System.IO.Path.Combine(projectReference.Project.DirectoryPath, path);
+                    }
+
+                    return System.IO.Path.GetFullPath(path);
                 }
             }
         }
@@ -610,9 +611,8 @@ namespace Altemiq.SemanticVersioning
         {
             var finder = new VisualStudioInstanceFinder(GetInstances());
             var instance = finder.GetVisualStudioInstance(projectOrSolution);
-            if (!isRegistered)
+            if (Microsoft.Build.Locator.MSBuildLocator.CanRegister)
             {
-                isRegistered = true;
                 Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
             }
 

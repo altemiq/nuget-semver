@@ -146,7 +146,7 @@ namespace Altemiq.SemanticVersioning
             }
         }
 
-        private class RollForwardComparer : System.Collections.Generic.IComparer<NuGet.Versioning.SemanticVersion>
+        private sealed class RollForwardComparer : System.Collections.Generic.IComparer<NuGet.Versioning.SemanticVersion>
         {
             private readonly RollForwardPolicy policy;
 
@@ -196,8 +196,8 @@ namespace Altemiq.SemanticVersioning
                 writer.WriteStringValue(System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(value.ToString()));
         }
 
-        private record Global(Sdk? Sdk);
+        private sealed record Global(Sdk? Sdk);
 
-        private record Sdk(NuGet.Versioning.SemanticVersion? Version, bool AllowPrerelease = true, RollForwardPolicy? RollForward = default);
+        private sealed record Sdk(NuGet.Versioning.SemanticVersion? Version, bool AllowPrerelease = true, RollForwardPolicy? RollForward = default);
     }
 }
