@@ -225,7 +225,7 @@ namespace Altemiq.SemanticVersioning
             var instance = RegisterMSBuild(projectOrSolution);
 
             var consoleWithOutput = ConsoleWithOutput.Create(console, output);
-            consoleWithOutput.Out.WriteLine($"Using {instance.Name} {instance.Version}", OutputTypes.Diagnostic);
+            consoleWithOutput.Out.WriteLine(FormattableString.CurrentCulture($"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
 
             var regex = string.IsNullOrEmpty(packageIdRegex)
                 ? null
