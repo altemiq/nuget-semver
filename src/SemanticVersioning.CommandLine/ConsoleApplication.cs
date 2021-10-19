@@ -323,7 +323,16 @@ namespace Altemiq.SemanticVersioning
             if (baseDir is not null)
             {
                 using var repository = new LibGit2Sharp.Repository(baseDir);
-                folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
+                try
+                {
+                    folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
+                }
+                catch (LibGit2Sharp.NotFoundException ex)
+                {
+                    // this indicates that the fetch is too shallow
+                    throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow", ex);
+                }
+
                 headCommits = GetHeadCommits(repository, folderCommits[0]).ToList();
                 var referencePaths = GetProjects(project)
                     .Select(reference => reference.DirectoryPath)
