@@ -6,8 +6,6 @@
 
 namespace Mondo.SemanticVersioning
 {
-    using System.CommandLine.IO;
-
     /// <content>
     /// Application class for writing the TeamCity version.
     /// </content>

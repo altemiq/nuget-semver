@@ -9,6 +9,13 @@
     {
         public static MethodInfo FindStaticEntryMethod(Assembly assembly, string entryPointFullTypeName = default)
         {
+            if (Microsoft.Build.Locator.MSBuildLocator.CanRegister)
+            {
+                var finder = new VisualStudioInstanceFinder();
+                var instance = finder.GetVisualStudioInstance(default(System.IO.FileInfo));
+                Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
+            }
+
             var candidates = new List<MethodInfo>();
 
             if (!string.IsNullOrWhiteSpace(entryPointFullTypeName))

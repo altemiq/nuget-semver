@@ -107,14 +107,13 @@ namespace Mondo.SemanticVersioning
                 static bool TryGetIncludes(System.Collections.IEnumerable nodes, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out IEnumerable<string>? includes)
                 {
                     const string Include = nameof(Include);
-
-                    foreach (System.Xml.XmlNode node in nodes)
+                    var node = nodes
+                        .OfType<System.Xml.XmlNode>()
+                        .FirstOrDefault(node => string.Equals(node.Name, Include, StringComparison.Ordinal));
+                    if (node is not null)
                     {
-                        if (string.Equals(node.Name, Include, StringComparison.Ordinal))
-                        {
-                            includes = node.Value.Split(';');
-                            return true;
-                        }
+                        includes = node.Value.Split(';');
+                        return true;
                     }
 
                     includes = default;

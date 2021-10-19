@@ -51,7 +51,7 @@ namespace Mondo.SemanticVersioning
                 return new ConsoleWithOutput(console, outputTypes);
             }
 
-            private class StandardStreamWriterWithOutput : IStandardStreamWriterWithOutput
+            private sealed class StandardStreamWriterWithOutput : IStandardStreamWriterWithOutput
             {
                 private readonly System.CommandLine.IConsole console;
 
@@ -96,7 +96,7 @@ namespace Mondo.SemanticVersioning
             }
         }
 
-        private class TerminalWithOutput : ConsoleWithOutput, System.CommandLine.Rendering.ITerminal
+        private sealed class TerminalWithOutput : ConsoleWithOutput, System.CommandLine.Rendering.ITerminal
         {
             private readonly System.CommandLine.Rendering.ITerminal terminal;
 
@@ -138,7 +138,7 @@ namespace Mondo.SemanticVersioning
             public void ShowCursor() => this.terminal.ShowCursor();
         }
 
-        private class NuGetConsole : NuGet.Common.ILogger
+        private sealed class NuGetConsole : NuGet.Common.ILogger
         {
             private readonly System.CommandLine.IConsole console;
 

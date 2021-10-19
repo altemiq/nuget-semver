@@ -6,8 +6,6 @@
 
 namespace Mondo.SemanticVersioning
 {
-    using System.CommandLine.IO;
-
     /// <content>
     /// Application class for writing the GitHub version.
     /// </content>
@@ -32,7 +30,7 @@ namespace Mondo.SemanticVersioning
             console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options), OutputTypes.Json);
         }
 
-        private class Versions
+        private sealed class Versions
         {
             public NuGet.Versioning.SemanticVersion? Version { get; set; }
 
