@@ -4,47 +4,46 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.SemanticVersioning
+namespace Altemiq.SemanticVersioning;
+
+using Microsoft.Build.Utilities;
+
+/// <summary>
+/// Writes the version to a file.
+/// </summary>
+public sealed class WriteVersionToFile : Microsoft.Build.Tasks.WriteLinesToFile
 {
-    using Microsoft.Build.Utilities;
+    /// <summary>
+    /// Gets or sets the version.
+    /// </summary>
+    public string? Version { get; set; }
 
     /// <summary>
-    /// Writes the version to a file.
+    /// Gets or sets the version prefix.
     /// </summary>
-    public sealed class WriteVersionToFile : Microsoft.Build.Tasks.WriteLinesToFile
+    public string? VersionPrefix { get; set; }
+
+    /// <summary>
+    /// Gets or sets the version suffix.
+    /// </summary>
+    public string? VersionSuffix { get; set; }
+
+    /// <summary>
+    /// Gets or sets the repository commit.
+    /// </summary>
+    public string? RepositoryCommit { get; set; }
+
+    /// <inheritdoc/>
+    public override bool Execute()
     {
-        /// <summary>
-        /// Gets or sets the version.
-        /// </summary>
-        public string? Version { get; set; }
-
-        /// <summary>
-        /// Gets or sets the version prefix.
-        /// </summary>
-        public string? VersionPrefix { get; set; }
-
-        /// <summary>
-        /// Gets or sets the version suffix.
-        /// </summary>
-        public string? VersionSuffix { get; set; }
-
-        /// <summary>
-        /// Gets or sets the repository commit.
-        /// </summary>
-        public string? RepositoryCommit { get; set; }
-
-        /// <inheritdoc/>
-        public override bool Execute()
+        this.Lines = new Microsoft.Build.Framework.ITaskItem[]
         {
-            this.Lines = new Microsoft.Build.Framework.ITaskItem[]
-            {
-                new TaskItem(this.Version),
-                new TaskItem(this.VersionPrefix),
-                new TaskItem(this.VersionSuffix),
-                new TaskItem(this.RepositoryCommit),
-            };
+            new TaskItem(this.Version),
+            new TaskItem(this.VersionPrefix),
+            new TaskItem(this.VersionSuffix),
+            new TaskItem(this.RepositoryCommit),
+        };
 
-            return base.Execute();
-        }
+        return base.Execute();
     }
 }

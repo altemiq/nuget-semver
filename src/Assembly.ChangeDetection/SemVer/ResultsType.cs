@@ -4,26 +4,25 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.Assembly.ChangeDetection.SemVer
+namespace Altemiq.Assembly.ChangeDetection.SemVer;
+
+/// <summary>
+/// The results type.
+/// </summary>
+public enum ResultsType
 {
     /// <summary>
-    /// The results type.
+    /// Patch.
     /// </summary>
-    public enum ResultsType
-    {
-        /// <summary>
-        /// Patch.
-        /// </summary>
-        Patch,
+    Patch,
 
-        /// <summary>
-        /// Minor.
-        /// </summary>
-        Minor,
+    /// <summary>
+    /// Minor.
+    /// </summary>
+    Minor,
 
-        /// <summary>
-        /// Major.
-        /// </summary>
-        Major,
-    }
+    /// <summary>
+    /// Major.
+    /// </summary>
+    Major,
 }

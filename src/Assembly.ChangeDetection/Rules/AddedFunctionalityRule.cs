@@ -4,14 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.Assembly.ChangeDetection.Rules
+namespace Altemiq.Assembly.ChangeDetection.Rules;
+
+/// <summary>
+/// The added functionality rule.
+/// </summary>
+internal class AddedFunctionalityRule : IRule
 {
-    /// <summary>
-    /// The added functionality rule.
-    /// </summary>
-    internal class AddedFunctionalityRule : IRule
-    {
-        /// <inheritdoc/>
-        public bool Detect(Diff.AssemblyDiffCollection assemblyDiffCollection) => assemblyDiffCollection.ChangedTypes.Count > 0;
-    }
+    /// <inheritdoc/>
+    public bool Detect(Diff.AssemblyDiffCollection assemblyDiffCollection) => assemblyDiffCollection.ChangedTypes.Count > 0;
 }

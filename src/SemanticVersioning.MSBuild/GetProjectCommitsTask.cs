@@ -4,35 +4,34 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.SemanticVersioning
+namespace Altemiq.SemanticVersioning;
+
+using System.Linq;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+/// <summary>
+/// The GIT log task.
+/// </summary>
+public sealed class GetProjectCommitsTask : GitLogTask
 {
-    using System.Linq;
-    using Microsoft.Build.Framework;
-    using Microsoft.Build.Utilities;
+    /// <summary>
+    /// Initialises a new instance of the <see cref="GetProjectCommitsTask"/> class.
+    /// </summary>
+    public GetProjectCommitsTask() => this.MaxCount = 10;
 
     /// <summary>
-    /// The GIT log task.
+    /// Gets or sets the project dir.
     /// </summary>
-    public sealed class GetProjectCommitsTask : GitLogTask
-    {
-        /// <summary>
-        /// Initialises a new instance of the <see cref="GetProjectCommitsTask"/> class.
-        /// </summary>
-        public GetProjectCommitsTask() => this.MaxCount = 10;
+    [Required]
+    public string ProjectDir { get; set; } = default!;
 
-        /// <summary>
-        /// Gets or sets the project dir.
-        /// </summary>
-        [Required]
-        public string ProjectDir { get; set; } = default!;
+    /// <summary>
+    /// Gets the latest commit.
+    /// </summary>
+    [Output]
+    public string? Commit => this.GitCommits.Select(commit => commit.Sha).FirstOrDefault();
 
-        /// <summary>
-        /// Gets the latest commit.
-        /// </summary>
-        [Output]
-        public string? Commit => this.GitCommits.Select(commit => commit.Sha).FirstOrDefault();
-
-        /// <inheritdoc/>
-        protected override ITaskItem? GetPath() => new TaskItem(this.ProjectDir);
-    }
+    /// <inheritdoc/>
+    protected override ITaskItem? GetPath() => new TaskItem(this.ProjectDir);
 }
