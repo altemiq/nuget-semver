@@ -4,32 +4,31 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Diff
+namespace Mondo.Assembly.ChangeDetection.Diff;
+
+/// <summary>
+/// The diff result.
+/// </summary>
+/// <typeparam name="T">The type of object.</typeparam>
+public class DiffResult<T>
 {
     /// <summary>
-    /// The diff result.
+    /// Initialises a new instance of the <see cref="DiffResult{T}"/> class.
     /// </summary>
-    /// <typeparam name="T">The type of object.</typeparam>
-    public class DiffResult<T>
-    {
-        /// <summary>
-        /// Initialises a new instance of the <see cref="DiffResult{T}"/> class.
-        /// </summary>
-        /// <param name="v1">The first version.</param>
-        /// <param name="diffType">The diff type.</param>
-        public DiffResult(T v1, DiffOperation diffType) => (this.ObjectV1, this.Operation) = (v1, diffType);
+    /// <param name="v1">The first version.</param>
+    /// <param name="diffType">The diff type.</param>
+    public DiffResult(T v1, DiffOperation diffType) => (this.ObjectV1, this.Operation) = (v1, diffType);
 
-        /// <summary>
-        /// Gets the operation.
-        /// </summary>
-        public DiffOperation Operation { get; }
+    /// <summary>
+    /// Gets the operation.
+    /// </summary>
+    public DiffOperation Operation { get; }
 
-        /// <summary>
-        /// Gets the object.
-        /// </summary>
-        public T ObjectV1 { get; }
+    /// <summary>
+    /// Gets the object.
+    /// </summary>
+    public T ObjectV1 { get; }
 
-        /// <inheritdoc/>
-        public override string ToString() => string.Format(Properties.Resources.Culture, "{0}, {1}", this.ObjectV1, this.Operation.IsAdded ? "added" : "removed");
-    }
+    /// <inheritdoc/>
+    public override string ToString() => string.Format(Properties.Resources.Culture, "{0}, {1}", this.ObjectV1, this.Operation.IsAdded ? "added" : "removed");
 }

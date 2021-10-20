@@ -4,145 +4,144 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning
+namespace Mondo.SemanticVersioning;
+
+using System.Collections.Generic;
+using System.Linq;
+using Endjin.ApiChange.Api.Diff;
+using Endjin.ApiChange.Api.Introspection;
+using Endjin.ApiChange.Api.Query;
+using Mono.Cecil;
+
+/// <summary>
+/// The library comparison.
+/// </summary>
+public static class LibraryComparison
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Endjin.ApiChange.Api.Diff;
-    using Endjin.ApiChange.Api.Introspection;
-    using Endjin.ApiChange.Api.Query;
-    using Mono.Cecil;
+    /// <summary>
+    /// Analyses the results.
+    /// </summary>
+    /// <param name="previousAssembly">The previous assembly.</param>
+    /// <param name="currentAssembly">The current assembly.</param>
+    /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
+    /// <param name="prerelease">The pre-release label.</param>
+    /// <param name="build">The build label.</param>
+    /// <returns>The results.</returns>
+    public static (NuGet.Versioning.SemanticVersion? Version, SemanticVersionChange Change, AssemblyDiffCollection Differences) Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
+    {
+        var differences = DetectChanges(previousAssembly, currentAssembly);
+        var resultsType = System.IO.File.Exists(previousAssembly)
+            ? GetMinimumAcceptableChange(differences)
+            : SemanticVersionChange.Major;
+        var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
+        if (build is not null)
+        {
+            calculatedVersion = calculatedVersion.With(metadata: build);
+        }
+
+        return (calculatedVersion, resultsType, differences);
+    }
 
     /// <summary>
-    /// The library comparison.
+    /// Reports the changes from one assembly to another.
     /// </summary>
-    public static class LibraryComparison
+    /// <param name="pathToOldAssembly">The full file path of the old assembly.</param>
+    /// <param name="pathToNewAssembly">The full file path of the new assembly.</param>
+    /// <returns>
+    /// A <see cref="AssemblyDiffCollection"/> describing the changes.
+    /// </returns>
+    public static AssemblyDiffCollection DetectChanges(string pathToOldAssembly, string pathToNewAssembly)
     {
-        /// <summary>
-        /// Analyses the results.
-        /// </summary>
-        /// <param name="previousAssembly">The previous assembly.</param>
-        /// <param name="currentAssembly">The current assembly.</param>
-        /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
-        /// <param name="prerelease">The pre-release label.</param>
-        /// <param name="build">The build label.</param>
-        /// <returns>The results.</returns>
-        public static (NuGet.Versioning.SemanticVersion? Version, SemanticVersionChange Change, AssemblyDiffCollection Differences) Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
+        var oldExists = System.IO.File.Exists(pathToOldAssembly);
+        var newExists = System.IO.File.Exists(pathToNewAssembly);
+        return (oldExists, newExists) switch
         {
-            var differences = DetectChanges(previousAssembly, currentAssembly);
-            var resultsType = System.IO.File.Exists(previousAssembly)
-                ? GetMinimumAcceptableChange(differences)
-                : SemanticVersionChange.Major;
-            var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
-            if (build is not null)
-            {
-                calculatedVersion = calculatedVersion.With(metadata: build);
-            }
+            (true, true) => DetectChangesCore(),
+            (true, false) => GetAll(pathToOldAssembly, isAdded: false),
+            (false, true) => GetAll(pathToNewAssembly, isAdded: true),
+            (false, false) => new AssemblyDiffCollection(),
+        };
 
-            return (calculatedVersion, resultsType, differences);
+        static AssemblyDiffCollection GetAll(string path, bool isAdded)
+        {
+            using var assembly = AssemblyLoader.LoadCecilAssembly(path);
+            var difference = new AssemblyDiffCollection();
+
+            var typeQuery = new TypeQuery(TypeQueryMode.ApiRelevant);
+            var results = typeQuery.GetTypes(assembly)
+                .Select(type => new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded)));
+            difference.AddedRemovedTypes.AddRange(results);
+
+            return difference;
         }
 
-        /// <summary>
-        /// Reports the changes from one assembly to another.
-        /// </summary>
-        /// <param name="pathToOldAssembly">The full file path of the old assembly.</param>
-        /// <param name="pathToNewAssembly">The full file path of the new assembly.</param>
-        /// <returns>
-        /// A <see cref="AssemblyDiffCollection"/> describing the changes.
-        /// </returns>
-        public static AssemblyDiffCollection DetectChanges(string pathToOldAssembly, string pathToNewAssembly)
+        AssemblyDiffCollection DetectChangesCore()
         {
-            var oldExists = System.IO.File.Exists(pathToOldAssembly);
-            var newExists = System.IO.File.Exists(pathToNewAssembly);
-            return (oldExists, newExists) switch
-            {
-                (true, true) => DetectChangesCore(),
-                (true, false) => GetAll(pathToOldAssembly, isAdded: false),
-                (false, true) => GetAll(pathToNewAssembly, isAdded: true),
-                (false, false) => new AssemblyDiffCollection(),
-            };
+            using var oldAssembly = AssemblyLoader.LoadCecilAssembly(pathToOldAssembly);
+            using var newAssembly = AssemblyLoader.LoadCecilAssembly(pathToNewAssembly);
+            var ad = new AssemblyDiffer(oldAssembly, newAssembly);
 
-            static AssemblyDiffCollection GetAll(string path, bool isAdded)
-            {
-                using var assembly = AssemblyLoader.LoadCecilAssembly(path);
-                var difference = new AssemblyDiffCollection();
+            var qa = new QueryAggregator();
+            qa.TypeQueries.Add(new TypeQuery(TypeQueryMode.ApiRelevant));
 
-                var typeQuery = new TypeQuery(TypeQueryMode.ApiRelevant);
-                var results = typeQuery.GetTypes(assembly)
-                    .Select(type => new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded)));
-                difference.AddedRemovedTypes.AddRange(results);
+            qa.MethodQueries.Add(MethodQuery.PublicMethods);
+            qa.MethodQueries.Add(MethodQuery.ProtectedMethods);
 
-                return difference;
-            }
+            qa.FieldQueries.Add(FieldQuery.PublicFields);
+            qa.FieldQueries.Add(FieldQuery.ProtectedFields);
 
-            AssemblyDiffCollection DetectChangesCore()
-            {
-                using var oldAssembly = AssemblyLoader.LoadCecilAssembly(pathToOldAssembly);
-                using var newAssembly = AssemblyLoader.LoadCecilAssembly(pathToNewAssembly);
-                var ad = new AssemblyDiffer(oldAssembly, newAssembly);
+            qa.EventQueries.Add(EventQuery.PublicEvents);
+            qa.EventQueries.Add(EventQuery.ProtectedEvents);
 
-                var qa = new QueryAggregator();
-                qa.TypeQueries.Add(new TypeQuery(TypeQueryMode.ApiRelevant));
+            return ad.GenerateTypeDiff(qa);
+        }
+    }
 
-                qa.MethodQueries.Add(MethodQuery.PublicMethods);
-                qa.MethodQueries.Add(MethodQuery.ProtectedMethods);
+    /// <summary>
+    /// Calculate the minimum acceptable version number change according to Semantic Versioning
+    /// rules given some changes that have been made to a library.
+    /// </summary>
+    /// <param name="libraryChanges">The changes made to the library.</param>
+    /// <returns>The minimum version number change acceptable in Semantic Versioning.</returns>
+    public static SemanticVersionChange GetMinimumAcceptableChange(AssemblyDiffCollection libraryChanges)
+    {
+        bool typesRemoved = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsRemoved);
+        bool constructorsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => md.IsConstructor));
+        bool methodsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => !md.IsSpecialName));
+        bool propertiesRemoved = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: false).Any());
+        bool fieldsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: false).Any());
 
-                qa.FieldQueries.Add(FieldQuery.PublicFields);
-                qa.FieldQueries.Add(FieldQuery.ProtectedFields);
-
-                qa.EventQueries.Add(EventQuery.PublicEvents);
-                qa.EventQueries.Add(EventQuery.ProtectedEvents);
-
-                return ad.GenerateTypeDiff(qa);
-            }
+        if (typesRemoved || constructorsRemoved || methodsRemoved || propertiesRemoved || fieldsRemoved)
+        {
+            return SemanticVersionChange.Major;
         }
 
-        /// <summary>
-        /// Calculate the minimum acceptable version number change according to Semantic Versioning
-        /// rules given some changes that have been made to a library.
-        /// </summary>
-        /// <param name="libraryChanges">The changes made to the library.</param>
-        /// <returns>The minimum version number change acceptable in Semantic Versioning.</returns>
-        public static SemanticVersionChange GetMinimumAcceptableChange(AssemblyDiffCollection libraryChanges)
+        bool typesAdded = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsAdded);
+        bool constructorsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => md.IsConstructor));
+        bool methodsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => !md.IsSpecialName));
+        bool propertiesAdded = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: true).Any());
+        bool fieldsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: true).Any());
+
+        return typesAdded || constructorsAdded || methodsAdded || propertiesAdded || fieldsAdded
+            ? SemanticVersionChange.Minor
+            : SemanticVersionChange.None;
+
+        static IEnumerable<T> FromDiff<T>(DiffCollection<T> source, bool added)
         {
-            bool typesRemoved = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsRemoved);
-            bool constructorsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => md.IsConstructor));
-            bool methodsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => !md.IsSpecialName));
-            bool propertiesRemoved = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: false).Any());
-            bool fieldsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: false).Any());
+            return source
+                .Where(dr => added ? dr.Operation.IsAdded : dr.Operation.IsRemoved)
+                .Select(dr => dr.ObjectV1);
+        }
 
-            if (typesRemoved || constructorsRemoved || methodsRemoved || propertiesRemoved || fieldsRemoved)
-            {
-                return SemanticVersionChange.Major;
-            }
-
-            bool typesAdded = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsAdded);
-            bool constructorsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => md.IsConstructor));
-            bool methodsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => !md.IsSpecialName));
-            bool propertiesAdded = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: true).Any());
-            bool fieldsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: true).Any());
-
-            return typesAdded || constructorsAdded || methodsAdded || propertiesAdded || fieldsAdded
-                ? SemanticVersionChange.Minor
-                : SemanticVersionChange.None;
-
-            static IEnumerable<T> FromDiff<T>(DiffCollection<T> source, bool added)
-            {
-                return source
-                    .Where(dr => added ? dr.Operation.IsAdded : dr.Operation.IsRemoved)
-                    .Select(dr => dr.ObjectV1);
-            }
-
-            static IEnumerable<PropertyDefinition> GetProperties(TypeDiff td, bool added)
-            {
-                var source = added ? td.TypeV2 : td.TypeV1;
-                return td
-                    .Methods
-                    .Where(md => (md.ObjectV1.IsGetter || md.ObjectV1.IsSetter) &&
-                        (added ? md.Operation.IsAdded : md.Operation.IsRemoved))
-                    .GroupBy(md => source.Properties.Single(p => p.GetMethod == md.ObjectV1 || p.SetMethod == md.ObjectV1))
-                    .Select(g => g.Key);
-            }
+        static IEnumerable<PropertyDefinition> GetProperties(TypeDiff td, bool added)
+        {
+            var source = added ? td.TypeV2 : td.TypeV1;
+            return td
+                .Methods
+                .Where(md => (md.ObjectV1.IsGetter || md.ObjectV1.IsSetter) &&
+                    (added ? md.Operation.IsAdded : md.Operation.IsRemoved))
+                .GroupBy(md => source.Properties.Single(p => p.GetMethod == md.ObjectV1 || p.SetMethod == md.ObjectV1))
+                .Select(g => g.Key);
         }
     }
 }

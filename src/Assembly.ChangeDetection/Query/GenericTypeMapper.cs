@@ -4,202 +4,201 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Query
+namespace Mondo.Assembly.ChangeDetection.Query;
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Mondo.Assembly.ChangeDetection.Introspection;
+
+/// <summary>
+/// The generic type mapper.
+/// </summary>
+internal static class GenericTypeMapper
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using Mondo.Assembly.ChangeDetection.Introspection;
-
     /// <summary>
-    /// The generic type mapper.
+    /// Transforms the generic type names.
     /// </summary>
-    internal static class GenericTypeMapper
+    /// <param name="typeName">The type name.</param>
+    /// <param name="typeNameTransformer">The transformer.</param>
+    /// <returns>The transformed type name.</returns>
+    public static string TransformGenericTypeNames(string typeName, Func<string, string> typeNameTransformer)
     {
-        /// <summary>
-        /// Transforms the generic type names.
-        /// </summary>
-        /// <param name="typeName">The type name.</param>
-        /// <param name="typeNameTransformer">The transformer.</param>
-        /// <returns>The transformed type name.</returns>
-        public static string TransformGenericTypeNames(string typeName, Func<string, string> typeNameTransformer)
+        if (typeNameTransformer is null)
         {
-            if (typeNameTransformer is null)
-            {
-                throw new ArgumentNullException(nameof(typeNameTransformer));
-            }
-
-            if (string.IsNullOrEmpty(typeName))
-            {
-                return typeName;
-            }
-
-            var normalizedName = typeName.Replace(" ", string.Empty);
-
-            var formattedType = normalizedName;
-
-            var root = ParseGenericType(normalizedName);
-            if (root is not null)
-            {
-                TransformGeneric(root, typeNameTransformer);
-
-                var sb = new StringBuilder();
-                FormatExpandedGeneric(sb, root);
-                formattedType = sb.ToString();
-            }
-
-            return formattedType;
+            throw new ArgumentNullException(nameof(typeNameTransformer));
         }
 
-        /// <summary>
-        /// Converts the CLR type names.
-        /// </summary>
-        /// <param name="typeName">The type name.</param>
-        /// <returns>The converted type name.</returns>
-        public static string ConvertClrTypeName(string typeName)
+        if (string.IsNullOrEmpty(typeName))
         {
-            if (string.IsNullOrEmpty(typeName))
-            {
-                return typeName;
-            }
+            return typeName;
+        }
 
-            var normalizedName = typeName.Replace(" ", string.Empty);
+        var normalizedName = typeName.Replace(" ", string.Empty);
 
-            // No generic type then we need no mapping
-            if (typeName.IndexOf('<') == -1)
-            {
-                return TypeMapper.ShortToFull(typeName);
-            }
+        var formattedType = normalizedName;
 
-            var root = ParseGenericType(normalizedName);
+        var root = ParseGenericType(normalizedName);
+        if (root is not null)
+        {
+            TransformGeneric(root, typeNameTransformer);
 
             var sb = new StringBuilder();
-            FormatExpandedGeneric(sb, root!);
-            return sb.ToString();
+            FormatExpandedGeneric(sb, root);
+            formattedType = sb.ToString();
         }
 
-        private static void TransformGeneric(GenericType type, Func<string, string> typeNameTransformer)
-        {
-            if (type is null)
-            {
-                return;
-            }
+        return formattedType;
+    }
 
-            type.GenericTypeName = typeNameTransformer(type.GenericTypeName);
-            foreach (var typeArg in type.Arguments)
-            {
-                TransformGeneric(typeArg, typeNameTransformer);
-            }
+    /// <summary>
+    /// Converts the CLR type names.
+    /// </summary>
+    /// <param name="typeName">The type name.</param>
+    /// <returns>The converted type name.</returns>
+    public static string ConvertClrTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+        {
+            return typeName;
         }
 
-        private static GenericType? ParseGenericType(string normalizedName)
+        var normalizedName = typeName.Replace(" ", string.Empty);
+
+        // No generic type then we need no mapping
+        if (typeName.IndexOf('<') == -1)
         {
-            var curArg = new StringBuilder();
-            var root = default(GenericType?);
-            var curType = default(GenericType?);
+            return TypeMapper.ShortToFull(typeName);
+        }
 
-            // Func< Func<Func<int,int>,bool> >
-            // Func`1< Func`2< Func`2<System.Int32,System.Int32>, System.Boolean> >
-            // Func<int,bool,int>
-            for (var i = 0; i < normalizedName.Length; i++)
+        var root = ParseGenericType(normalizedName);
+
+        var sb = new StringBuilder();
+        FormatExpandedGeneric(sb, root!);
+        return sb.ToString();
+    }
+
+    private static void TransformGeneric(GenericType type, Func<string, string> typeNameTransformer)
+    {
+        if (type is null)
+        {
+            return;
+        }
+
+        type.GenericTypeName = typeNameTransformer(type.GenericTypeName);
+        foreach (var typeArg in type.Arguments)
+        {
+            TransformGeneric(typeArg, typeNameTransformer);
+        }
+    }
+
+    private static GenericType? ParseGenericType(string normalizedName)
+    {
+        var curArg = new StringBuilder();
+        var root = default(GenericType?);
+        var curType = default(GenericType?);
+
+        // Func< Func<Func<int,int>,bool> >
+        // Func`1< Func`2< Func`2<System.Int32,System.Int32>, System.Boolean> >
+        // Func<int,bool,int>
+        for (var i = 0; i < normalizedName.Length; i++)
+        {
+            if (normalizedName[i] == '<')
             {
-                if (normalizedName[i] == '<')
+                if (curType is null)
                 {
-                    if (curType is null)
-                    {
-                        curType = new GenericType(curArg.ToString(), parent: null);
-                        root = curType;
-                    }
-                    else
-                    {
-                        var newGeneric = new GenericType(curArg.ToString(), curType);
-                        curType.Arguments.Add(newGeneric);
-                        curType = newGeneric;
-                    }
-
-                    curArg.Length = 0;
-                }
-                else if (normalizedName[i] == '>')
-                {
-                    if (curArg.Length > 0 && curType is not null)
-                    {
-                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
-                    }
-
-                    if (curType?.Parent is not null)
-                    {
-                        curType = curType.Parent;
-                    }
-
-                    curArg.Length = 0;
-                }
-                else if (normalizedName[i] == ',')
-                {
-                    if (curArg.Length > 0 && curType is not null)
-                    {
-                        curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
-                    }
-
-                    curArg.Length = 0;
+                    curType = new GenericType(curArg.ToString(), parent: null);
+                    root = curType;
                 }
                 else
                 {
-                    curArg.Append(normalizedName[i]);
+                    var newGeneric = new GenericType(curArg.ToString(), curType);
+                    curType.Arguments.Add(newGeneric);
+                    curType = newGeneric;
                 }
+
+                curArg.Length = 0;
             }
-
-            return root;
-        }
-
-        private static void FormatExpandedGeneric(StringBuilder sb, GenericType type)
-        {
-            sb.Append(type.GenericTypeName);
-            if (type.Arguments.Count > 0)
+            else if (normalizedName[i] == '>')
             {
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "`{0}", type.Arguments.Count)
-                    .Append('<');
-                for (var i = 0; i < type.Arguments.Count; i++)
+                if (curArg.Length > 0 && curType is not null)
                 {
-                    var curGen = type.Arguments[i];
-                    if (curGen.Arguments.Count > 0)
-                    {
-                        FormatExpandedGeneric(sb, curGen);
-                    }
-                    else
-                    {
-                        sb.Append(curGen.GenericTypeName);
-                    }
-
-                    if (i != type.Arguments.Count - 1)
-                    {
-                        sb.Append(',');
-                    }
+                    curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
                 }
 
-                sb.Append('>');
-            }
-        }
+                if (curType?.Parent is not null)
+                {
+                    curType = curType.Parent;
+                }
 
-        private class GenericType
-        {
-            public GenericType(string typeName, GenericType? parent)
+                curArg.Length = 0;
+            }
+            else if (normalizedName[i] == ',')
             {
-                this.GenericTypeName = typeName;
-
-                var idx = typeName.IndexOf('`');
-                if (idx != -1)
+                if (curArg.Length > 0 && curType is not null)
                 {
-                    this.GenericTypeName = typeName.Substring(0, idx);
+                    curType.Arguments.Add(new GenericType(TypeMapper.ShortToFull(curArg.ToString()), parent: null));
                 }
 
-                this.Parent = parent;
+                curArg.Length = 0;
+            }
+            else
+            {
+                curArg.Append(normalizedName[i]);
+            }
+        }
+
+        return root;
+    }
+
+    private static void FormatExpandedGeneric(StringBuilder sb, GenericType type)
+    {
+        sb.Append(type.GenericTypeName);
+        if (type.Arguments.Count > 0)
+        {
+            sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "`{0}", type.Arguments.Count)
+                .Append('<');
+            for (var i = 0; i < type.Arguments.Count; i++)
+            {
+                var curGen = type.Arguments[i];
+                if (curGen.Arguments.Count > 0)
+                {
+                    FormatExpandedGeneric(sb, curGen);
+                }
+                else
+                {
+                    sb.Append(curGen.GenericTypeName);
+                }
+
+                if (i != type.Arguments.Count - 1)
+                {
+                    sb.Append(',');
+                }
             }
 
-            public IList<GenericType> Arguments { get; } = new List<GenericType>();
-
-            public GenericType? Parent { get; }
-
-            public string GenericTypeName { get; set; }
+            sb.Append('>');
         }
+    }
+
+    private class GenericType
+    {
+        public GenericType(string typeName, GenericType? parent)
+        {
+            this.GenericTypeName = typeName;
+
+            var idx = typeName.IndexOf('`');
+            if (idx != -1)
+            {
+                this.GenericTypeName = typeName.Substring(0, idx);
+            }
+
+            this.Parent = parent;
+        }
+
+        public IList<GenericType> Arguments { get; } = new List<GenericType>();
+
+        public GenericType? Parent { get; }
+
+        public string GenericTypeName { get; set; }
     }
 }
