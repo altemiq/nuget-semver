@@ -492,7 +492,7 @@ namespace Altemiq.SemanticVersioning
             var repositories = sources?
                 .Where(source => !string.IsNullOrEmpty(source))
                 .Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray();
-            return repositories is not null && repositories.Length > 0
+            return repositories?.Length > 0
                 ? repositories
                 : enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
 
