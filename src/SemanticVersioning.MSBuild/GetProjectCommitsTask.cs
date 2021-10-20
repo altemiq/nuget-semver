@@ -6,10 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System.Linq;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
-
 /// <summary>
 /// The GIT log task.
 /// </summary>

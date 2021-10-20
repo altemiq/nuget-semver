@@ -6,7 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Rules;
 
-using System.Linq;
 using Altemiq.Assembly.ChangeDetection.Diff;
 
 /// <summary>

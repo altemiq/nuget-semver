@@ -8,15 +8,14 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.CommandLine.Rendering;
-using System.Linq;
 using Altemiq.SemanticVersioning;
 
 var fileCommandBuilder = new CommandBuilder(new Command("file", "Calculated the differences between two assemblies") { Handler = System.CommandLine.Invocation.CommandHandler.Create(new ConsoleApplication.FileFunctionDelegate(ConsoleApplication.FileFunction)) })
-    .AddArgument(new Argument<System.IO.FileInfo>("first") { Description = "The first assembly" })
-    .AddArgument(new Argument<System.IO.FileInfo>("second") { Description = "The second assembly" })
+    .AddArgument(new Argument<FileInfo>("first") { Description = "The first assembly" })
+    .AddArgument(new Argument<FileInfo>("second") { Description = "The second assembly" })
     .AddOption(new Option<string>(new string[] { "-b", "--build" }, "Ths build label"));
 
-var projectOrSolutionArgument = new Argument<System.IO.FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." };
+var projectOrSolutionArgument = new Argument<FileSystemInfo?>("projectOrSolution", GetFileSystemInformation) { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one." };
 
 var configurationOption = new Option<string?>(new string[] { "--configuration", "-c" }, () => ConsoleApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'.");
 
@@ -81,7 +80,7 @@ static NuGet.Versioning.SemanticVersion? ParseVersion(ArgumentResult argumentRes
     return ConsoleApplication.DefaultPrevious;
 }
 
-static System.IO.FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
+static FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
 {
     var pathToken = argumentResult.Tokens.SingleOrDefault();
     if (pathToken is null || pathToken.Value is null)

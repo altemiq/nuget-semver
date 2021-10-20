@@ -6,8 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection;
 
-using System;
-using System.Collections.Generic;
 using Altemiq.Assembly.ChangeDetection.Infrastructure;
 
 /// <summary>

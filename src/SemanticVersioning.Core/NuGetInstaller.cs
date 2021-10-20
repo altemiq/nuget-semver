@@ -6,10 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using NuGet.Configuration;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -41,7 +37,7 @@ public static class NuGetInstaller
         bool directDownload = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var enumerableSources = sources ?? Enumerable.Empty<string>();
         var settings = Settings.LoadDefaultSettings(root);
@@ -70,7 +66,7 @@ public static class NuGetInstaller
 
         throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), version: null));
 
-        static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        static async Task<bool> IsPackageInSource(PackageIdentity packageIdentity, IEnumerable<SourceRepository> repositories, NuGet.Common.ILogger log, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -92,7 +88,7 @@ public static class NuGetInstaller
             bool includePrerelease,
             NuGet.Common.ILogger log,
             ISettings settings,
-            System.Threading.CancellationToken cancellationToken)
+            CancellationToken cancellationToken)
         {
             SourcePackageDependencyInfo? latest = default;
             foreach (var repository in GetRepositories(settings, sources))
@@ -112,7 +108,7 @@ public static class NuGetInstaller
 
             return latest;
 
-            static async Task<SourcePackageDependencyInfo?> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+            static async Task<SourcePackageDependencyInfo?> GetLatestPackage(SourceRepository source, string packageId, bool includePrerelease, NuGet.Common.ILogger log, CancellationToken cancellationToken)
             {
                 return await GetPackages(source, packageId, log, cancellationToken)
                     .Where(package => package.Listed && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
@@ -122,7 +118,7 @@ public static class NuGetInstaller
             }
         }
 
-        static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -165,7 +161,7 @@ public static class NuGetInstaller
         bool directDownload = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var package = version is null
             ? GetLatestPackage(packages, includePrerelease: false)
@@ -199,7 +195,7 @@ public static class NuGetInstaller
             return packages.FirstOrDefault(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0);
         }
 
-        static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -238,7 +234,7 @@ public static class NuGetInstaller
         IEnumerable<string>? sources = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         log ??= NuGet.Common.NullLogger.Instance;
         var settings = Settings.LoadDefaultSettings(root);
@@ -276,7 +272,7 @@ public static class NuGetInstaller
         IEnumerable<string>? sources = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var settings = Settings.LoadDefaultSettings(root);
         log ??= NuGet.Common.NullLogger.Instance;
@@ -285,7 +281,7 @@ public static class NuGetInstaller
             .SelectMany(packageName => GetPackagesFromSources(sources, packageName, log, settings, cancellationToken))
             .Where(info => info.Listed && info.HasVersion && !info.Version.IsLegacyVersion);
 
-        static IAsyncEnumerable<SourcePackageDependencyInfo> GetPackagesFromSources(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, System.Threading.CancellationToken cancellationToken)
+        static IAsyncEnumerable<SourcePackageDependencyInfo> GetPackagesFromSources(IEnumerable<string>? sources, string packageId, NuGet.Common.ILogger log, ISettings settings, CancellationToken cancellationToken)
         {
             return GetRepositories(settings, sources).ToAsyncEnumerable().SelectMany(repository => GetPackages(repository, packageId, log, cancellationToken));
         }
@@ -309,7 +305,7 @@ public static class NuGetInstaller
         IEnumerable<string>? sources = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default) => GetPackageByCommit(
+        CancellationToken cancellationToken = default) => GetPackageByCommit(
             folderCommits,
             headCommits,
             GetPackagesAsync(packageNames, sources, log, root, cancellationToken).ToEnumerable(),
@@ -336,7 +332,7 @@ public static class NuGetInstaller
         IEnumerable<string>? sources = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var settings = Settings.LoadDefaultSettings(root);
         log ??= NuGet.Common.NullLogger.Instance;
@@ -375,15 +371,15 @@ public static class NuGetInstaller
 
         return default;
 
-        static async Task<Manifest?> GetManifest(PackageIdentity package, IEnumerable<SourceRepository> sourceRepositories, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+        static async Task<Manifest?> GetManifest(PackageIdentity package, IEnumerable<SourceRepository> sourceRepositories, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, CancellationToken cancellationToken)
         {
             return package is SourcePackageDependencyInfo info
                 ? await GetManifestFromSource(info, cacheContext, logger, cancellationToken).ConfigureAwait(false)
                 : await GetManifestFromSources(package, sourceRepositories, cacheContext, logger, cancellationToken).ConfigureAwait(false);
 
-            static async Task<Manifest?> GetManifestFromSource(SourcePackageDependencyInfo info, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+            static async Task<Manifest?> GetManifestFromSource(SourcePackageDependencyInfo info, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, CancellationToken cancellationToken)
             {
-                var archiveStream = new System.IO.MemoryStream();
+                var archiveStream = new MemoryStream();
                 if (await info.Source.GetResourceAsync<HttpSourceResource>(cancellationToken).ConfigureAwait(false) is HttpSourceResource httpSourceResource)
                 {
                     var downloader = new FindPackagesByIdNupkgDownloader(httpSourceResource.HttpSource);
@@ -412,7 +408,7 @@ public static class NuGetInstaller
 #endif
             }
 
-            static async Task<Manifest?> GetManifestFromSources(PackageIdentity package, IEnumerable<SourceRepository> sources, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, System.Threading.CancellationToken cancellationToken)
+            static async Task<Manifest?> GetManifestFromSources(PackageIdentity package, IEnumerable<SourceRepository> sources, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, CancellationToken cancellationToken)
             {
                 foreach (var source in sources)
                 {
@@ -449,7 +445,7 @@ public static class NuGetInstaller
         IEnumerable<string>? sources = default,
         NuGet.Common.ILogger? log = default,
         string? root = default,
-        System.Threading.CancellationToken cancellationToken = default) => GetLatestPackagesAsync(
+        CancellationToken cancellationToken = default) => GetLatestPackagesAsync(
             GetPackagesAsync(packageNames, sources, log, root, cancellationToken),
             cancellationToken);
 
@@ -461,7 +457,7 @@ public static class NuGetInstaller
     /// <returns>The latest NuGet packages.</returns>
     public static async IAsyncEnumerable<PackageIdentity> GetLatestPackagesAsync(
         this IAsyncEnumerable<PackageIdentity> packages,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken = default)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var group in packages
             .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease))
@@ -519,7 +515,7 @@ public static class NuGetInstaller
         SourceRepository source,
         string packageId,
         NuGet.Common.ILogger log,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken cancellationToken)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -554,7 +550,7 @@ public static class NuGetInstaller
         bool useCache,
         bool addToCache,
         NuGet.Common.ILogger logger,
-        System.Threading.CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -590,7 +586,7 @@ public static class NuGetInstaller
         bool useCache,
         bool addToCache,
         NuGet.Common.ILogger logger,
-        System.Threading.CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -617,7 +613,7 @@ public static class NuGetInstaller
         ISettings settings,
         bool addToCache,
         NuGet.Common.ILogger logger,
-        System.Threading.CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         var findPackagesByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
         using var packageDownloder = await findPackagesByIdResource.GetPackageDownloaderAsync(package, cacheContext, logger, cancellationToken).ConfigureAwait(false);
@@ -701,9 +697,9 @@ public static class NuGetInstaller
                     return false;
                 }
 
-                return FilesContentsAreEqual(new System.IO.FileInfo(sourceFile), new System.IO.FileInfo(destinationFile));
+                return FilesContentsAreEqual(new FileInfo(sourceFile), new FileInfo(destinationFile));
 
-                static bool FilesContentsAreEqual(System.IO.FileInfo first, System.IO.FileInfo second)
+                static bool FilesContentsAreEqual(FileInfo first, FileInfo second)
                 {
                     if (first.Length != second.Length)
                     {
@@ -717,7 +713,7 @@ public static class NuGetInstaller
                     secondFileStream?.Dispose();
                     return result;
 
-                    static bool StreamsContentsAreEqual(System.IO.Stream first, System.IO.Stream second)
+                    static bool StreamsContentsAreEqual(Stream first, Stream second)
                     {
                         const int sizeOfLong = sizeof(long);
                         const int bufferSize = 1024 * sizeOfLong;
@@ -783,7 +779,7 @@ public static class NuGetInstaller
         NuGet.Versioning.SemanticVersion version,
         NuGet.Common.ILogger log,
         ISettings settings,
-        System.Threading.CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         foreach (var repository in GetRepositories(settings, sources))
         {
@@ -798,7 +794,7 @@ public static class NuGetInstaller
 
         return default;
 
-        static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, System.Threading.CancellationToken cancellationToken)
+        static async Task<SourcePackageDependencyInfo?> GetPackage(SourceRepository source, string packageId, NuGet.Versioning.SemanticVersion version, NuGet.Common.ILogger log, CancellationToken cancellationToken)
         {
             return await GetPackages(source, packageId, log, cancellationToken)
                 .FirstOrDefaultAsync(package => package.Listed && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0, cancellationToken)
@@ -806,7 +802,7 @@ public static class NuGetInstaller
         }
     }
 
-    private static async Task<string> InstallToTemp(PackageReaderBase reader, NuGet.Common.ILogger logger, PackageSaveMode packageSaveMode = PackageSaveMode.Files, XmlDocFileSaveMode xmlDocFileSaveMode = default, System.Threading.CancellationToken cancellationToken = default)
+    private static async Task<string> InstallToTemp(PackageReaderBase reader, NuGet.Common.ILogger logger, PackageSaveMode packageSaveMode = PackageSaveMode.Files, XmlDocFileSaveMode xmlDocFileSaveMode = default, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

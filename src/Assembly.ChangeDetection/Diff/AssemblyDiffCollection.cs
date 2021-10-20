@@ -6,7 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Diff;
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using Mono.Cecil;
 

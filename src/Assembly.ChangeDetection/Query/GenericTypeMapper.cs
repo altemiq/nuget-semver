@@ -6,8 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Query;
 
-using System;
-using System.Collections.Generic;
 using System.Text;
 using Altemiq.Assembly.ChangeDetection.Introspection;
 
@@ -180,7 +178,7 @@ internal static class GenericTypeMapper
         }
     }
 
-    private class GenericType
+    private sealed class GenericType
     {
         public GenericType(string typeName, GenericType? parent)
         {

@@ -6,8 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using Microsoft.Build.Framework;
-
 /// <summary>
 /// Reads the version from the file.
 /// </summary>

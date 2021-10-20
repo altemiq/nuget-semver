@@ -6,9 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Diff;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Altemiq.Assembly.ChangeDetection.Infrastructure;
 using Altemiq.Assembly.ChangeDetection.Introspection;
 using Altemiq.Assembly.ChangeDetection.Query;

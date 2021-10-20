@@ -6,8 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Diff;
 
-using System;
-using System.Linq;
 using Altemiq.Assembly.ChangeDetection.Introspection;
 using Altemiq.Assembly.ChangeDetection.Query;
 using Mono.Cecil;
@@ -118,14 +116,14 @@ public sealed class TypeDiff
 
     private static bool IsSameBaseType(TypeDefinition t1, TypeDefinition t2)
     {
-        static bool CompareNull(object o1, object o2)
-        {
-            return o1 is null ? o2 is null : !(o2 is null);
-        }
-
         return CompareNull(t1, t2)
             && CompareNull(t1.BaseType, t2.BaseType)
             && string.Equals(t1.BaseType.FullName, t2.BaseType.FullName, StringComparison.Ordinal);
+
+        static bool CompareNull(object o1, object o2)
+        {
+            return o1 is null ? o2 is null : o2 is not null;
+        }
     }
 
     private void DoDiff(QueryAggregator diffQueries)

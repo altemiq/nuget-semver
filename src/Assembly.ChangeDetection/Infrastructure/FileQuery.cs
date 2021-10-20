@@ -6,11 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Infrastructure;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
 /// <summary>
 /// The file query.
 /// </summary>

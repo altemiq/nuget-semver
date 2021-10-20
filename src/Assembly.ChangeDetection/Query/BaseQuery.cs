@@ -6,7 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Query;
 
-using System;
 using System.Text.RegularExpressions;
 
 /// <summary>
@@ -101,14 +100,14 @@ internal abstract class BaseQuery
     protected internal virtual bool? Captures(Match m, string value)
     {
         var notValue = "!" + value;
-        foreach (Capture capture in m.Groups["modifiers"].Captures)
+        foreach (var captureValue in m.Groups["modifiers"].Captures.OfType<Capture>().Select(capture => capture.Value.TrimEnd()))
         {
-            if (string.Equals(value, capture.Value.TrimEnd(), StringComparison.Ordinal))
+            if (string.Equals(value, captureValue, StringComparison.Ordinal))
             {
                 return true;
             }
 
-            if (string.Equals(notValue, capture.Value.TrimEnd(), StringComparison.Ordinal))
+            if (string.Equals(notValue, captureValue, StringComparison.Ordinal))
             {
                 return false;
             }

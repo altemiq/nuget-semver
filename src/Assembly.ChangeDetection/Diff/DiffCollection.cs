@@ -6,9 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Diff;
 
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// The difference collection.
 /// </summary>

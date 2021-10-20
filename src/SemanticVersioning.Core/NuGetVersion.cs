@@ -6,10 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// Methods for dealing with <see cref="NuGet.Versioning.NuGetVersion"/>.
 /// </summary>

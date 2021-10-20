@@ -6,15 +6,10 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System;
-using System.Linq;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
-
 /// <summary>
 /// The semantic versioning task.
 /// </summary>
-public class SemanticVersioningTask : Task
+public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
 {
     /// <summary>
     /// Gets or sets the project directory.

@@ -6,7 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System;
 using System.Reflection;
 
 /// <summary>

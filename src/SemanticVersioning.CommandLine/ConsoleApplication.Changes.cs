@@ -52,7 +52,7 @@ internal static partial class ConsoleApplication
             PrintBreakingChange(diffResult.Operation, message, tabs);
         }
 
-        void WriteLine(System.ConsoleColor? consoleColor, string value, int tabs = 0)
+        void WriteLine(ConsoleColor? consoleColor, string value, int tabs = 0)
         {
             var message = string.Concat(new string('\t', tabs), value);
             if (console is System.CommandLine.Rendering.ITerminal terminal)
@@ -76,7 +76,7 @@ internal static partial class ConsoleApplication
             return breakingChanges && changedBaseType;
         }
 
-        bool ShouldPrintChangedTypes(System.Collections.Generic.IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
+        bool ShouldPrintChangedTypes(IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
         {
             return typeDifferences.Any(ShouldPrintChangedType);
         }

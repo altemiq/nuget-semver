@@ -6,10 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Infrastructure;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// The list extensions.
 /// </summary>

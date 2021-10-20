@@ -1,0 +1,4 @@
+[*.cs]
+
+# MA0047: Declare types in namespaces
+dotnet_diagnostic.MA0047.severity = none

@@ -6,8 +6,6 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Query;
 
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 /// <summary>

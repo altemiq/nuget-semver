@@ -9,7 +9,7 @@ namespace Altemiq.SemanticVersioning;
 /// <summary>
 /// The base GIT task.
 /// </summary>
-public abstract class GitTask : Microsoft.Build.Utilities.ToolTask
+public abstract class GitTask : ToolTask
 {
     /// <inheritdoc/>
     protected override string ToolName => "git";

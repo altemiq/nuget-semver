@@ -19,7 +19,7 @@ public sealed class GetHeadCommitsTask : GitLogTask
     /// <summary>
     /// Gets or sets the project dir.
     /// </summary>
-    [Microsoft.Build.Framework.Required]
+    [Required]
     public string ProjectDir { get; set; } = default!;
 
     /// <summary>
@@ -67,5 +67,5 @@ public sealed class GetHeadCommitsTask : GitLogTask
     protected override string? GetWorkingDirectory() => GetBaseDirectory(this.ProjectDir);
 
     /// <inheritdoc/>
-    protected override Microsoft.Build.Framework.ITaskItem? GetPath() => default;
+    protected override ITaskItem? GetPath() => default;
 }

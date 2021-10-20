@@ -6,9 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System.Linq;
-using Microsoft.Build.Framework;
-
 /// <summary>
 /// Gets the latest commit for a set of paths.
 /// </summary>
@@ -28,14 +25,14 @@ public sealed class GetLatestCommitTask : Microsoft.Build.Utilities.Task
     [Output]
     public string? Commit { get; private set; }
 
-    /// <inheritdoc cref="Microsoft.Build.Utilities.ToolTask.ToolPath" />
+    /// <inheritdoc cref="ToolTask.ToolPath" />
     public string ToolPath
     {
         get => this.task.ToolPath;
         set => this.task.ToolPath = value;
     }
 
-    /// <inheritdoc cref="Microsoft.Build.Utilities.ToolTask.ToolExe" />
+    /// <inheritdoc cref="ToolTask.ToolExe" />
     public string ToolExe
     {
         get => this.task.ToolExe;
