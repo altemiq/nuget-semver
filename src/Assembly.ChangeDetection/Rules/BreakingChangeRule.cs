@@ -6,7 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Rules;
 
-using System.Linq;
 using Mondo.Assembly.ChangeDetection.Diff;
 
 /// <summary>

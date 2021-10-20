@@ -6,8 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Query;
 
-using System.Collections.Generic;
-using System.Linq;
 using Mondo.Assembly.ChangeDetection.Introspection;
 using Mono.Cecil;
 
@@ -145,28 +143,28 @@ internal class QueryAggregator
         return result.ToArray();
     }
 
-    private class TypeNameComparer : IEqualityComparer<TypeDefinition>
+    private sealed class TypeNameComparer : IEqualityComparer<TypeDefinition>
     {
         public bool Equals(TypeDefinition x, TypeDefinition y) => string.Equals(x.FullName, y.FullName, System.StringComparison.Ordinal);
 
         public int GetHashCode(TypeDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
     }
 
-    private class MethodComparer : IEqualityComparer<MethodDefinition>
+    private sealed class MethodComparer : IEqualityComparer<MethodDefinition>
     {
         public bool Equals(MethodDefinition x, MethodDefinition y) => x.IsEqual(y);
 
         public int GetHashCode(MethodDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
     }
 
-    private class FieldComparer : IEqualityComparer<FieldDefinition>
+    private sealed class FieldComparer : IEqualityComparer<FieldDefinition>
     {
         public bool Equals(FieldDefinition x, FieldDefinition y) => x.IsEqual(y);
 
         public int GetHashCode(FieldDefinition obj) => System.StringComparer.Ordinal.GetHashCode(obj.Name);
     }
 
-    private class EventComparer : IEqualityComparer<EventDefinition>
+    private sealed class EventComparer : IEqualityComparer<EventDefinition>
     {
         public bool Equals(EventDefinition x, EventDefinition y) => x.AddMethod.IsEqual(y.AddMethod);
 

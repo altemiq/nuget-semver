@@ -6,7 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System;
 using System.Reflection;
 
 /// <summary>

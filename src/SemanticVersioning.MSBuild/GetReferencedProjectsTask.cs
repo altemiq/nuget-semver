@@ -6,16 +6,10 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
-
 /// <summary>
 /// Gets the referenced projects.
 /// </summary>
-public sealed class GetReferencedProjectsTask : Task
+public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
 {
     /// <summary>
     /// Gets or sets the project path.

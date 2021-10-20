@@ -9,7 +9,7 @@ namespace Mondo.Assembly.ChangeDetection.Query;
 /// <summary>
 /// The type query mode.
 /// </summary>
-[System.Flags]
+[Flags]
 internal enum TypeQueryMode
 {
     /// <summary>

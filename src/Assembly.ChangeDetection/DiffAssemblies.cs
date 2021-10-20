@@ -6,8 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection;
 
-using System;
-using System.Collections.Generic;
 using Mondo.Assembly.ChangeDetection.Infrastructure;
 
 /// <summary>

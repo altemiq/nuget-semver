@@ -6,9 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Diff;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Mondo.Assembly.ChangeDetection.Infrastructure;
 using Mondo.Assembly.ChangeDetection.Introspection;
 using Mondo.Assembly.ChangeDetection.Query;

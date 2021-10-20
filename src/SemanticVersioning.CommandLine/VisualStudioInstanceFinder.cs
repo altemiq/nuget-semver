@@ -6,15 +6,12 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System;
-using System.Linq;
-
 /// <summary>
 /// The <see cref="Microsoft.Build.Locator.VisualStudioInstance"/> finder.
 /// </summary>
 internal class VisualStudioInstanceFinder
 {
-    private readonly System.Collections.Generic.IDictionary<NuGet.Versioning.SemanticVersion, Microsoft.Build.Locator.VisualStudioInstance> instances;
+    private readonly IDictionary<NuGet.Versioning.SemanticVersion, Microsoft.Build.Locator.VisualStudioInstance> instances;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="VisualStudioInstanceFinder"/> class.
@@ -28,14 +25,14 @@ internal class VisualStudioInstanceFinder
     /// Initialises a new instance of the <see cref="VisualStudioInstanceFinder"/> class.
     /// </summary>
     /// <param name="instances">The available instances.</param>
-    public VisualStudioInstanceFinder(System.Collections.Generic.IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> instances) => this.instances = instances.ToDictionary(instance => SemanticVersion.Create(instance.Version), NuGet.Versioning.VersionComparer.VersionRelease);
+    public VisualStudioInstanceFinder(IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> instances) => this.instances = instances.ToDictionary(instance => SemanticVersion.Create(instance.Version), NuGet.Versioning.VersionComparer.VersionRelease);
 
     /// <summary>
     /// Gets the visual studio instance.
     /// </summary>
     /// <param name="path">The project or solution path.</param>
     /// <returns>The visual studio instance.</returns>
-    public Microsoft.Build.Locator.VisualStudioInstance GetVisualStudioInstance(System.IO.FileSystemInfo? path)
+    public Microsoft.Build.Locator.VisualStudioInstance GetVisualStudioInstance(FileSystemInfo? path)
     {
         var instance = FindGlobalJson(path) is string globalJson
             ? this.GetVisualStudioInstance(globalJson)
@@ -43,12 +40,12 @@ internal class VisualStudioInstanceFinder
 
         return instance ?? throw new InvalidOperationException("No instances of MSBuild could be detected.");
 
-        static string? FindGlobalJson(System.IO.FileSystemInfo? path)
+        static string? FindGlobalJson(FileSystemInfo? path)
         {
             var directory = path switch
             {
-                System.IO.DirectoryInfo directoryInfo => directoryInfo.FullName,
-                System.IO.FileInfo fileInfo => fileInfo.DirectoryName,
+                DirectoryInfo directoryInfo => directoryInfo.FullName,
+                FileInfo fileInfo => fileInfo.DirectoryName,
                 _ => System.IO.Directory.GetCurrentDirectory(),
             };
 
@@ -146,7 +143,7 @@ internal class VisualStudioInstanceFinder
         }
     }
 
-    private sealed class RollForwardComparer : System.Collections.Generic.IComparer<NuGet.Versioning.SemanticVersion>
+    private sealed class RollForwardComparer : IComparer<NuGet.Versioning.SemanticVersion>
     {
         private readonly RollForwardPolicy policy;
 

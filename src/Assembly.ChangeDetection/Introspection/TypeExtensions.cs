@@ -6,10 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Introspection;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Mondo.Assembly.ChangeDetection.Diff;
 using Mono.Cecil;
 using Mono.Collections.Generic;

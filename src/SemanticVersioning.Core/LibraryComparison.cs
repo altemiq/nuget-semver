@@ -6,7 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System.Collections.Generic;
 using System.Linq;
 using Endjin.ApiChange.Api.Diff;
 using Endjin.ApiChange.Api.Introspection;

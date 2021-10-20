@@ -12,7 +12,7 @@ namespace Mondo.SemanticVersioning;
 /// <param name="Sha">The SHA.</param>
 /// <param name="AuthorDate">The author date.</param>
 /// <param name="CommitterDate">The committer date.</param>
-internal record GitCommit(string Sha, System.DateTimeOffset AuthorDate, System.DateTimeOffset CommitterDate)
+internal record GitCommit(string Sha, DateTimeOffset AuthorDate, DateTimeOffset CommitterDate)
 {
     /// <summary>
     /// Parses a new instance of a <see cref="GitCommit"/> record.

@@ -11,13 +11,13 @@ namespace Mondo.SemanticVersioning;
 /// </summary>
 internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
 {
-    private readonly Microsoft.Build.Utilities.TaskLoggingHelper logger;
+    private readonly TaskLoggingHelper logger;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="MSBuildNuGetLogger"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    public MSBuildNuGetLogger(Microsoft.Build.Utilities.TaskLoggingHelper logger) => this.logger = logger;
+    public MSBuildNuGetLogger(TaskLoggingHelper logger) => this.logger = logger;
 
     /// <inheritdoc/>
     public void Log(NuGet.Common.LogLevel level, string data)

@@ -9,7 +9,7 @@ namespace Mondo.SemanticVersioning;
 /// <summary>
 /// The output type.
 /// </summary>
-[System.Flags]
+[Flags]
 public enum OutputTypes
 {
     /// <summary>

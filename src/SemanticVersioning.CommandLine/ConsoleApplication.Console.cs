@@ -103,13 +103,13 @@ internal static partial class ConsoleApplication
         public TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output)
             : base(terminal, output) => this.terminal = terminal;
 
-        public System.ConsoleColor BackgroundColor
+        public ConsoleColor BackgroundColor
         {
             get => this.terminal.BackgroundColor;
             set => this.terminal.BackgroundColor = value;
         }
 
-        public System.ConsoleColor ForegroundColor
+        public ConsoleColor ForegroundColor
         {
             get => this.terminal.ForegroundColor;
             set => this.terminal.ForegroundColor = value;
@@ -171,9 +171,9 @@ internal static partial class ConsoleApplication
 
         public void Log(NuGet.Common.ILogMessage message) => this.Log(message.Level, message.Message);
 
-        public System.Threading.Tasks.Task LogAsync(NuGet.Common.LogLevel level, string data) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(level, data));
+        public Task LogAsync(NuGet.Common.LogLevel level, string data) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(level, data));
 
-        public System.Threading.Tasks.Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
+        public Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
 
         public void LogDebug(string data) => this.WriteLine(System.ConsoleColor.Blue, data);
 
@@ -189,7 +189,7 @@ internal static partial class ConsoleApplication
 
         public void LogWarning(string data) => this.WriteLine(System.ConsoleColor.DarkYellow, data);
 
-        private void WriteLine(System.ConsoleColor? consoleColor, string value)
+        private void WriteLine(ConsoleColor? consoleColor, string value)
         {
             if (this.console is System.CommandLine.Rendering.ITerminal terminal)
             {

@@ -6,10 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-
 /// <summary>
 /// The MSBuild application.
 /// </summary>
@@ -39,20 +35,20 @@ public static class MSBuildApplication
     /// <param name="getVersionSuffix">The function to get the version suffix.</param>
     /// <param name="logger">The logger.</param>
     /// <returns>The task.</returns>
-    public static async Task<(NuGet.Versioning.SemanticVersion Version, System.Collections.Generic.IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
+    public static async Task<(NuGet.Versioning.SemanticVersion Version, IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
         string projectDirectory,
         string assemblyName,
         string projectPackageId,
         string targetExt,
         string buildOutputTargetFolder,
         string outputPath,
-        System.Collections.Generic.IEnumerable<string> source,
-        System.Collections.Generic.IEnumerable<string> packageIds,
+        IEnumerable<string> source,
+        IEnumerable<string> packageIds,
         System.Text.RegularExpressions.Regex? packageIdRegex,
         string? packageIdReplace,
         NuGet.Versioning.SemanticVersion? previous,
-        System.Collections.Generic.IEnumerable<string> folderCommits,
-        System.Collections.Generic.IEnumerable<string> headCommits,
+        IEnumerable<string> folderCommits,
+        IEnumerable<string> headCommits,
         string? referenceCommit,
         bool noCache,
         bool directDownload,
@@ -97,7 +93,7 @@ public static class MSBuildApplication
         var previousPackages = packages.GetLatestPackages().ToArray();
         var installDir = await TryInstallPackagesAsync(packages, projectDirectory, logger).ConfigureAwait(false);
         var calculatedVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
-        var results = new System.Collections.Generic.List<ProjectResult>();
+        var results = new List<ProjectResult>();
 
         if (installDir is null)
         {
@@ -132,9 +128,9 @@ public static class MSBuildApplication
 
             var searchPattern = assemblyName + targetExt;
 #if NETSTANDARD2_1_OR_GREATER
-            var searchOptions = new System.IO.EnumerationOptions { RecurseSubdirectories = false };
+            var searchOptions = new EnumerationOptions { RecurseSubdirectories = false };
 #else
-            const System.IO.SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
+            const SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
 #endif
             foreach (var currentAssembly in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
             {
@@ -169,7 +165,7 @@ public static class MSBuildApplication
             return version?.Equals(Empty) != false;
         }
 
-        async Task<string?> TryInstallPackagesAsync(System.Collections.Generic.IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages, string projectDirectory, NuGet.Common.ILogger? logger = default)
+        async Task<string?> TryInstallPackagesAsync(IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages, string projectDirectory, NuGet.Common.ILogger? logger = default)
         {
             var previousVersion = IsNullOrEmpty(previous)
                 ? default
@@ -192,7 +188,7 @@ public static class MSBuildApplication
             return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
         }
 
-        static System.Collections.Generic.IEnumerable<T> CreateEnumerable<T>(T value)
+        static IEnumerable<T> CreateEnumerable<T>(T value)
         {
             yield return value;
         }

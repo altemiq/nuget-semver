@@ -6,7 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.SemVer;
 
-using System.Linq;
 using Mondo.Assembly.ChangeDetection.Infrastructure;
 using Mondo.Assembly.ChangeDetection.Rules;
 
@@ -34,7 +33,7 @@ public static class SemanticVersionAnalyzer
     /// <param name="prerelease">The pre-release label.</param>
     /// <param name="build">The build label.</param>
     /// <returns>The results.</returns>
-    public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
+    public static AnalysisResult Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
     {
         var previous = new FileQuery(previousAssembly);
         var current = new FileQuery(currentAssembly);
@@ -100,7 +99,7 @@ public static class SemanticVersionAnalyzer
     /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
     /// <param name="prerelease">The pre-release label.</param>
     /// <returns>The breaking change version.</returns>
-    public static NuGet.Versioning.SemanticVersion CreateBreakingChange(System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease)
+    public static NuGet.Versioning.SemanticVersion CreateBreakingChange(IEnumerable<string> lastVersions, string? prerelease)
     {
         var lastSemanticVersions = lastVersions is null
             ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
@@ -116,7 +115,7 @@ public static class SemanticVersionAnalyzer
     /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
     /// <param name="prerelease">The pre-release label.</param>
     /// <returns>The breaking change version.</returns>
-    public static NuGet.Versioning.SemanticVersion CreateFeatureChange(System.Collections.Generic.IEnumerable<string> lastVersions, string? prerelease)
+    public static NuGet.Versioning.SemanticVersion CreateFeatureChange(IEnumerable<string> lastVersions, string? prerelease)
     {
         var lastSemanticVersions = lastVersions is null
             ? Enumerable.Empty<NuGet.Versioning.SemanticVersion>()
@@ -127,7 +126,7 @@ public static class SemanticVersionAnalyzer
     }
 
     private static NuGet.Versioning.SemanticVersion GetNextPatchVersion(
-        System.Collections.Generic.IEnumerable<NuGet.Versioning.SemanticVersion> versions,
+        IEnumerable<NuGet.Versioning.SemanticVersion> versions,
         NuGet.Versioning.SemanticVersion previousVersion,
         string? prerelease)
     {
@@ -150,7 +149,7 @@ public static class SemanticVersionAnalyzer
         return default;
     }
 
-    private static System.Collections.Generic.IEnumerable<T> WhereNotNull<T>(this System.Collections.Generic.IEnumerable<T?> source)
+    private static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
     {
         foreach (var item in source)
         {

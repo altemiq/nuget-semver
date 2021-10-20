@@ -6,10 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Infrastructure;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 /// <summary>
 /// The file name comparer.
 /// </summary>

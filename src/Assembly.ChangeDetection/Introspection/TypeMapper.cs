@@ -6,8 +6,6 @@
 
 namespace Mondo.Assembly.ChangeDetection.Introspection;
 
-using System.Collections.Generic;
-
 /// <summary>
 /// The type mapper.
 /// </summary>

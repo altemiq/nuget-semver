@@ -6,9 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using LibGit2Sharp;
 
 /// <summary>

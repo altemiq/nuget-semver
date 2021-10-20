@@ -6,8 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using Microsoft.Build.Utilities;
-
 /// <summary>
 /// Writes the version to a file.
 /// </summary>
@@ -36,7 +34,7 @@ public sealed class WriteVersionToFile : Microsoft.Build.Tasks.WriteLinesToFile
     /// <inheritdoc/>
     public override bool Execute()
     {
-        this.Lines = new Microsoft.Build.Framework.ITaskItem[]
+        this.Lines = new ITaskItem[]
         {
             new TaskItem(this.Version),
             new TaskItem(this.VersionPrefix),

@@ -6,9 +6,6 @@
 
 namespace Mondo.SemanticVersioning;
 
-using System.Collections.Generic;
-using System.Linq;
-
 /// <summary>
 /// The <c>git log</c> task.
 /// </summary>
@@ -22,7 +19,7 @@ public abstract class GitLogTask : GitTask
     /// <summary>
     /// Gets the commits.
     /// </summary>
-    [Microsoft.Build.Framework.Output]
+    [Output]
     public string[] Commits { get; private set; } = System.Array.Empty<string>();
 
     /// <summary>
@@ -45,7 +42,7 @@ public abstract class GitLogTask : GitTask
     /// <inheritdoc/>
     protected override string GenerateCommandLineCommands()
     {
-        var builder = new Microsoft.Build.Utilities.CommandLineBuilder();
+        var builder = new CommandLineBuilder();
         builder.AppendTextUnquoted("log");
         builder.AppendSwitch("--no-show-signature");
         builder.AppendSwitchIfNotNull("--format=", "%H %aI %cI");
@@ -56,16 +53,16 @@ public abstract class GitLogTask : GitTask
     }
 
     /// <inheritdoc/>
-    protected override string? GetWorkingDirectory() => this.GetPath() is Microsoft.Build.Framework.ITaskItem taskItem ? GetBaseDirectory(taskItem.ItemSpec) : default;
+    protected override string? GetWorkingDirectory() => this.GetPath() is ITaskItem taskItem ? GetBaseDirectory(taskItem.ItemSpec) : default;
 
     /// <summary>
     /// Gets the path to use for the process.
     /// </summary>
     /// <returns>The path.</returns>
-    protected abstract Microsoft.Build.Framework.ITaskItem? GetPath();
+    protected abstract ITaskItem? GetPath();
 
     /// <inheritdoc/>
-    protected override void LogEventsFromTextOutput(string singleLine, Microsoft.Build.Framework.MessageImportance messageImportance)
+    protected override void LogEventsFromTextOutput(string singleLine, MessageImportance messageImportance)
     {
         this.GitCommits.Add(GitCommit.Parse(singleLine));
         base.LogEventsFromTextOutput(singleLine, messageImportance);

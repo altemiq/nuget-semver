@@ -6,10 +6,7 @@
 
 namespace Mondo.Assembly.ChangeDetection.Query;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using Mono.Cecil;
 
 /// <summary>

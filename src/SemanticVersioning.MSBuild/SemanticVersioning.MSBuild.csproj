@@ -87,4 +87,9 @@
     </ItemGroup>
   </Target>
 
+  <ItemGroup>
+    <Using Include="Microsoft.Build.Framework" />
+    <Using Include="Microsoft.Build.Utilities" />
+  </ItemGroup>
+
 </Project>

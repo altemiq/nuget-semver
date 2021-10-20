@@ -14,20 +14,20 @@ public sealed class GetBranchNameTask : GitTask
     /// <summary>
     /// Gets or sets the project dir.
     /// </summary>
-    [Microsoft.Build.Framework.Required]
+    [Required]
     public string ProjectDir { get; set; } = default!;
 
     /// <summary>
     /// Gets the latest commit.
     /// </summary>
-    [Microsoft.Build.Framework.Output]
+    [Output]
     public string? Branch { get; private set; }
 
     /// <inheritdoc/>
     protected override string GenerateCommandLineCommands()
     {
         ////System.Diagnostics.Debugger.Launch();
-        var builder = new Microsoft.Build.Utilities.CommandLineBuilder();
+        var builder = new CommandLineBuilder();
         builder.AppendSwitch("branch");
         builder.AppendSwitch("--show-current");
         return builder.ToString();
@@ -37,7 +37,7 @@ public sealed class GetBranchNameTask : GitTask
     protected override string? GetWorkingDirectory() => GetBaseDirectory(this.ProjectDir);
 
     /// <inheritdoc/>
-    protected override void LogEventsFromTextOutput(string singleLine, Microsoft.Build.Framework.MessageImportance messageImportance)
+    protected override void LogEventsFromTextOutput(string singleLine, MessageImportance messageImportance)
     {
         this.Branch = singleLine;
         base.LogEventsFromTextOutput(singleLine, messageImportance);
