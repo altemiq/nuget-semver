@@ -89,9 +89,9 @@ static FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
     }
 
     var path = pathToken.Value;
-    if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
+    if (File.Exists(path) || Directory.Exists(path))
     {
-        return (System.IO.File.GetAttributes(path) & System.IO.FileAttributes.Directory) != 0
+        return (File.GetAttributes(path) & FileAttributes.Directory) != 0
             ? new System.IO.DirectoryInfo(path)
             : new System.IO.FileInfo(path);
     }

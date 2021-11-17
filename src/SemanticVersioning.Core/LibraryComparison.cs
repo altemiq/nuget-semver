@@ -29,7 +29,7 @@ public static class LibraryComparison
     public static (NuGet.Versioning.SemanticVersion? Version, SemanticVersionChange Change, AssemblyDiffCollection Differences) Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
     {
         var differences = DetectChanges(previousAssembly, currentAssembly);
-        var resultsType = System.IO.File.Exists(previousAssembly)
+        var resultsType = File.Exists(previousAssembly)
             ? GetMinimumAcceptableChange(differences)
             : SemanticVersionChange.Major;
         var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
@@ -51,8 +51,8 @@ public static class LibraryComparison
     /// </returns>
     public static AssemblyDiffCollection DetectChanges(string pathToOldAssembly, string pathToNewAssembly)
     {
-        var oldExists = System.IO.File.Exists(pathToOldAssembly);
-        var newExists = System.IO.File.Exists(pathToNewAssembly);
+        var oldExists = File.Exists(pathToOldAssembly);
+        var newExists = File.Exists(pathToNewAssembly);
         return (oldExists, newExists) switch
         {
             (true, true) => DetectChangesCore(),

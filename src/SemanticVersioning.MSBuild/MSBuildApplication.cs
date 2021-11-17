@@ -104,14 +104,14 @@ public static class MSBuildApplication
         }
         else
         {
-            var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(System.IO.Path.Combine(installDir, buildOutputTargetFolder));
+            var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(Path.Combine(installDir, buildOutputTargetFolder));
 
             // Get the package output path
-            var fullPackageOutputPath = TrimEndingDirectorySeparator(System.IO.Path.Combine(projectDirectory, outputPath.Replace('\\', System.IO.Path.DirectorySeparatorChar)));
+            var fullPackageOutputPath = TrimEndingDirectorySeparator(Path.Combine(projectDirectory, outputPath.Replace('\\', Path.DirectorySeparatorChar)));
 
             // check the frameworks
-            var currentFrameworks = System.IO.Directory.EnumerateDirectories(fullPackageOutputPath).Select(System.IO.Path.GetFileName).ToArray();
-            var previousFrameworks = System.IO.Directory.EnumerateDirectories(installedBuildOutputTargetFolder).Select(System.IO.Path.GetFileName).ToArray();
+            var currentFrameworks = Directory.EnumerateDirectories(fullPackageOutputPath).Select(Path.GetFileName).ToArray();
+            var previousFrameworks = Directory.EnumerateDirectories(installedBuildOutputTargetFolder).Select(Path.GetFileName).ToArray();
             var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
             if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
             {
@@ -130,9 +130,9 @@ public static class MSBuildApplication
 #if NETSTANDARD2_1_OR_GREATER
             var searchOptions = new EnumerationOptions { RecurseSubdirectories = false };
 #else
-            const SearchOption searchOptions = System.IO.SearchOption.TopDirectoryOnly;
+            const SearchOption searchOptions = SearchOption.TopDirectoryOnly;
 #endif
-            foreach (var currentAssembly in frameworks.SelectMany(framework => System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
+            foreach (var currentAssembly in frameworks.SelectMany(framework => Directory.EnumerateFiles(Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
             {
                 var oldAssembly = currentAssembly
 #if NETSTANDARD2_1_OR_GREATER
@@ -141,7 +141,7 @@ public static class MSBuildApplication
                     .Replace(fullPackageOutputPath, installedBuildOutputTargetFolder);
 #endif
                 var differences = LibraryComparison.DetectChanges(oldAssembly, currentAssembly);
-                var resultsType = System.IO.File.Exists(oldAssembly)
+                var resultsType = File.Exists(oldAssembly)
                     ? LibraryComparison.GetMinimumAcceptableChange(differences)
                     : SemanticVersionChange.Major;
                 var lastPackage = NuGetVersion.GetLastestPackage(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousPackages, releasePackage);
@@ -155,7 +155,7 @@ public static class MSBuildApplication
                 calculatedVersion = calculatedVersion.Max(version);
             }
 
-            System.IO.Directory.Delete(installDir, recursive: true);
+            Directory.Delete(installDir, recursive: true);
         }
 
         return (calculatedVersion, results, Published: false);
@@ -185,7 +185,7 @@ public static class MSBuildApplication
 
         static string TrimEndingDirectorySeparator(string path)
         {
-            return path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            return path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         static IEnumerable<T> CreateEnumerable<T>(T value)

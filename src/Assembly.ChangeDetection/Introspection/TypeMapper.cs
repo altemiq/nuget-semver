@@ -11,7 +11,7 @@ namespace Mondo.Assembly.ChangeDetection.Introspection;
 /// </summary>
 internal static class TypeMapper
 {
-    private static readonly IDictionary<string, string> SimpleType2FullType = new Dictionary<string, string>(System.StringComparer.Ordinal)
+    private static readonly IDictionary<string, string> SimpleType2FullType = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         { "bool", "System.Boolean" },
         { "byte", "System.Byte" },
@@ -50,7 +50,7 @@ internal static class TypeMapper
         { "Void", "System.Void" },
     };
 
-    private static readonly IDictionary<string, string> FullType2SimpleType = new Dictionary<string, string>(System.StringComparer.Ordinal)
+    private static readonly IDictionary<string, string> FullType2SimpleType = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         { "System.Boolean", "bool" },
         { "System.Byte", "byte" },

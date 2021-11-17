@@ -34,9 +34,9 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
         {
             var messageImportance = level switch
             {
-                NuGet.Common.LogLevel.Debug or NuGet.Common.LogLevel.Verbose or NuGet.Common.LogLevel.Minimal => Microsoft.Build.Framework.MessageImportance.Low,
-                NuGet.Common.LogLevel.Information => Microsoft.Build.Framework.MessageImportance.Normal,
-                NuGet.Common.LogLevel.Warning or NuGet.Common.LogLevel.Error => Microsoft.Build.Framework.MessageImportance.High,
+                NuGet.Common.LogLevel.Debug or NuGet.Common.LogLevel.Verbose or NuGet.Common.LogLevel.Minimal => MessageImportance.Low,
+                NuGet.Common.LogLevel.Information => MessageImportance.Normal,
+                NuGet.Common.LogLevel.Warning or NuGet.Common.LogLevel.Error => MessageImportance.High,
                 _ => default,
             };
 
@@ -54,22 +54,22 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
     public System.Threading.Tasks.Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
 
     /// <inheritdoc/>
-    public void LogDebug(string data) => this.logger.LogMessage(Microsoft.Build.Framework.MessageImportance.Low, data);
+    public void LogDebug(string data) => this.logger.LogMessage(MessageImportance.Low, data);
 
     /// <inheritdoc/>
     public void LogError(string data) => this.logger.LogError(data);
 
     /// <inheritdoc/>
-    public void LogInformation(string data) => this.logger.LogMessage(Microsoft.Build.Framework.MessageImportance.Normal, data);
+    public void LogInformation(string data) => this.logger.LogMessage(MessageImportance.Normal, data);
 
     /// <inheritdoc/>
-    public void LogInformationSummary(string data) => this.logger.LogMessage(Microsoft.Build.Framework.MessageImportance.Normal, data);
+    public void LogInformationSummary(string data) => this.logger.LogMessage(MessageImportance.Normal, data);
 
     /// <inheritdoc/>
-    public void LogMinimal(string data) => this.logger.LogMessage(Microsoft.Build.Framework.MessageImportance.Low, data);
+    public void LogMinimal(string data) => this.logger.LogMessage(MessageImportance.Low, data);
 
     /// <inheritdoc/>
-    public void LogVerbose(string data) => this.logger.LogMessage(Microsoft.Build.Framework.MessageImportance.Low, data);
+    public void LogVerbose(string data) => this.logger.LogMessage(MessageImportance.Low, data);
 
     /// <inheritdoc/>
     public void LogWarning(string data) => this.logger.LogWarning(data);

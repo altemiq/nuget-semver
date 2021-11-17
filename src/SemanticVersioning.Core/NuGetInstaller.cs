@@ -61,7 +61,7 @@ public static class NuGetInstaller
 
         if (latest != default && await IsPackageInSource(latest, GetRepositories(settings, enumerableSources), log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false))
         {
-            return await InstallPackage(latest, enumerableSources, settings, System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), latest.Id), !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            return await InstallPackage(latest, enumerableSources, settings, Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), latest.Id), !noCache, !directDownload, log ?? NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
         }
 
         throw new PackageNotFoundProtocolException(latest ?? new PackageIdentity(packageNames.FirstOrDefault(), version: null));
@@ -123,7 +123,7 @@ public static class NuGetInstaller
             cancellationToken.ThrowIfCancellationRequested();
 
             // Setup local installation path
-            var localInstallPath = installPath ?? System.IO.Directory.GetCurrentDirectory();
+            var localInstallPath = installPath ?? Directory.GetCurrentDirectory();
 
             // Read package file from remote or cache
             log.LogInformation($"Downloading package {package}");
@@ -134,10 +134,10 @@ public static class NuGetInstaller
 
             var tempInstallPath = await InstallToTemp(packageReader, log, cancellationToken: cancellationToken).ConfigureAwait(false);
             CopyFiles(log, tempInstallPath, localInstallPath);
-            System.IO.Directory.Delete(tempInstallPath, recursive: true);
+            Directory.Delete(tempInstallPath, recursive: true);
 
             log.LogInformation($"Package {package} installation complete");
-            return System.IO.Path.GetFullPath(localInstallPath);
+            return Path.GetFullPath(localInstallPath);
         }
     }
 
@@ -176,7 +176,7 @@ public static class NuGetInstaller
             package,
             sources ?? Enumerable.Empty<string>(),
             Settings.LoadDefaultSettings(root),
-            System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName(), package.Id),
+            Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), package.Id),
             !noCache,
             !directDownload,
             log ?? NuGet.Common.NullLogger.Instance,
@@ -200,7 +200,7 @@ public static class NuGetInstaller
             cancellationToken.ThrowIfCancellationRequested();
 
             // Setup local installation path
-            var localInstallPath = installPath ?? System.IO.Directory.GetCurrentDirectory();
+            var localInstallPath = installPath ?? Directory.GetCurrentDirectory();
 
             // Read package file from remote or cache
             log.LogInformation($"Downloading package {package}");
@@ -213,10 +213,10 @@ public static class NuGetInstaller
 
             var tempInstallPath = await InstallToTemp(packageReader, log, cancellationToken: cancellationToken).ConfigureAwait(false);
             CopyFiles(log, tempInstallPath, localInstallPath);
-            System.IO.Directory.Delete(tempInstallPath, recursive: true);
+            Directory.Delete(tempInstallPath, recursive: true);
 
             log.LogInformation($"Package {package} installation complete");
-            return System.IO.Path.GetFullPath(localInstallPath);
+            return Path.GetFullPath(localInstallPath);
         }
     }
 
@@ -246,14 +246,14 @@ public static class NuGetInstaller
 
         var manifest = GetManifest(installDir);
 
-        System.IO.Directory.Delete(installDir, recursive: true);
+        Directory.Delete(installDir, recursive: true);
 
         return manifest;
 
         static Manifest GetManifest(string path, string? name = "*")
         {
-            var file = System.IO.Directory.EnumerateFiles(path, name + PackagingCoreConstants.NuspecExtension).Single();
-            using var stream = System.IO.File.OpenRead(file);
+            var file = Directory.EnumerateFiles(path, name + PackagingCoreConstants.NuspecExtension).Single();
+            using var stream = File.OpenRead(file);
             return Manifest.ReadFrom(stream, validateSchema: true);
         }
     }
@@ -626,7 +626,7 @@ public static class NuGetInstaller
 
         logger.LogInformation($"Getting {package} from {repository}");
 
-        var tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+        var tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         var downloaded = await packageDownloder.CopyNupkgFileToAsync(tempFile, cancellationToken).ConfigureAwait(false);
 
         if (!downloaded)
@@ -636,7 +636,7 @@ public static class NuGetInstaller
 
         if (addToCache)
         {
-            var stream = System.IO.File.OpenRead(tempFile);
+            var stream = File.OpenRead(tempFile);
 #if NETSTANDARD2_1_OR_GREATER
             await
 #endif
@@ -653,31 +653,31 @@ public static class NuGetInstaller
 
     private static void CopyFiles(NuGet.Common.ILogger logger, string source, string destination)
     {
-        if (source[source.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+        if (source[source.Length - 1] != Path.DirectorySeparatorChar)
         {
-            source = string.Concat(source, System.IO.Path.DirectorySeparatorChar);
+            source = string.Concat(source, Path.DirectorySeparatorChar);
         }
 
         if (string.IsNullOrEmpty(destination))
         {
-            destination = System.IO.Directory.GetCurrentDirectory();
+            destination = Directory.GetCurrentDirectory();
         }
 
         // copy all the files
-        foreach (var file in System.IO.Directory.EnumerateFiles(source, "*", System.IO.SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
         {
             var relativePath = MakeRelativePath(source, file);
-            var destinationPath = System.IO.Path.Combine(destination, relativePath);
+            var destinationPath = Path.Combine(destination, relativePath);
 
             // create the directory
-            var directory = System.IO.Path.GetDirectoryName(destinationPath);
+            var directory = Path.GetDirectoryName(destinationPath);
             if (!string.IsNullOrEmpty(directory))
             {
-                System.IO.Directory.CreateDirectory(directory);
+                Directory.CreateDirectory(directory);
             }
 
             // copy to destination
-            System.IO.File.Copy(file, destinationPath, overwrite: true);
+            File.Copy(file, destinationPath, overwrite: true);
 
             if (!ValidateFileInstallation(file, source, destination))
             {
@@ -689,10 +689,10 @@ public static class NuGetInstaller
             static bool ValidateFileInstallation(string sourceFile, string source, string destination)
             {
                 var relativePath = MakeRelativePath(source, sourceFile);
-                var destinationFile = System.IO.Path.Combine(destination, relativePath);
+                var destinationFile = Path.Combine(destination, relativePath);
 
                 // check to see if this file is in the destination
-                if (!System.IO.File.Exists(destinationFile))
+                if (!File.Exists(destinationFile))
                 {
                     return false;
                 }
@@ -752,7 +752,7 @@ public static class NuGetInstaller
 
     private static string MakeRelativePath(string basePath, string absolutePath)
     {
-        if (string.IsNullOrEmpty(basePath) || !System.IO.Path.IsPathRooted(absolutePath))
+        if (string.IsNullOrEmpty(basePath) || !Path.IsPathRooted(absolutePath))
         {
             return absolutePath;
         }
@@ -769,7 +769,7 @@ public static class NuGetInstaller
         var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
         return uri.Scheme.Equals("file", StringComparison.OrdinalIgnoreCase)
-            ? relativePath.Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar)
+            ? relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
             : relativePath;
     }
 
@@ -806,7 +806,7 @@ public static class NuGetInstaller
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var tempInstallPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+        var tempInstallPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         var packageFiles = (await reader.GetFilesAsync(cancellationToken).ConfigureAwait(false)).Where(file => PackageHelper.IsPackageFile(file, packageSaveMode)).ToList();
         var packageFileExtractor = new PackageFileExtractor(packageFiles, xmlDocFileSaveMode);

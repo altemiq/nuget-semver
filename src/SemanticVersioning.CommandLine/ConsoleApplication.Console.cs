@@ -171,11 +171,11 @@ internal static partial class ConsoleApplication
 
         public void Log(NuGet.Common.ILogMessage message) => this.Log(message.Level, message.Message);
 
-        public Task LogAsync(NuGet.Common.LogLevel level, string data) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(level, data));
+        public Task LogAsync(NuGet.Common.LogLevel level, string data) => Task.Factory.StartNew(() => this.Log(level, data));
 
-        public Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
+        public Task LogAsync(NuGet.Common.ILogMessage message) => Task.Factory.StartNew(() => this.Log(message));
 
-        public void LogDebug(string data) => this.WriteLine(System.ConsoleColor.Blue, data);
+        public void LogDebug(string data) => this.WriteLine(ConsoleColor.Blue, data);
 
         public void LogError(string data) => this.console.Error.WriteLine(data);
 
@@ -183,11 +183,11 @@ internal static partial class ConsoleApplication
 
         public void LogInformationSummary(string data) => this.WriteLine(default, data);
 
-        public void LogMinimal(string data) => this.WriteLine(System.ConsoleColor.DarkGray, data);
+        public void LogMinimal(string data) => this.WriteLine(ConsoleColor.DarkGray, data);
 
-        public void LogVerbose(string data) => this.WriteLine(System.ConsoleColor.Gray, data);
+        public void LogVerbose(string data) => this.WriteLine(ConsoleColor.Gray, data);
 
-        public void LogWarning(string data) => this.WriteLine(System.ConsoleColor.DarkYellow, data);
+        public void LogWarning(string data) => this.WriteLine(ConsoleColor.DarkYellow, data);
 
         private void WriteLine(ConsoleColor? consoleColor, string value)
         {

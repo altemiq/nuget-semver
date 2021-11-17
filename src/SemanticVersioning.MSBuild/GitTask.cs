@@ -23,13 +23,13 @@ public abstract class GitTask : ToolTask
     {
         while (directory is not null)
         {
-            var git = System.IO.Path.Combine(directory, ".git");
-            if (System.IO.Directory.Exists(git))
+            var git = Path.Combine(directory, ".git");
+            if (Directory.Exists(git))
             {
                 return directory;
             }
 
-            directory = System.IO.Path.GetDirectoryName(directory);
+            directory = Path.GetDirectoryName(directory);
         }
 
         return default;
@@ -43,6 +43,6 @@ public abstract class GitTask : ToolTask
             return this.ToolExe;
         }
 
-        return System.IO.Path.Combine(this.ToolPath, this.ToolExe);
+        return Path.Combine(this.ToolPath, this.ToolExe);
     }
 }

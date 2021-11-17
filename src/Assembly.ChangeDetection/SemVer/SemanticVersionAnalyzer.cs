@@ -51,7 +51,7 @@ public static class SemanticVersionAnalyzer
             : lastVersions.Select(SafeParse).WhereNotNull().ToArray();
 
         NuGet.Versioning.SemanticVersion previousVersion;
-        if (System.IO.File.Exists(previousAssembly))
+        if (File.Exists(previousAssembly))
         {
             previousVersion = GetProductVersion(previousAssembly);
         }

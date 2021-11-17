@@ -91,7 +91,7 @@ internal class FileQuery
         get
         {
             // relative directory given use current working directory
-            if (!this.Query.Contains(System.IO.Path.DirectorySeparatorChar))
+            if (!this.Query.Contains(Path.DirectorySeparatorChar))
             {
                 return Directory.GetCurrentDirectory();
             }
