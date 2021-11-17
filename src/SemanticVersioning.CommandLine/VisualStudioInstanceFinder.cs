@@ -46,18 +46,18 @@ internal class VisualStudioInstanceFinder
             {
                 DirectoryInfo directoryInfo => directoryInfo.FullName,
                 FileInfo fileInfo => fileInfo.DirectoryName,
-                _ => System.IO.Directory.GetCurrentDirectory(),
+                _ => Directory.GetCurrentDirectory(),
             };
 
             while (directory is not null)
             {
-                var filePath = System.IO.Path.Combine(directory, "global.json");
-                if (System.IO.File.Exists(filePath))
+                var filePath = Path.Combine(directory, "global.json");
+                if (File.Exists(filePath))
                 {
                     return filePath;
                 }
 
-                directory = System.IO.Path.GetDirectoryName(directory);
+                directory = Path.GetDirectoryName(directory);
             }
 
             return default;
@@ -72,7 +72,7 @@ internal class VisualStudioInstanceFinder
     public Microsoft.Build.Locator.VisualStudioInstance GetVisualStudioInstance(string globalJson)
     {
         var global = System.Text.Json.JsonSerializer.Deserialize<Global>(
-            System.IO.File.ReadAllText(globalJson),
+            File.ReadAllText(globalJson),
             new System.Text.Json.JsonSerializerOptions
             {
                 Converters = { SemanticVersionConverter.Instance, RollForwardPolicyConverter.Instance },

@@ -26,10 +26,10 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
     /// <inheritdoc/>
     public override bool Execute()
     {
-        if (this.ProjectPath is not null && System.IO.File.Exists(this.ProjectPath))
+        if (this.ProjectPath is not null && File.Exists(this.ProjectPath))
         {
             this.ReferencedProjectDirs = GetProjects(this.ProjectPath)
-                .Select(project => System.IO.Path.GetDirectoryName(project))
+                .Select(project => Path.GetDirectoryName(project))
                 .Distinct(StringComparer.Ordinal)
                 .Select(projectDir => new TaskItem(projectDir))
                 .ToArray();
@@ -45,7 +45,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
     private static IEnumerable<string> GetProjects(string project)
     {
         var xmlDocument = new System.Xml.XmlDocument();
-        using (var xmlReader = System.Xml.XmlReader.Create(System.IO.File.OpenRead(project), new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore }))
+        using (var xmlReader = System.Xml.XmlReader.Create(File.OpenRead(project), new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore }))
         {
             xmlDocument.Load(xmlReader);
         }
@@ -56,7 +56,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
             yield break;
         }
 
-        var projectDir = System.IO.Path.GetDirectoryName(project);
+        var projectDir = Path.GetDirectoryName(project);
 
         foreach (System.Xml.XmlNode projectReference in projectReferences)
         {
@@ -68,12 +68,12 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
 #else
                     .Replace("\\", "/");
 #endif
-                if (!System.IO.Path.IsPathRooted(evaluatedPath))
+                if (!Path.IsPathRooted(evaluatedPath))
                 {
-                    evaluatedPath = System.IO.Path.Combine(projectDir, evaluatedPath);
+                    evaluatedPath = Path.Combine(projectDir, evaluatedPath);
                 }
 
-                evaluatedPath = System.IO.Path.GetFullPath(evaluatedPath);
+                evaluatedPath = Path.GetFullPath(evaluatedPath);
 
                 yield return evaluatedPath;
 

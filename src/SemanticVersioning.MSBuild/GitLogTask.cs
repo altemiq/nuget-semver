@@ -20,7 +20,7 @@ public abstract class GitLogTask : GitTask
     /// Gets the commits.
     /// </summary>
     [Output]
-    public string[] Commits { get; private set; } = System.Array.Empty<string>();
+    public string[] Commits { get; private set; } = Array.Empty<string>();
 
     /// <summary>
     /// Gets the git commits.

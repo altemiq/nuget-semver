@@ -33,7 +33,7 @@ internal static partial class ConsoleApplication
         {
             if (breakingChanges && operation.IsRemoved)
             {
-                WriteLine(System.ConsoleColor.Red, message, tabs);
+                WriteLine(ConsoleColor.Red, message, tabs);
             }
         }
 
@@ -41,7 +41,7 @@ internal static partial class ConsoleApplication
         {
             if (functionalChanges && operation.IsAdded)
             {
-                WriteLine(System.ConsoleColor.Blue, message, tabs);
+                WriteLine(ConsoleColor.Blue, message, tabs);
             }
         }
 
@@ -118,7 +118,7 @@ internal static partial class ConsoleApplication
                     WriteLine(default, $"{changedType.TypeV1}", 2);
                     if (ShouldPrintChangedBaseType(changedType.HasChangedBaseType))
                     {
-                        WriteLine(System.ConsoleColor.Red, Properties.Resources.ChangedBaseType, 3);
+                        WriteLine(ConsoleColor.Red, Properties.Resources.ChangedBaseType, 3);
                     }
 
                     if (ShouldPrintChanged(changedType.Methods))

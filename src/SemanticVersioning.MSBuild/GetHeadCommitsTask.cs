@@ -39,7 +39,7 @@ public sealed class GetHeadCommitsTask : GitLogTask
                 var index = -1;
                 for (int i = 0; i < this.GitCommits.Count; i++)
                 {
-                    if (string.Equals(this.GitCommits[i].Sha, projectCommit, System.StringComparison.Ordinal))
+                    if (string.Equals(this.GitCommits[i].Sha, projectCommit, StringComparison.Ordinal))
                     {
                         index = i;
                         break;

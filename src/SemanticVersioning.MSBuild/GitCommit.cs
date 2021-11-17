@@ -23,8 +23,8 @@ internal record GitCommit(string Sha, DateTimeOffset AuthorDate, DateTimeOffset 
     {
         var split = line.Split(' ');
         var sha = split[0];
-        var authorDate = System.DateTimeOffset.Parse(split[1], formatProvider: null, System.Globalization.DateTimeStyles.RoundtripKind);
-        var committerDate = System.DateTimeOffset.Parse(split[2], formatProvider: null, System.Globalization.DateTimeStyles.RoundtripKind);
+        var authorDate = DateTimeOffset.Parse(split[1], formatProvider: null, System.Globalization.DateTimeStyles.RoundtripKind);
+        var committerDate = DateTimeOffset.Parse(split[2], formatProvider: null, System.Globalization.DateTimeStyles.RoundtripKind);
         return new GitCommit(sha, authorDate, committerDate);
     }
 }

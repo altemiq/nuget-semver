@@ -393,12 +393,12 @@ internal static partial class ConsoleApplication
             static string ProjectPath(Microsoft.Build.Evaluation.ProjectItem projectReference)
             {
                 var path = projectReference.EvaluatedInclude;
-                if (!System.IO.Path.IsPathRooted(path))
+                if (!Path.IsPathRooted(path))
                 {
-                    path = System.IO.Path.Combine(projectReference.Project.DirectoryPath, path);
+                    path = Path.Combine(projectReference.Project.DirectoryPath, path);
                 }
 
-                return System.IO.Path.GetFullPath(path);
+                return Path.GetFullPath(path);
             }
         }
     }
@@ -426,7 +426,7 @@ internal static partial class ConsoleApplication
 
     private static IEnumerable<string> GetCommits(LibGit2Sharp.Repository repository, string projectDir, int count)
     {
-        var path = System.IO.Path.GetFullPath(projectDir);
+        var path = Path.GetFullPath(projectDir);
         if (path is null)
         {
             yield break;
@@ -486,13 +486,13 @@ internal static partial class ConsoleApplication
     {
         while (directory is not null)
         {
-            var git = System.IO.Path.Combine(directory, ".git");
-            if (System.IO.Directory.Exists(git))
+            var git = Path.Combine(directory, ".git");
+            if (Directory.Exists(git))
             {
                 return directory;
             }
 
-            directory = System.IO.Path.GetDirectoryName(directory);
+            directory = Path.GetDirectoryName(directory);
         }
 
         return default;
@@ -532,7 +532,7 @@ internal static partial class ConsoleApplication
         static Microsoft.Build.Evaluation.ProjectCollection GetProjects(FileSystemInfo projectOrSolution, string? configuration, string? platform)
         {
             var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
-            var projectOrSolutionPath = GetPath(projectOrSolution ?? new DirectoryInfo(System.IO.Directory.GetCurrentDirectory()), projectOrSolution is null);
+            var projectOrSolutionPath = GetPath(projectOrSolution ?? new DirectoryInfo(Directory.GetCurrentDirectory()), projectOrSolution is null);
             var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
                 ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
                 : default;

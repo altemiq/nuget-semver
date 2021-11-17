@@ -24,7 +24,7 @@ internal static partial class ConsoleApplication
 #if NETSTANDARD2_0
             .Contains("."))
 #else
-            .Contains(".", System.StringComparison.Ordinal))
+            .Contains(".", StringComparison.Ordinal))
 #endif
         {
             console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version), OutputTypes.TeamCity);
