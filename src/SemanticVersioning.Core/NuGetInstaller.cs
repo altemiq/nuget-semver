@@ -491,7 +491,7 @@ public static class NuGetInstaller
             .Select(source => GetFromMachineSources(source, enabledSources) ?? Repository.Factory.GetCoreV3(source)).ToArray();
         return repositories?.Length > 0
             ? repositories
-            : enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource.Source)).ToArray();
+            : enabledSources.Select(packageSource => Repository.Factory.GetCoreV3(packageSource)).ToArray();
 
         static PackageSource ResolveSource(IEnumerable<PackageSource> availableSources, string source)
         {
