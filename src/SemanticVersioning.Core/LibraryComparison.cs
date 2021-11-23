@@ -137,8 +137,7 @@ public static class LibraryComparison
             var source = added ? td.TypeV2 : td.TypeV1;
             return td
                 .Methods
-                .Where(md => (md.ObjectV1.IsGetter || md.ObjectV1.IsSetter) &&
-                    (added ? md.Operation.IsAdded : md.Operation.IsRemoved))
+                .Where(md => (md.ObjectV1.IsGetter || md.ObjectV1.IsSetter) && (added ? md.Operation.IsAdded : md.Operation.IsRemoved))
                 .GroupBy(md => source.Properties.Single(p => p.GetMethod == md.ObjectV1 || p.SetMethod == md.ObjectV1))
                 .Select(g => g.Key);
         }

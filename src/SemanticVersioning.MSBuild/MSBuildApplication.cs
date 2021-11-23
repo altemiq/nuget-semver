@@ -113,18 +113,17 @@ public static class MSBuildApplication
             var currentFrameworks = Directory.EnumerateDirectories(fullPackageOutputPath).Select(Path.GetFileName).ToArray();
             var previousFrameworks = Directory.EnumerateDirectories(installedBuildOutputTargetFolder).Select(Path.GetFileName).ToArray();
             var frameworks = currentFrameworks.Intersect(previousFrameworks, StringComparer.OrdinalIgnoreCase);
+            IList<NuGet.Versioning.SemanticVersion> previousVersions = previousPackages.Select<NuGet.Packaging.Core.PackageIdentity, NuGet.Versioning.SemanticVersion>(package => package.Version).ToList();
             if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
             {
                 // we have removed frameworks, this is a breaking change
-                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousPackages.Select(package => package.Version), getVersionSuffix(default));
+                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousVersions, getVersionSuffix(default));
             }
             else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
             {
                 // we have added frameworks, this is a feature change
-                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousPackages.Select(package => package.Version), getVersionSuffix(default));
+                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousVersions, getVersionSuffix(default));
             }
-
-            var releasePackage = NuGetVersion.GetReleasePackage(previousPackages);
 
             var searchPattern = assemblyName + targetExt;
 #if NETSTANDARD2_1_OR_GREATER
@@ -144,9 +143,7 @@ public static class MSBuildApplication
                 var resultsType = File.Exists(oldAssembly)
                     ? LibraryComparison.GetMinimumAcceptableChange(differences)
                     : SemanticVersionChange.Major;
-                var lastPackage = NuGetVersion.GetLastestPackage(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousPackages, releasePackage);
-
-                var version = NuGetVersion.CalculateNextVersion(releasePackage.Version, lastPackage?.Version, getVersionSuffix(default));
+                var version = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousVersions, getVersionSuffix(default));
                 if (version is not null && differences is not null)
                 {
                     results.Add(new(version, differences));
