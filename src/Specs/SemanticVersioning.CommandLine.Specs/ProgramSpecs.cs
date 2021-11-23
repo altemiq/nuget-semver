@@ -112,7 +112,7 @@ internal class When_running_the_program_with_a_name_change : When_running_the_pr
 
     private readonly It should_have_returned_a_version = () => console.Should().Contain("##teamcity[buildNumber '2.0.0']");
 
-    private readonly It should_have_returned_a_blank_suffix = () => console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='alpha']");
+    private readonly It should_have_returned_a_blank_suffix = () => console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='']");
 
     private readonly It should_not_have_thrown_an_exception = () => error.Should().BeEmpty();
 }
@@ -166,7 +166,7 @@ internal class When_running_the_program_with_pre_release_and_release : When_runn
 
     private readonly It should_have_returned_a_version = () => console.Should().Contain("##teamcity[buildNumber '1.0.2']");
 
-    private readonly It should_have_returned_a_blank_suffix = () => console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='develop']");
+    private readonly It should_have_returned_a_blank_suffix = () => console.Should().Contain("##teamcity[setParameter name='system.build.suffix' value='']");
 
     private readonly It should_not_have_thrown_an_exception = () => error.Should().BeEmpty();
 }

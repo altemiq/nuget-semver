@@ -60,6 +60,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.CommandL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.CommandLine.Specs", "Specs\SemanticVersioning.CommandLine.Specs\SemanticVersioning.CommandLine.Specs.csproj", "{F2F85046-636D-4FEA-B74C-5EC59ADF968C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticVersioning.Core.Tests", "Tests\SemanticVersionsing.Core.Tests\SemanticVersioning.Core.Tests.csproj", "{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C8C8CA0A-7C1B-4E53-BCF9-8D3A80BC6E51}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -106,6 +110,10 @@ Global
 		{F2F85046-636D-4FEA-B74C-5EC59ADF968C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2F85046-636D-4FEA-B74C-5EC59ADF968C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2F85046-636D-4FEA-B74C-5EC59ADF968C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,6 +131,7 @@ Global
 		{7E6417CC-2097-4E57-9916-2DD4F1B2DAFE} = {028F3616-5A1D-4352-977F-50BF81A728E9}
 		{363F2644-64D0-4EA2-AF87-4783234AC0A7} = {A39FC7D8-CCFD-41EA-B322-F2883668EB43}
 		{F2F85046-636D-4FEA-B74C-5EC59ADF968C} = {9B8BBDD3-B28D-4587-9738-53264B625CAD}
+		{0BE2B319-ABE1-4C8F-9EE6-9DE9C7F025B4} = {C8C8CA0A-7C1B-4E53-BCF9-8D3A80BC6E51}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8FC58E18-2736-4D41-A668-C02B952A2FEF}

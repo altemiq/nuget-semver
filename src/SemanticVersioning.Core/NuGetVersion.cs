@@ -32,7 +32,7 @@ public static class NuGetVersion
     {
         var previousSemanticVersions = previousVersions.ToSemanticVersions();
 
-        return CalculateVersion(semanticVersionChange, previousSemanticVersions, prerelease);
+        return CalculateVersion(semanticVersionChange, previousSemanticVersions.ToList(), prerelease);
     }
 
     /// <summary>
@@ -42,146 +42,45 @@ public static class NuGetVersion
     /// <param name="previousVersions">The previous versions.</param>
     /// <param name="prerelease">The prerelease tag.</param>
     /// <returns>The semantic version.</returns>
-    public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, string? prerelease) =>
+    public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, string? prerelease) =>
         CalculateVersion(semanticVersionChange, previousVersions, GetReleaseVersion(previousVersions), prerelease);
 
-    /// <summary>
-    /// Calculates the version.
-    /// </summary>
-    /// <param name="semanticVersionChange">The semantic version change.</param>
-    /// <param name="previousVersions">The previous versions.</param>
-    /// <param name="previousVersion">The previous version.</param>
-    /// <param name="prerelease">The prerelease tag.</param>
-    /// <returns>The semantic version.</returns>
-    public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion previousVersion, string? prerelease) =>
-        CalculateNextVersion(previousVersion, GetLastestVersion(semanticVersionChange, previousVersions, previousVersion), prerelease);
+    private static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion? previousVersion, string? prerelease)
+    {
+        var nextVersion = previousVersion is null
+            ? new NuGet.Versioning.SemanticVersion(0, 1, 0)
+            : CalculateNextVersion(previousVersion, semanticVersionChange);
+        var latestVersion = GetLatestVersion(previousVersions, nextVersion);
+        if (latestVersion is null && previousVersions.Count > 0)
+        {
+            // this has no value in the released versions.
+            return nextVersion.With(releaseLabel: prerelease);
+        }
 
-    /// <summary>
-    /// Calculates the next version.
-    /// </summary>
-    /// <param name="releaseVersion">The release version.</param>
-    /// <param name="patchVersion">The patch version.</param>
-    /// <param name="prerelease">The prerelease.</param>
-    /// <returns>The next version.</returns>
-    public static NuGet.Versioning.SemanticVersion CalculateNextVersion(NuGet.Versioning.SemanticVersion releaseVersion, NuGet.Versioning.SemanticVersion? patchVersion, string? prerelease)
+        return CalculateNextVersion(previousVersion ?? nextVersion, latestVersion, previousVersion is null && prerelease is null ? DefaultAlphaRelease : prerelease);
+    }
+
+    private static NuGet.Versioning.SemanticVersion CalculateNextVersion(NuGet.Versioning.SemanticVersion releaseVersion, NuGet.Versioning.SemanticVersion? patchVersion, string? prerelease)
     {
         if (patchVersion is null)
         {
             return releaseVersion.With(releaseLabel: prerelease ?? DefaultAlphaRelease);
         }
 
-        return patchVersion.With(patch: patchVersion.Patch + 1, releaseLabel: prerelease ?? patchVersion.Release);
+        return patchVersion.With(patch: patchVersion.Patch + 1, releaseLabel: prerelease ?? string.Empty);
     }
 
-    /// <summary>
-    /// Gets the last version.
-    /// </summary>
-    /// <param name="semanticVersionChange">The semantic version change.</param>
-    /// <param name="previousVersions">The previous versions.</param>
-    /// <returns>The last version.</returns>
-    public static NuGet.Versioning.SemanticVersion? GetLastestVersion(SemanticVersionChange semanticVersionChange, IEnumerable<string> previousVersions) =>
-        GetLastestVersion(semanticVersionChange, previousVersions.ToSemanticVersions());
-
-    /// <summary>
-    /// Gets the last version.
-    /// </summary>
-    /// <param name="semanticVersionChange">The semantic version change.</param>
-    /// <param name="previousVersions">The previous versions.</param>
-    /// <returns>The last version.</returns>
-    public static NuGet.Versioning.SemanticVersion? GetLastestVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions) =>
-        GetLastestVersion(semanticVersionChange, previousVersions, GetReleaseVersion(previousVersions));
-
-    /// <summary>
-    /// Gets the last version.
-    /// </summary>
-    /// <param name="semanticVersionChange">The semantic version change.</param>
-    /// <param name="previousVersions">The previous versions.</param>
-    /// <param name="previousVersion">The previous version.</param>
-    /// <returns>The last version.</returns>
-    public static NuGet.Versioning.SemanticVersion? GetLastestVersion(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion previousVersion)
+    private static NuGet.Versioning.SemanticVersion CalculateNextVersion(NuGet.Versioning.SemanticVersion previousVersion, SemanticVersionChange semanticVersionChange) => semanticVersionChange switch
     {
-        return semanticVersionChange switch
-        {
-            SemanticVersionChange.Major => GetPatchVersion(previousVersions, previousVersion.With(major: previousVersion.Major + 1, minor: 0, patch: 0)),
-            SemanticVersionChange.Minor => GetPatchVersion(previousVersions, previousVersion.With(minor: previousVersion.Minor + 1, patch: 0)),
-            SemanticVersionChange.Patch => GetPatchVersion(previousVersions, previousVersion.With(patch: previousVersion.Patch + 1)),
-            _ => previousVersion,
-        };
+        SemanticVersionChange.Major => previousVersion.With(major: previousVersion.Major + 1, minor: 0, patch: 0),
+        SemanticVersionChange.Minor => previousVersion.With(minor: previousVersion.Minor + 1, patch: 0),
+        SemanticVersionChange.Patch => previousVersion.With(patch: previousVersion.Patch + 1),
+        _ => previousVersion,
+    };
 
-        static NuGet.Versioning.SemanticVersion GetPatchVersion(
-            IEnumerable<NuGet.Versioning.SemanticVersion> versions,
-            NuGet.Versioning.SemanticVersion previousVersion)
-        {
-            // find the one with the same major/minor
-            return versions.Where(version => version.Major == previousVersion.Major && version.Minor == previousVersion.Minor).Max();
-        }
-    }
+    private static NuGet.Versioning.SemanticVersion? GetLatestVersion(IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion nextVersion) => previousVersions.Where(previousVersion => previousVersion.Major == nextVersion.Major && previousVersion.Minor == nextVersion.Minor).Max();
 
-    /// <summary>
-    /// Gets the last version.
-    /// </summary>
-    /// <param name="semanticVersionChange">The semantic version change.</param>
-    /// <param name="previousPackages">The previous versions.</param>
-    /// <param name="previousPackage">The previous version.</param>
-    /// <returns>The last version.</returns>
-    public static NuGet.Packaging.Core.PackageIdentity? GetLastestPackage(SemanticVersionChange semanticVersionChange, IEnumerable<NuGet.Packaging.Core.PackageIdentity> previousPackages, NuGet.Packaging.Core.PackageIdentity previousPackage) =>
-        semanticVersionChange switch
-        {
-            SemanticVersionChange.Major => GetPatchPackage(previousPackages, previousPackage.Version.With(major: previousPackage.Version.Major + 1, minor: 0, patch: 0)),
-            SemanticVersionChange.Minor => GetPatchPackage(previousPackages, previousPackage.Version.With(minor: previousPackage.Version.Minor + 1, patch: 0)),
-            SemanticVersionChange.Patch => GetPatchPackage(previousPackages, previousPackage.Version.With(patch: previousPackage.Version.Patch + 1)),
-            _ => previousPackage,
-        };
-
-    /// <summary>
-    /// Gets the patch version.
-    /// </summary>
-    /// <param name="packages">The packages.</param>
-    /// <param name="previousVersion">The previous version.</param>
-    /// <returns>The patch version.</returns>
-    public static NuGet.Packaging.Core.PackageIdentity GetPatchPackage(
-        IEnumerable<NuGet.Packaging.Core.PackageIdentity> packages,
-        NuGet.Versioning.SemanticVersion previousVersion) => packages.Where(package => package.Version.Major == previousVersion.Major && package.Version.Minor == previousVersion.Minor).Max();
-
-    /// <summary>
-    /// Gets the current released version.
-    /// </summary>
-    /// <param name="previousVersions">The previous versions.</param>
-    /// <returns>The current released version.</returns>
-    public static NuGet.Versioning.SemanticVersion GetReleaseVersion(IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions)
-    {
-        var previousVersion = previousVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max() ?? previousVersions.Max();
-        if (previousVersion is null)
-        {
-            throw new ArgumentException("Failed to find previous version", nameof(previousVersions));
-        }
-
-        return previousVersion;
-    }
-
-    /// <summary>
-    /// Gets the current released package.
-    /// </summary>
-    /// <param name="previousPackages">The previous versions.</param>
-    /// <returns>The current released version.</returns>
-    public static NuGet.Packaging.Core.PackageIdentity GetReleasePackage(IEnumerable<NuGet.Packaging.Core.PackageIdentity> previousPackages)
-    {
-        var previousPackage = previousPackages
-            .Where(info => info.HasVersion && !info.Version.IsPrerelease)
-            .OrderByDescending(info => info.Version)
-            .FirstOrDefault();
-
-        previousPackage ??= previousPackages
-            .Where(info => info.HasVersion && !info.Version.IsPrerelease)
-            .OrderByDescending(info => info.Version)
-            .FirstOrDefault();
-        if (previousPackage is null)
-        {
-            throw new ArgumentException("Failed to find previous package", nameof(previousPackages));
-        }
-
-        return previousPackage;
-    }
+    private static NuGet.Versioning.SemanticVersion? GetReleaseVersion(IEnumerable<NuGet.Versioning.SemanticVersion> previousVersions) => previousVersions.Where(lastSemanticVersion => !lastSemanticVersion.IsPrerelease).Max();
 
     private static IEnumerable<NuGet.Versioning.SemanticVersion> ToSemanticVersions(this IEnumerable<string> previousVersions)
     {
