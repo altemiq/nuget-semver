@@ -165,7 +165,6 @@ internal class VisualStudioInstanceFinder
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0097:A class that implements IComparable<T> or IComparable should override comparison operators", Justification = "This is not required")]
     private sealed class SemanticVersion : NuGet.Versioning.SemanticVersion
     {
         private SemanticVersion(Version version)
