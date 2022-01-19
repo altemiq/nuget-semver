@@ -32,8 +32,7 @@ public class EntryPointDiscoverer
         {
             foreach (var type in assembly
                 .DefinedTypes
-                .Where(t => t.IsClass)
-                .Where(t => t.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute))))
+                .Where(t => t.IsClass))
             {
                 FindMainMethodCandidates(type, candidates);
             }
