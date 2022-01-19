@@ -42,7 +42,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.21216.1" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.21617.1" />
   </ItemGroup>
 
   <ItemGroup Label="Downgrades">

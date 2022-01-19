@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="NuGetVersionTests.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="NuGetVersionTests.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.Tests
+namespace Altemiq.SemanticVersioning.Tests
 {
     using FluentAssertions;
     using Xunit;
