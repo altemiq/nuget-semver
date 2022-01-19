@@ -106,6 +106,7 @@ internal static partial class ConsoleApplication
     /// <param name="output">The output.</param>
     /// <param name="buildNumberParameter">The build number parameter.</param>
     /// <param name="versionSuffixParameter">The version suffix parameter.</param>
+    /// <param name="increment">The increment location.</param>
     /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
     public static void FileFunction(
         System.CommandLine.IConsole console,
@@ -114,6 +115,7 @@ internal static partial class ConsoleApplication
         OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
+        SemanticVersionIncrement increment = default,
         bool noLogo = DefaultNoLogo)
     {
         if (!noLogo)
@@ -121,7 +123,7 @@ internal static partial class ConsoleApplication
             WriteHeader(console);
         }
 
-        (var version, _, var differences) = LibraryComparison.Analyze(options.First.FullName, options.Second.FullName, new[] { previous.ToString() }, options.Build);
+        (var version, _, var differences) = LibraryComparison.Analyze(options.First.FullName, options.Second.FullName, new[] { previous.ToString() }, build: options.Build, increment: increment);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
         WriteChanges(consoleWithOutput, differences);
@@ -141,6 +143,7 @@ internal static partial class ConsoleApplication
     /// <param name="output">The output type.</param>
     /// <param name="buildNumberParameter">The parameter name for the build number.</param>
     /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
+    /// <param name="increment">The increment location.</param>
     /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
     /// <returns>The task.</returns>
     public static async Task<int> ProcessProjectOrSolution(
@@ -150,6 +153,7 @@ internal static partial class ConsoleApplication
         OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
+        SemanticVersionIncrement increment = default,
         bool noLogo = DefaultNoLogo)
     {
         if (!noLogo)
@@ -181,7 +185,8 @@ internal static partial class ConsoleApplication
             options.NoVersionSuffix,
             options.NoCache,
             options.DirectDownload,
-            options.CommitCount).ConfigureAwait(false);
+            options.CommitCount,
+            increment).ConfigureAwait(false);
 
         // write out the version and the suffix
         WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
@@ -192,7 +197,7 @@ internal static partial class ConsoleApplication
 
     private static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolutionCore(
         IConsoleWithOutput console,
-        FileSystemInfo projectOrSolution,
+        FileSystemInfo? projectOrSolution,
         string? configuration,
         string? platform,
         IEnumerable<string> source,
@@ -205,7 +210,8 @@ internal static partial class ConsoleApplication
         bool noVersionSuffix,
         bool noCache,
         bool directDownload,
-        int commitCount)
+        int commitCount,
+        SemanticVersionIncrement increment)
     {
         var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
@@ -223,6 +229,7 @@ internal static partial class ConsoleApplication
                 noCache,
                 directDownload,
                 commitCount,
+                increment,
                 GetVersionSuffix).ConfigureAwait(false);
             globalVersion = globalVersion.Max(calculatedVersion);
         }
@@ -246,6 +253,7 @@ internal static partial class ConsoleApplication
         bool noCache,
         bool directDownload,
         int commitCount,
+        SemanticVersionIncrement increment,
         Func<string?, string?> getVersionSuffix)
     {
         var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
@@ -297,6 +305,7 @@ internal static partial class ConsoleApplication
             referenceCommit,
             noCache,
             directDownload,
+            increment,
             getVersionSuffix,
             nugetLogger).ConfigureAwait(false);
 
@@ -437,7 +446,7 @@ internal static partial class ConsoleApplication
     }
 
     private static IEnumerable<Microsoft.Build.Evaluation.Project> GetProjects(
-        FileSystemInfo projectOrSolution,
+        FileSystemInfo? projectOrSolution,
         string? configuration,
         string? platform,
         IEnumerable<string> exclude)
@@ -467,7 +476,7 @@ internal static partial class ConsoleApplication
             return excludes?.Contains(project.GetPropertyValue(PackageIdPropertyName), StringComparer.Ordinal) == true;
         }
 
-        static Microsoft.Build.Evaluation.ProjectCollection GetProjects(FileSystemInfo projectOrSolution, string? configuration, string? platform)
+        static Microsoft.Build.Evaluation.ProjectCollection GetProjects(FileSystemInfo? projectOrSolution, string? configuration, string? platform)
         {
             var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
             var projectOrSolutionPath = GetPath(projectOrSolution ?? new DirectoryInfo(Directory.GetCurrentDirectory()), projectOrSolution is null);
@@ -551,7 +560,7 @@ internal static partial class ConsoleApplication
         }
     }
 
-    private static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(FileSystemInfo projectOrSolution)
+    private static Microsoft.Build.Locator.VisualStudioInstance RegisterMSBuild(FileSystemInfo? projectOrSolution)
     {
         var finder = new VisualStudioInstanceFinder(GetInstances());
         var instance = finder.GetVisualStudioInstance(projectOrSolution);

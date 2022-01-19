@@ -30,21 +30,23 @@ return await commandLineBuilder
 
 static Command CreateDiffCommand(Option<bool> noLogoOption)
 {
+    var outputTypesOption = new Option<OutputTypes>("--output", () => ConsoleApplication.DefaultOutput, "The output type");
     var previousOption = new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, ParseVersion, isDefault: true, description: "The previous version");
     var buildNumberParameterOption = new Option<string>("--build-number-parameter", () => ConsoleApplication.DefaultBuildNumberParameter, "The parameter name for the build number");
     var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter", () => ConsoleApplication.DefaultVersionSuffixParameter, "The parameter name for the version suffix");
-    var outputTypesOption = new Option<OutputTypes>("--output", () => ConsoleApplication.DefaultOutput, "The output type");
+    var incrementOption = new Option<SemanticVersionIncrement>("--increment", () => default(SemanticVersionIncrement), "The location to increment the version");
 
     var command = new Command("diff", "Calculates the differences")
     {
-        CreateFileCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, noLogoOption),
-        CreateSolutionCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, noLogoOption),
+        CreateFileCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
+        CreateSolutionCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
     };
 
     command.AddGlobalOption(previousOption);
     command.AddGlobalOption(buildNumberParameterOption);
     command.AddGlobalOption(versionSuffixParameterOption);
     command.AddGlobalOption(outputTypesOption);
+    command.AddGlobalOption(incrementOption);
 
     return command;
 
@@ -68,6 +70,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
         Option<OutputTypes> outputTypesOption,
         Option<string> buildNumberParameterOption,
         Option<string> versionSuffixParameterOption,
+        Option<SemanticVersionIncrement> incrementOption,
         Option<bool> noLogoOption)
     {
         var firstArgument = new Argument<FileInfo>("first", "The first assembly");
@@ -86,13 +89,14 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
             secondArgument,
             buildOption);
 
-        command.SetHandler<IConsole, ConsoleApplication.FileFunctionOptions, NuGet.Versioning.SemanticVersion, OutputTypes, string, string, bool>(
+        command.SetHandler<IConsole, ConsoleApplication.FileFunctionOptions, NuGet.Versioning.SemanticVersion, OutputTypes, string, string, SemanticVersionIncrement, bool>(
             ConsoleApplication.FileFunction,
             optionsHandler,
             previousOption,
             outputTypesOption,
             buildNumberParameterOption,
             versionSuffixParameterOption,
+            incrementOption,
             noLogoOption);
 
         return command;
@@ -103,6 +107,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
         Option<OutputTypes> outputTypesOption,
         Option<string> buildNumberParameterOption,
         Option<string> versionSuffixParameterOption,
+        Option<SemanticVersionIncrement> incrementOption,
         Option<bool> noLogoOption)
     {
         var projectOrSolutionArgument = new Argument<FileSystemInfo?>("projectOrSolution", GetFileSystemInformation, description: "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.") { HelpName = "PROJECT | SOLUTION", Name = "PROJECT | SOLUTION" };
@@ -151,13 +156,14 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
             directDownloadOption,
             commitCountOption);
 
-        command.SetHandler<IConsole, ConsoleApplication.ProcessProjectOrSolutionOptions, NuGet.Versioning.SemanticVersion?, OutputTypes, string, string, bool>(
+        command.SetHandler<IConsole, ConsoleApplication.ProcessProjectOrSolutionOptions, NuGet.Versioning.SemanticVersion?, OutputTypes, string, string, SemanticVersionIncrement, bool>(
             ConsoleApplication.ProcessProjectOrSolution,
             optionsHandler,
             previousOption,
             outputTypesOption,
             buildNumberParameterOption,
             versionSuffixParameterOption,
+            incrementOption,
             noLogoOption);
 
         return command;
