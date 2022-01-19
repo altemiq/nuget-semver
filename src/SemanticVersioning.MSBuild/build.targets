@@ -12,13 +12,14 @@
   </PropertyGroup>
 
   <!-- Get the semantic version from the latest package and commit -->
-  <Target Name="GetSemanticVersion"
-          BeforeTargets="$(SemanticVersion_BeforeTargets)"
-          Condition=" !('$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true')
-                  and '$(SourceControlInformationFeatureSupported)' == 'true'
-                  and '$(DisableSemanticVersioning)' != 'true'
-                  and '$(ComputeSemanticVersion)' == 'true'
-                  and '$(SemanticVersion)' == '' ">
+  <Target
+    Name="GetSemanticVersion"
+    BeforeTargets="$(SemanticVersion_BeforeTargets)"
+    Condition=" !('$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true')
+            and '$(SourceControlInformationFeatureSupported)' == 'true'
+            and '$(DisableSemanticVersioning)' != 'true'
+            and '$(ComputeSemanticVersion)' == 'true'
+            and '$(SemanticVersion)' == '' ">
 
     <!-- Set the project NAME/DIR/PATH properties
          These are not available before DispatchToInnerBuilds
@@ -66,10 +67,12 @@
       <_RepositoryCommit>$(_RepositoryCommitFromFile)</_RepositoryCommit>
     </PropertyGroup>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
-             Importance="Normal" />
-    <Message Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
-             Importance="Normal" />
+    <Message
+        Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
+        Importance="Normal" />
+    <Message
+        Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
+        Importance="Normal" />
 
     <!-- Get the head commits for the repository
          We can use this to see if a package has
@@ -82,9 +85,10 @@
       <Output TaskParameter="Commits" PropertyName="_HeadCommits" />
     </GetHeadCommitsTask>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Head Commits: $(_HeadCommits)"
-             Condition=" '$(_HeadCommits)' != '' "
-             Importance="Normal" />
+    <Message
+      Text="$(SemanticVersion_ProjectName) -> Head Commits: $(_HeadCommits)"
+      Condition=" '$(_HeadCommits)' != '' "
+      Importance="Normal" />
 
     <!-- Get the referenced project for the current project
          This means we can check to see if any referenced projects
@@ -102,9 +106,10 @@
       <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
     </GetLatestCommitTask>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)"
-             Condition=" '$(_ReferenceCommit)' != '' "
-             Importance="Normal" />
+    <Message
+      Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)"
+      Condition=" '$(_ReferenceCommit)' != '' "
+      Importance="Normal" />
 
     <!-- Set the version repository branch to use -->
     <PropertyGroup>
@@ -155,6 +160,7 @@
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
       ReferenceCommit="$(_ReferenceCommit)"
+      Increment="$(SemanticVersionIncrement)"
       Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
       <Output TaskParameter="ComputedVersionPrefix" PropertyName="_ComputedVersionPrefix" />
@@ -174,16 +180,18 @@
       <PackageVersion Condition=" $(SemanticVersion_IsOuterBuild) And '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</PackageVersion>
     </PropertyGroup>
 
-    <Message Text="$(SemanticVersion_ProjectName) -> SemanticVersion: $(SemanticVersion), SemanticVersionPrefix: $(SemanticVersionPrefix), SemanticVersionSuffix: $(SemanticVersionSuffix), SemanticRepositoryCommit: $(SemanticRepositoryCommit)"
-             Importance="High" />
+    <Message
+      Text="$(SemanticVersion_ProjectName) -> SemanticVersion: $(SemanticVersion), SemanticVersionPrefix: $(SemanticVersionPrefix), SemanticVersionSuffix: $(SemanticVersionSuffix), SemanticRepositoryCommit: $(SemanticRepositoryCommit)"
+      Importance="High" />
 
-    <WriteVersionToFile File="@(SemanticVersion_VersionFile)"
-                        Condition="!$(_VersionsFromFile)"
-                        Version="$(SemanticVersion)"
-                        VersionPrefix="$(SemanticVersionPrefix)"
-                        VersionSuffix="$(SemanticVersionSuffix)"
-                        RepositoryCommit="$(SemanticRepositoryCommit)"
-                        Overwrite="true" />
+    <WriteVersionToFile
+      File="@(SemanticVersion_VersionFile)"
+      Condition="!$(_VersionsFromFile)"
+      Version="$(SemanticVersion)"
+      VersionPrefix="$(SemanticVersionPrefix)"
+      VersionSuffix="$(SemanticVersionSuffix)"
+      RepositoryCommit="$(SemanticRepositoryCommit)"
+      Overwrite="true" />
 
     <ItemGroup>
       <FileWrites Include="@(SemanticVersion_VersionFile)" />
@@ -191,14 +199,15 @@
 
   </Target>
   
-  <Target Name="SetSemanticVersion"
-          BeforeTargets="GetAssemblyVersion"
-          Condition=" '$(Version)' != '$(SemanticVersion)'
-                   or '$(VersionPrefix)' != '$(SemanticVersionPrefix)'
-                   or '$(VersionSuffix)' != '$(SemanticVersionSuffix)'
-                   or '$(PackageVersion)' != '$(SemanticPackageVersion)'
-                   or '$(RepositoryCommit)' != '$(SemanticRepositoryCommit)'
-                   or '$(NuGetVersion)' != '$(SemanticPackageVersion)' ">
+  <Target
+    Name="SetSemanticVersion"
+    BeforeTargets="GetAssemblyVersion"
+    Condition=" '$(Version)' != '$(SemanticVersion)'
+             or '$(VersionPrefix)' != '$(SemanticVersionPrefix)'
+             or '$(VersionSuffix)' != '$(SemanticVersionSuffix)'
+             or '$(PackageVersion)' != '$(SemanticPackageVersion)'
+             or '$(RepositoryCommit)' != '$(SemanticRepositoryCommit)'
+             or '$(NuGetVersion)' != '$(SemanticPackageVersion)' ">
 
     <PropertyGroup>
       <Version Condition=" '$(SemanticVersion)' != '' ">$(SemanticVersion)</Version>

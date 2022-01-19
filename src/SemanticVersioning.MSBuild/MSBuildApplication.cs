@@ -32,6 +32,7 @@ public static class MSBuildApplication
     /// <param name="referenceCommit">The reference commit.</param>
     /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
     /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
+    /// <param name="increment">The increment location.</param>
     /// <param name="getVersionSuffix">The function to get the version suffix.</param>
     /// <param name="logger">The logger.</param>
     /// <returns>The task.</returns>
@@ -52,6 +53,7 @@ public static class MSBuildApplication
         string? referenceCommit,
         bool noCache,
         bool directDownload,
+        SemanticVersionIncrement increment,
         Func<string?, string?> getVersionSuffix,
         NuGet.Common.ILogger? logger = default)
     {
@@ -117,12 +119,12 @@ public static class MSBuildApplication
             if (previousFrameworks.Except(currentFrameworks, StringComparer.OrdinalIgnoreCase).Any())
             {
                 // we have removed frameworks, this is a breaking change
-                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousVersions, getVersionSuffix(default));
+                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousVersions, getVersionSuffix(default), increment);
             }
             else if (currentFrameworks.Except(previousFrameworks, StringComparer.OrdinalIgnoreCase).Any())
             {
                 // we have added frameworks, this is a feature change
-                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousVersions, getVersionSuffix(default));
+                calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousVersions, getVersionSuffix(default), increment);
             }
 
             var searchPattern = assemblyName + targetExt;
@@ -143,7 +145,7 @@ public static class MSBuildApplication
                 var resultsType = File.Exists(oldAssembly)
                     ? LibraryComparison.GetMinimumAcceptableChange(differences)
                     : SemanticVersionChange.Major;
-                var version = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousVersions, getVersionSuffix(default));
+                var version = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousVersions, getVersionSuffix(default), increment);
                 if (version is not null && differences is not null)
                 {
                     results.Add(new(version, differences));

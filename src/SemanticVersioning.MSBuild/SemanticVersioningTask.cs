@@ -11,6 +11,8 @@ namespace Altemiq.SemanticVersioning;
 /// </summary>
 public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
 {
+    private SemanticVersionIncrement semanticVersionIncrement;
+
     /// <summary>
     /// Gets or sets the project directory.
     /// </summary>
@@ -103,6 +105,15 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     public string? ReferenceCommit { get; set; }
 
     /// <summary>
+    /// Gets or sets the increment location.
+    /// </summary>
+    public string Increment
+    {
+        get => this.semanticVersionIncrement.ToString();
+        set => this.semanticVersionIncrement = Enum.Parse<SemanticVersionIncrement>(value);
+    }
+
+    /// <summary>
     /// Gets the calculated semantic version.
     /// </summary>
     [Output]
@@ -160,6 +171,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             this.ReferenceCommit,
             this.NoCache,
             this.DirectDownload,
+            this.semanticVersionIncrement,
             GetVersionSuffix,
             new MSBuildNuGetLogger(this.Log)).Result;
 

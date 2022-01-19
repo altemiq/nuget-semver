@@ -25,14 +25,15 @@ public static class LibraryComparison
     /// <param name="lastVersions">The last version numbers for each major.minor grouping.</param>
     /// <param name="prerelease">The pre-release label.</param>
     /// <param name="build">The build label.</param>
+    /// <param name="increment">The increment location.</param>
     /// <returns>The results.</returns>
-    public static (NuGet.Versioning.SemanticVersion? Version, SemanticVersionChange Change, AssemblyDiffCollection Differences) Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default)
+    public static (NuGet.Versioning.SemanticVersion? Version, SemanticVersionChange Change, AssemblyDiffCollection Differences) Analyze(string previousAssembly, string currentAssembly, IEnumerable<string> lastVersions, string? prerelease = default, string? build = default, SemanticVersionIncrement increment = default)
     {
         var differences = DetectChanges(previousAssembly, currentAssembly);
         var resultsType = File.Exists(previousAssembly)
             ? GetMinimumAcceptableChange(differences)
             : SemanticVersionChange.Major;
-        var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease);
+        var calculatedVersion = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, lastVersions, prerelease, increment);
         if (build is not null)
         {
             calculatedVersion = calculatedVersion.With(metadata: build);
