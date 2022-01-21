@@ -297,8 +297,8 @@ public static class NuGetInstaller
     /// <param name="log">The log.</param>
     /// <param name="root">The settings root.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The latest NuGet packages.</returns>
-    public static Task<PackageIdentity?> GetPackageByCommit(
+    /// <returns>The latest NuGet package.</returns>
+    public static Task<(PackageIdentity? PackageIdentity, Manifest? Manifest)> GetPackageByCommit(
         IList<string> folderCommits,
         IList<string> headCommits,
         IEnumerable<string> packageNames,
@@ -324,8 +324,8 @@ public static class NuGetInstaller
     /// <param name="log">The log.</param>
     /// <param name="root">The settings root.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The latest NuGet packages.</returns>
-    public static async Task<PackageIdentity?> GetPackageByCommit(
+    /// <returns>The latest NuGet package.</returns>
+    public static async Task<(PackageIdentity? PackageIdentity, Manifest? Manifest)> GetPackageByCommit(
         IList<string> folderCommits,
         IList<string> headCommits,
         IEnumerable<PackageIdentity> packages,
@@ -339,7 +339,8 @@ public static class NuGetInstaller
         IEnumerable<SourceRepository> sourceRepositories = GetRepositories(settings, sources);
 
         using var cacheContext = new SourceCacheContext { IgnoreFailedSources = true };
-        foreach (var package in packages)
+        foreach (var package in packages
+            .OrderByDescending(p => p.Version, NuGet.Versioning.VersionComparer.Default))
         {
             var manifest = await GetManifest(package, sourceRepositories, cacheContext, log, cancellationToken).ConfigureAwait(false);
             if (manifest?.Metadata?.Repository is RepositoryMetadata repository)
@@ -347,7 +348,7 @@ public static class NuGetInstaller
                 if (headCommits.Contains(repository.Commit, StringComparer.Ordinal))
                 {
                     // this is in the head commits, so let this through
-                    return package;
+                    return (package, manifest);
                 }
 
                 // see where this is in the folder commits
@@ -365,7 +366,7 @@ public static class NuGetInstaller
                 }
 
                 // this is the same commit
-                return package;
+                return (package, manifest);
             }
         }
 

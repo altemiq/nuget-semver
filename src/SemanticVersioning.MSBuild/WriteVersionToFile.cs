@@ -31,17 +31,29 @@ public sealed class WriteVersionToFile : Microsoft.Build.Tasks.WriteLinesToFile
     /// </summary>
     public string? RepositoryCommit { get; set; }
 
+    /// <summary>
+    /// Gets or sets the package ID.
+    /// </summary>
+    public string? PackageId { get; set; }
+
     /// <inheritdoc/>
     public override bool Execute()
     {
-        this.Lines = new ITaskItem[]
-        {
-            new TaskItem(this.Version),
-            new TaskItem(this.VersionPrefix),
-            new TaskItem(this.VersionSuffix),
-            new TaskItem(this.RepositoryCommit),
-        };
+        const string NonBreakingSpace = " ";
+
+        this.Lines = GetValues()
+            .Select(s => new TaskItem(s))
+            .ToArray();
 
         return base.Execute();
+
+        IEnumerable<string> GetValues()
+        {
+            yield return this.Version ?? NonBreakingSpace;
+            yield return this.VersionPrefix ?? NonBreakingSpace;
+            yield return this.VersionSuffix ?? NonBreakingSpace;
+            yield return this.RepositoryCommit ?? NonBreakingSpace;
+            yield return this.PackageId ?? NonBreakingSpace;
+        }
     }
 }

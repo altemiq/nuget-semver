@@ -15,12 +15,28 @@
   <Target
     Name="GetSemanticVersion"
     BeforeTargets="$(SemanticVersion_BeforeTargets)"
+    DependsOnTargets="_GetSemanticVersion"
     Condition=" !('$(OnlyComputeSemanticVersionForPackable)' == 'true' and '$(IsPackable)' != 'true')
             and '$(SourceControlInformationFeatureSupported)' == 'true'
             and '$(DisableSemanticVersioning)' != 'true'
             and '$(ComputeSemanticVersion)' == 'true'
             and '$(SemanticVersion)' == '' ">
+  </Target>
 
+  <Target
+    Name="GetReferenceSemanticVersion"
+    DependsOnTargets="_GetSemanticVersion"
+    Returns="@(_Reference)">
+    <ItemGroup>
+      <_Reference Include="$(PackageId)">
+        <Version>$(SemanticVersion)</Version>
+        <Commit>$(SemanticRepositoryCommit)</Commit>
+      </_Reference>
+    </ItemGroup>
+  </Target>
+
+  <Target
+    Name="_GetSemanticVersion">
     <!-- Set the project NAME/DIR/PATH properties
          These are not available before DispatchToInnerBuilds
          so we need to use the well known properties -->
@@ -73,6 +89,19 @@
     <Message
       Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
       Importance="Normal" />
+
+    <!-- Get the versions from referenced projects -->
+    <MSBuild
+      Projects="@(ProjectReference)"
+      Targets="GetReferenceSemanticVersion"
+      SkipNonexistentTargets="true"
+      SkipNonexistentProjects="true"
+      Properties="BuildProjectReferences=false;"
+      Condition="!$(_VersionsFromFile)">
+      <Output
+        TaskParameter="TargetOutputs"
+        ItemName="_ReferencedPackages"/>
+    </MSBuild>
 
     <!-- Get the head commits for the repository
          We can use this to see if a package has
@@ -160,6 +189,7 @@
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
       ReferenceCommit="$(_ReferenceCommit)"
+      ReferencedPackages="$(_ReferencedPackages)"
       Increment="$(SemanticVersionIncrement)"
       Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
@@ -182,6 +212,7 @@
 
     <Message
       Text="$(SemanticVersion_ProjectName) -> SemanticVersion: $(SemanticVersion), SemanticVersionPrefix: $(SemanticVersionPrefix), SemanticVersionSuffix: $(SemanticVersionSuffix), SemanticRepositoryCommit: $(SemanticRepositoryCommit)"
+      Condition="!$(_VersionsFromFile)"
       Importance="High" />
 
     <WriteVersionToFile
@@ -191,6 +222,7 @@
       VersionPrefix="$(SemanticVersionPrefix)"
       VersionSuffix="$(SemanticVersionSuffix)"
       RepositoryCommit="$(SemanticRepositoryCommit)"
+	  PackageId="$(PackageId)"
       Overwrite="true" />
 
     <ItemGroup>

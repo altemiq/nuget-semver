@@ -20,7 +20,7 @@ public sealed class GetLatestCommitTask : Microsoft.Build.Utilities.Task
     public ITaskItem[] Paths { get; set; } = default!;
 
     /// <summary>
-    /// Gets the commits.
+    /// Gets the commit.
     /// </summary>
     [Output]
     public string? Commit { get; private set; }

@@ -30,13 +30,14 @@ public static class MSBuildApplication
     /// <param name="folderCommits">The commits for the folder.</param>
     /// <param name="headCommits">The commits for the head.</param>
     /// <param name="referenceCommit">The reference commit.</param>
+    /// <param name="referencePackageIds">The reference package IDs.</param>
     /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
     /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
     /// <param name="increment">The increment location.</param>
     /// <param name="getVersionSuffix">The function to get the version suffix.</param>
     /// <param name="logger">The logger.</param>
     /// <returns>The task.</returns>
-    public static async Task<(NuGet.Versioning.SemanticVersion Version, IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
+    public static async Task<(PackageCommitIdentity Identity, IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
         string projectDirectory,
         string assemblyName,
         string projectPackageId,
@@ -51,6 +52,7 @@ public static class MSBuildApplication
         IEnumerable<string> folderCommits,
         IEnumerable<string> headCommits,
         string? referenceCommit,
+        IEnumerable<PackageCommitIdentity> referencePackageIds,
         bool noCache,
         bool directDownload,
         SemanticVersionIncrement increment,
@@ -74,21 +76,54 @@ public static class MSBuildApplication
 
         var folderCommitsList = folderCommits.ToList();
         var headCommitsList = headCommits.ToList();
+        var referenceVersionsList = referencePackageIds.ToList();
 
         // if we have commits, and a reference does not have a newer commit
-        if (folderCommitsList.Count > 0
-            && (referenceCommit is null || !headCommitsList.Contains(referenceCommit, StringComparer.Ordinal)))
+        if (folderCommitsList.Count > 0)
         {
-            var commitPackage = await NuGetInstaller.GetPackageByCommit(
+            var (commitPackage, manifest) = await NuGetInstaller.GetPackageByCommit(
                 folderCommitsList,
                 headCommitsList,
                 packages,
                 source,
                 log: logger,
                 root: projectDirectory).ConfigureAwait(false);
-            if (commitPackage is not null)
+
+            if (commitPackage is not null && manifest is not null)
             {
-                return (commitPackage.Version, Enumerable.Empty<ProjectResult>(), Published: true);
+                var packageCommitId = new PackageCommitIdentity(commitPackage.Id, commitPackage.Version, manifest.Metadata.Repository.Commit);
+                if (referenceCommit is not null && headCommitsList.Contains(referenceCommit, StringComparer.Ordinal))
+                {
+                    // get the referenced package
+                    var referencedPackage = referenceVersionsList.Find(r => EqualCommits(r.Commit, referenceCommit));
+                    if (referencedPackage is not null
+                        && manifest.Metadata.DependencyGroups
+                            .SelectMany(dg => dg.Packages)
+                            .Where(dp => string.Equals(dp.Id, referencedPackage.Id, StringComparison.OrdinalIgnoreCase))
+                            .All(d => IsInBounds(referencedPackage, d)))
+                    {
+                        return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
+                    }
+                }
+                else
+                {
+                    return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
+                }
+            }
+
+            static bool IsInBounds(NuGet.Packaging.Core.PackageIdentity reference, NuGet.Packaging.Core.PackageDependency packageDependency)
+            {
+                return reference.Version == packageDependency.VersionRange.MinVersion;
+            }
+
+            static bool EqualCommits(string? package, string reference)
+            {
+                if (package is null)
+                {
+                    return false;
+                }
+
+                return string.Compare(package, 0, reference, 0, Math.Min(package.Length, reference.Length), StringComparison.OrdinalIgnoreCase) == 0;
             }
         }
 
@@ -129,11 +164,11 @@ public static class MSBuildApplication
 
             var searchPattern = assemblyName + targetExt;
 #if NETSTANDARD2_1_OR_GREATER
-            var searchOptions = new EnumerationOptions { RecurseSubdirectories = false };
+            var options = new EnumerationOptions { RecurseSubdirectories = false };
 #else
-            const SearchOption searchOptions = SearchOption.TopDirectoryOnly;
+            const SearchOption options = SearchOption.TopDirectoryOnly;
 #endif
-            foreach (var currentAssembly in frameworks.SelectMany(framework => Directory.EnumerateFiles(Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, searchOptions)))
+            foreach (var currentAssembly in frameworks.SelectMany(framework => Directory.EnumerateFiles(Path.Combine(fullPackageOutputPath, framework ?? string.Empty), searchPattern, options)))
             {
                 var oldAssembly = currentAssembly
 #if NETSTANDARD2_1_OR_GREATER
@@ -157,7 +192,16 @@ public static class MSBuildApplication
             Directory.Delete(installDir, recursive: true);
         }
 
-        return (calculatedVersion, results, Published: false);
+        var nugetVersion = new NuGet.Versioning.NuGetVersion(
+            calculatedVersion.Major,
+            calculatedVersion.Minor,
+            calculatedVersion.Patch,
+            calculatedVersion.Release,
+            calculatedVersion.Metadata);
+        return (
+            new PackageCommitIdentity(projectPackageId, nugetVersion, folderCommitsList.FirstOrDefault()),
+            results,
+            Published: false);
 
         bool IsNullOrEmpty([System.Diagnostics.CodeAnalysis.NotNullWhen(false)] NuGet.Versioning.SemanticVersion? version)
         {
