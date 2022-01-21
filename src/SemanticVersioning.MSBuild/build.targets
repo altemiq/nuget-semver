@@ -55,11 +55,11 @@
     <GetProjectCommitsTask
       ProjectDir="$(SemanticVersion_ProjectDir)"
       MaxCount="$(MaxCommitCount)">
-      <Output TaskParameter="Commits" PropertyName="_RepositoryCommits"/>
-      <Output TaskParameter="Commit" PropertyName="_RepositoryCommit"/>
+      <Output TaskParameter="Commits" PropertyName="_RepositoryCommits" />
+      <Output TaskParameter="Commit" PropertyName="_RepositoryCommit" />
     </GetProjectCommitsTask>
 
-    <PropertyGroup Condition=" '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)'">
+    <PropertyGroup Condition=" '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)' ">
       <_VersionsFromFile>true</_VersionsFromFile>
       <_ComputedVersion>$(_VersionFromFile)</_ComputedVersion>
       <_ComputedVersionPrefix>$(_VersionPrefixFromFile)</_ComputedVersionPrefix>
@@ -68,11 +68,11 @@
     </PropertyGroup>
 
     <Message
-        Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
-        Importance="Normal" />
+      Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
+      Importance="Normal" />
     <Message
-        Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
-        Importance="Normal" />
+      Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
+      Importance="Normal" />
 
     <!-- Get the head commits for the repository
          We can use this to see if a package has
