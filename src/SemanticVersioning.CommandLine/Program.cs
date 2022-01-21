@@ -34,7 +34,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
     var previousOption = new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, ParseVersion, isDefault: true, description: "The previous version");
     var buildNumberParameterOption = new Option<string>("--build-number-parameter", () => ConsoleApplication.DefaultBuildNumberParameter, "The parameter name for the build number");
     var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter", () => ConsoleApplication.DefaultVersionSuffixParameter, "The parameter name for the version suffix");
-    var incrementOption = new Option<SemanticVersionIncrement>("--increment", () => default(SemanticVersionIncrement), "The location to increment the version");
+    var incrementOption = new Option<SemanticVersionIncrement>("--increment",  () => default(SemanticVersionIncrement), "The location to increment the version");
 
     var command = new Command("diff", "Calculates the differences")
     {
@@ -117,12 +117,12 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
         var packageIdRegexOption = new Option<string?>("--package-id-regex", () => ConsoleApplication.DefaultPackageIdRegex, "The regular expression to match in the package id.");
         var packageIdReplaceOption = new Option<string?>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex");
         var packageIdOption = new Option<string[]>("--package-id", "The package ID to check for previous versions");
-        var excludeOption = new Option<string[]>("--exclude", "A package ID to check exclude from analysis") { ArgumentHelpName = "EXCLUDE"};
+        var excludeOption = new Option<string[]>("--exclude", "A package ID to check exclude from analysis") { ArgumentHelpName = "EXCLUDE" };
         var noVersionSuffixOption = new Option<bool>("--no-version-suffix", () => ConsoleApplication.DefaultNoVersionSuffix, "Forces there to be no version suffix. This overrides --version-suffix");
-        var versionSuffixOption = new Option<string>("--version-suffix", () => ConsoleApplication.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") {  ArgumentHelpName = "VERSION_SUFFIX"};
+        var versionSuffixOption = new Option<string>("--version-suffix", () => ConsoleApplication.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { ArgumentHelpName = "VERSION_SUFFIX" };
         var noCacheOption = new Option<bool>("--no-cache", () => ConsoleApplication.DefaultNoCache, "Disable using the machine cache as the first package source.");
         var directDownloadOption = new Option<bool>("--direct-download", () => ConsoleApplication.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries.");
-        var commitCountOption = new Option<int>("--commit-count", () => ConsoleApplication.DefaultCommitCount, "The number of commits to analyse for equivalent packages") {  ArgumentHelpName = "COMMIT_COUNT"};
+        var commitCountOption = new Option<int>("--commit-count", () => ConsoleApplication.DefaultCommitCount, "The number of commits to analyse for equivalent packages") { ArgumentHelpName = "COMMIT_COUNT" };
 
         var command = new Command("solution", "Calculates the version based on a solution file")
         {

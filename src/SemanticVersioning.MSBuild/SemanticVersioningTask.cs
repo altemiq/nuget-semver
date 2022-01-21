@@ -110,7 +110,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     public string Increment
     {
         get => this.semanticVersionIncrement.ToString();
-        set => this.semanticVersionIncrement = Enum.Parse<SemanticVersionIncrement>(value);
+        set => this.semanticVersionIncrement = (SemanticVersionIncrement)Enum.Parse(typeof(SemanticVersionIncrement), value);
     }
 
     /// <summary>
