@@ -35,32 +35,56 @@ public sealed class ReadVersionFromFile : Microsoft.Build.Tasks.ReadLinesFromFil
     [Output]
     public string? RepositoryCommit { get; private set; }
 
+    /// <summary>
+    /// Gets the package ID.
+    /// </summary>
+    [Output]
+    public string? PackageId { get; private set; }
+
     /// <inheritdoc/>
     public override bool Execute()
     {
+        const char NonBreakingSpace = ' ';
+
         if (base.Execute())
         {
             if (this.Lines.Length > 0)
             {
-                this.Version = this.Lines[0].ItemSpec;
+                this.Version = GetValue(this.Lines[0].ItemSpec);
             }
 
             if (this.Lines.Length > 1)
             {
-                this.VersionPrefix = this.Lines[1].ItemSpec;
+                this.VersionPrefix = GetValue(this.Lines[1].ItemSpec);
             }
 
             if (this.Lines.Length > 2)
             {
-                this.VersionSuffix = this.Lines[2].ItemSpec;
+                this.VersionSuffix = GetValue(this.Lines[2].ItemSpec);
             }
 
             if (this.Lines.Length > 3)
             {
-                this.RepositoryCommit = this.Lines[3].ItemSpec;
+                this.RepositoryCommit = GetValue(this.Lines[3].ItemSpec);
+            }
+
+            if (this.Lines.Length > 4)
+            {
+                this.PackageId = GetValue(this.Lines[4].ItemSpec);
             }
 
             return true;
+
+            static string? GetValue(string input)
+            {
+                var trim = input.Trim(NonBreakingSpace);
+                if (string.IsNullOrWhiteSpace(trim))
+                {
+                    return default;
+                }
+
+                return trim;
+            }
         }
 
         return false;

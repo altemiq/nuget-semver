@@ -105,6 +105,11 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     public string? ReferenceCommit { get; set; }
 
     /// <summary>
+    /// Gets or sets the referenced packages.
+    /// </summary>
+    public ITaskItem[] ReferencedPackages { get; set; } = Array.Empty<ITaskItem>();
+
+    /// <summary>
     /// Gets or sets the increment location.
     /// </summary>
     public string Increment
@@ -154,7 +159,11 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
         var versionSuffix = this.VersionSuffix?
             .Replace('/', '-');
 
-        var (version, differences, published) = MSBuildApplication.ProcessProject(
+        var referenceVersions = this.ReferencedPackages is null
+            ? new List<PackageCommitIdentity>()
+            : this.ReferencedPackages.Select(itemTask => new PackageCommitIdentity(itemTask.ItemSpec, NuGet.Versioning.NuGetVersion.Parse(itemTask.GetMetadata("Version")), itemTask.GetMetadata("Commit"))).ToList();
+
+        var (packageId, differences, published) = MSBuildApplication.ProcessProject(
             this.ProjectDir,
             this.AssemblyName,
             this.PackageId,
@@ -169,12 +178,14 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             projectCommmits,
             headCommits,
             this.ReferenceCommit,
+            referenceVersions,
             this.NoCache,
             this.DirectDownload,
             this.semanticVersionIncrement,
             GetVersionSuffix,
             new MSBuildNuGetLogger(this.Log)).Result;
 
+        var version = packageId.Version;
         this.ComputedVersion = version.ToString();
         this.ComputedVersionPrefix = version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance);
         this.ComputedVersionSuffix = version.ToString("R", NuGet.Versioning.VersionFormatter.Instance);

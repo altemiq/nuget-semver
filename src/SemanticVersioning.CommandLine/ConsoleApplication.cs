@@ -216,6 +216,7 @@ internal static partial class ConsoleApplication
         var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
         var packageIds = packageId ?? Enumerable.Empty<string>();
+        var referenceVersions = new List<PackageCommitIdentity>();
         foreach (var project in GetProjects(projectOrSolution, configuration, platform, exclude))
         {
             var calculatedVersion = await ProcessProject(
@@ -226,12 +227,18 @@ internal static partial class ConsoleApplication
                 packageIdRegex,
                 packageIdReplace,
                 previous,
+                referenceVersions,
                 noCache,
                 directDownload,
                 commitCount,
                 increment,
                 GetVersionSuffix).ConfigureAwait(false);
-            globalVersion = globalVersion.Max(calculatedVersion);
+
+            if (calculatedVersion is not null && calculatedVersion.HasVersion)
+            {
+                globalVersion = globalVersion.Max(calculatedVersion.Version);
+                referenceVersions.Add(calculatedVersion);
+            }
         }
 
         return globalVersion;
@@ -242,7 +249,7 @@ internal static partial class ConsoleApplication
         }
     }
 
-    private static async Task<NuGet.Versioning.SemanticVersion> ProcessProject(
+    private static async Task<PackageCommitIdentity> ProcessProject(
         IConsoleWithOutput console,
         Microsoft.Build.Evaluation.Project project,
         IEnumerable<string> source,
@@ -250,6 +257,7 @@ internal static partial class ConsoleApplication
         System.Text.RegularExpressions.Regex? packageIdRegex,
         string? packageIdReplace,
         NuGet.Versioning.SemanticVersion? previous,
+        IReadOnlyList<PackageCommitIdentity> referencePackageIds,
         bool noCache,
         bool directDownload,
         int commitCount,
@@ -273,11 +281,11 @@ internal static partial class ConsoleApplication
             catch (LibGit2Sharp.NotFoundException ex)
             {
                 // this indicates that the fetch is too shallow
-                throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow", ex);
+                throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow.", ex);
             }
 
             headCommits = GetHeadCommits(repository, folderCommits[0]).ToList();
-            var referencePaths = GetProjects(project)
+            var referencePaths = GetDependentProjects(project)
                 .Select(reference => reference.DirectoryPath)
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
@@ -288,7 +296,7 @@ internal static partial class ConsoleApplication
             ? new NuGetConsole(console)
             : NuGet.Common.NullLogger.Instance;
 
-        (var version, var results, var published) = await MSBuildApplication.ProcessProject(
+        (var referenceVersion, var results, var published) = await MSBuildApplication.ProcessProject(
             project.DirectoryPath,
             project.GetPropertyValue(AssemblyNamePropertyName),
             project.GetPropertyValue(PackageIdPropertyName),
@@ -303,6 +311,7 @@ internal static partial class ConsoleApplication
             folderCommits ?? Array.Empty<string>(),
             headCommits ?? Array.Empty<string>(),
             referenceCommit,
+            referencePackageIds,
             noCache,
             directDownload,
             increment,
@@ -314,39 +323,39 @@ internal static partial class ConsoleApplication
             WriteChanges(console, result.Differences);
         }
 
-        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, version), OutputTypes.Diagnostic);
+        console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Calculated, projectName, referenceVersion.Version), OutputTypes.Diagnostic);
 
-        return version;
+        return referenceVersion;
+    }
 
-        static IEnumerable<Microsoft.Build.Evaluation.Project> GetProjects(Microsoft.Build.Evaluation.Project project)
+    private static IEnumerable<Microsoft.Build.Evaluation.Project> GetDependentProjects(Microsoft.Build.Evaluation.Project project)
+    {
+        var projectReferences = project.Items.Where(projectItem => string.Equals(projectItem.ItemType, "ProjectReference", StringComparison.Ordinal));
+
+        foreach (var path in projectReferences.Select(ProjectPath))
         {
-            var projectReferences = project.Items.Where(projectItem => string.Equals(projectItem.ItemType, "ProjectReference", StringComparison.Ordinal));
-
-            foreach (var path in projectReferences.Select(ProjectPath))
+            var referencedProject = project.ProjectCollection.LoadedProjects.SingleOrDefault(p => string.Equals(p.FullPath, path, StringComparison.Ordinal))
+                ?? LoadProject(project.ProjectCollection, path, default, default, default);
+            if (referencedProject is not null)
             {
-                var referencedProject = project.ProjectCollection.LoadedProjects.SingleOrDefault(p => string.Equals(p.FullPath, path, StringComparison.Ordinal))
-                    ?? LoadProject(project.ProjectCollection, path, default, default, default);
-                if (referencedProject is not null)
-                {
-                    yield return referencedProject;
+                yield return referencedProject;
 
-                    foreach (var subproject in GetProjects(referencedProject))
-                    {
-                        yield return subproject;
-                    }
+                foreach (var subproject in GetDependentProjects(referencedProject))
+                {
+                    yield return subproject;
                 }
             }
+        }
 
-            static string ProjectPath(Microsoft.Build.Evaluation.ProjectItem projectReference)
+        static string ProjectPath(Microsoft.Build.Evaluation.ProjectItem projectReference)
+        {
+            var path = projectReference.EvaluatedInclude;
+            if (!Path.IsPathRooted(path))
             {
-                var path = projectReference.EvaluatedInclude;
-                if (!Path.IsPathRooted(path))
-                {
-                    path = Path.Combine(projectReference.Project.DirectoryPath, path);
-                }
-
-                return Path.GetFullPath(path);
+                path = Path.Combine(projectReference.Project.DirectoryPath, path);
             }
+
+            return Path.GetFullPath(path);
         }
     }
 
@@ -451,14 +460,46 @@ internal static partial class ConsoleApplication
         string? platform,
         IEnumerable<string> exclude)
     {
-        using var projectCollection = GetProjects(projectOrSolution, configuration, platform);
+        var ordered = OrderByDependencies(GetProjects(projectOrSolution, configuration, platform).LoadedProjects);
 
-        foreach (var project in projectCollection.LoadedProjects.Where(project =>
+        foreach (var project in ordered.Where(project =>
             IsPackable(project)
             && !ShouldDisableSemanticVersioning(project)
             && !ShouldExclude(project, exclude)))
         {
             yield return project;
+        }
+
+        static IEnumerable<Microsoft.Build.Evaluation.Project> OrderByDependencies(ICollection<Microsoft.Build.Evaluation.Project> projects)
+        {
+            var ordered = new List<ProjectWithDependencies>();
+            foreach (var project in projects
+                .Select(project => new ProjectWithDependencies(project, GetDependentProjects(project).ToList())))
+            {
+                var inserted = false;
+                for (int i = 0; i < ordered.Count; i++)
+                {
+                    var compare = ProjectWithDependenciesComparer.Instance.Compare(project, ordered[i]);
+                    if (compare == 0)
+                    {
+                        break;
+                    }
+
+                    if (compare == -1)
+                    {
+                        ordered.Insert(i, project);
+                        inserted = true;
+                        break;
+                    }
+                }
+
+                if (!inserted)
+                {
+                    ordered.Add(project);
+                }
+            }
+
+            return ordered.Select(project => project.Project);
         }
 
         static bool IsPackable(Microsoft.Build.Evaluation.Project project)
@@ -486,7 +527,10 @@ internal static partial class ConsoleApplication
 
             IEnumerable<string> projectPaths = solution is null
                 ? new string[] { projectOrSolutionPath.FullName }
-                : solution.ProjectsInOrder.Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat).Select(projectInSolution => projectInSolution.AbsolutePath).ToArray();
+                : solution.ProjectsInOrder
+                    .Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat)
+                    .Select(projectInSolution => projectInSolution.AbsolutePath)
+                    .ToArray();
 
             foreach (var projectPath in projectPaths)
             {
@@ -709,5 +753,48 @@ internal static partial class ConsoleApplication
         /// Gets or sets the number of commits to get.
         /// </summary>
         public int CommitCount { get; set; } = DefaultCommitCount;
+    }
+
+    private sealed record class ProjectWithDependencies(Microsoft.Build.Evaluation.Project Project, IList<Microsoft.Build.Evaluation.Project> Dependencies);
+
+    private sealed class ProjectWithDependenciesComparer : IComparer<ProjectWithDependencies>
+    {
+        public static readonly IComparer<ProjectWithDependencies> Instance = new ProjectWithDependenciesComparer();
+
+        /// <inheritdoc/>
+        int IComparer<ProjectWithDependencies>.Compare(ProjectWithDependencies? x, ProjectWithDependencies? y)
+        {
+            if (x is null)
+            {
+                if (y is null)
+                {
+                    return 0;
+                }
+
+                return 1;
+            }
+
+            if (y is null)
+            {
+                return -1;
+            }
+
+            if (string.Equals(x.Project.FullPath, y.Project.FullPath, StringComparison.Ordinal))
+            {
+                return 0;
+            }
+
+            if (x.Dependencies.Contains(y.Project))
+            {
+                return 1;
+            }
+
+            if (y.Dependencies.Contains(x.Project))
+            {
+                return -1;
+            }
+
+            return 1;
+        }
     }
 }
