@@ -234,7 +234,7 @@ internal static partial class ConsoleApplication
                 increment,
                 GetVersionSuffix).ConfigureAwait(false);
 
-            if (calculatedVersion is not null && calculatedVersion.HasVersion)
+            if (calculatedVersion?.HasVersion == true)
             {
                 globalVersion = globalVersion.Max(calculatedVersion.Version);
                 referenceVersions.Add(calculatedVersion);
