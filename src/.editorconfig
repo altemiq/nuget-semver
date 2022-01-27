@@ -125,6 +125,38 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
+#### ROSLYNATOR ####
+
+# Settings
+
+# RCS1018: Add/remove accessibility modifiers
+roslynator_accessibility_modifiers = explicit
+
+# RCS1096: Use 'HasFlag' method or bitwise operator
+roslynator_enum_has_flag_style = operator
+
+# RCS1250: Use implicit/explicit object creation
+roslynator_object_creation_type_style = implicit_when_type_is_obvious
+
+#### MEZIANTOU ####
+
+# MA0026: Fix TODO comment
+dotnet_diagnostic.MA0026.severity = none
+
+# MA0048: File name must match type name
+dotnet_diagnostic.MA0048.severity = none
+
+# MA0049: Type name should not match namespace
+dotnet_diagnostic.MA0049.severity = none
+
+# MA0051: Method is too long
+dotnet_diagnostic.MA0051.severity = none
+
+#### Sonar ####
+
+# S3928: Parameter names used into ArgumentException constructors should match an existing one 
+dotnet_diagnostic.S3928.severity = none
+
 #### C# Coding Conventions ####
 [*.cs]
 
@@ -224,22 +256,3 @@ csharp_space_between_square_brackets = false
 # Wrapping preferences
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true
-
-#### MEZIANTOU ####
-
-# MA0026: Fix TODO comment
-dotnet_diagnostic.MA0026.severity = none
-
-# MA0048: File name must match type name
-dotnet_diagnostic.MA0048.severity = none
-
-# MA0049: Type name should not match namespace
-dotnet_diagnostic.MA0049.severity = none
-
-# MA0051: Method is too long
-dotnet_diagnostic.MA0051.severity = none
-
-#### Sonar ####
-
-# S3928: Parameter names used into ArgumentException constructors should match an existing one 
-dotnet_diagnostic.S3928.severity = none
