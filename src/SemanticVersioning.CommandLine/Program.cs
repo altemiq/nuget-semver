@@ -190,6 +190,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
     }
 }
 
+#pragma warning disable S3903 // Types should be defined in named namespaces
 /// <content>
 /// The binder base classes.
 /// </content>
@@ -281,3 +282,4 @@ internal partial class Program
         };
     }
 }
+#pragma warning restore S3903 // Types should be defined in named namespaces

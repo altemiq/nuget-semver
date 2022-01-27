@@ -20,12 +20,7 @@ internal static partial class ConsoleApplication
     /// <param name="versionSuffixParameter">The version suffix parameter.</param>
     public static void WriteTeamCityVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion version, string buildNumberParameter, string versionSuffixParameter)
     {
-        if (buildNumberParameter
-#if NETSTANDARD2_0
-            .Contains("."))
-#else
-            .Contains(".", StringComparison.Ordinal))
-#endif
+        if (buildNumberParameter.Contains('.', StringComparison.Ordinal))
         {
             console.Out.WriteLine(string.Format(NuGet.Versioning.VersionFormatter.Instance, "##teamcity[setParameter name='{0}' value='{1:x.y.z}']", buildNumberParameter, version), OutputTypes.TeamCity);
         }
