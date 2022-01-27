@@ -4,16 +4,30 @@
     <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CA1801;CA1812;RCS1096</NoWarn>
     <RootNamespace>$(Company).$(Title)</RootNamespace>
+    <InternalAsync Condition=" '$(InternalAsync)' == '' ">true</InternalAsync>
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>5.9.1</NuGetVersion>
-    <DotNetVersion>5.0.0</DotNetVersion>
+    <NuGetVersion>5.7.0</NuGetVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="..\..\ext\reactive\Ix.NET\Source\System.Linq.Async\System\**\*.cs" Link="System.Linq.Async/System/%(RecursiveDir)/%(FileName)%(Extension)" />
-  </ItemGroup>
+  <Choose>
+    <When Condition=" '$(InternalAsync)' == 'true' ">
+      <ItemGroup>
+        <Compile Include="..\..\ext\reactive\Ix.NET\Source\System.Linq.Async\System\**\*.cs" Link="System.Linq.Async/System/%(RecursiveDir)/%(FileName)%(Extension)" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="System.Linq.Async" Version="5.0.0" />
+      </ItemGroup>
+
+      <ItemGroup>
+        <None Remove="$(ProjectDir)\.editorconfig" />
+        <EditorConfigFiles Remove="$(ProjectDir)\.editorconfig" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
   <ItemGroup>
     <PackageReference Include="Endjin.ApiChange" Version="0.1.0" />
@@ -27,7 +41,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Text.Json" Version="$(DotNetVersion)" />
+    <PackageReference Include="System.Text.Json" Version="4.7.0" />
   </ItemGroup>
 
   <Target Name="RemoveEditorConfig" BeforeTargets="CoreCompile">
