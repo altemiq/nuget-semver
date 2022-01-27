@@ -28,13 +28,15 @@
 
   <PropertyGroup Label="Versions">
     <SystemVersion>4.3.0</SystemVersion>
+    <NuGetVersion>6.0.0</NuGetVersion>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Label="Build">
     <PackageReference Include="IsExternalInit" Version="1.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="$(MicrosoftBuildVersion)">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
@@ -50,6 +52,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Label="Upgrades">
+    <PackageReference Include="NuGet.Common" Version="$(NuGetVersion)" />
+    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />    
   </ItemGroup>
 
   <ItemGroup Label="Downgrades">
@@ -70,8 +77,8 @@
     <PropertyGroup>
       <_PackageFilesSearchPath>bin\$(Configuration)\*\</_PackageFilesSearchPath>
       <_PackageFilesToInclude>$(_PackageFilesSearchPath)Mondo.SemanticVersioning.Core.dll</_PackageFilesToInclude>
-      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.AsyncInterfaces.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Mono.Cecil*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Newtonsoft.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)NuGet.*.dll</_PackageFilesToInclude>
