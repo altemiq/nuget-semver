@@ -15,12 +15,12 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.sln\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --output All --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/Math.Converters/\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --output JSON --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo --increment ReleaseLabel --version-suffix personal",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\Math"
     },
     "Solution - IO": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/IO.sln\" --version-suffix develop --source https://nuget.pkg.github.com/MondoPower/index.json --output Json --direct-download --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/MondoPower/index.json --output All --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
@@ -28,13 +28,27 @@
       "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\Capio\\Capio.Core.Abstractions"
     },
+    "Project - NationalInstruments": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution NationalInstruments.csproj --source \"https://nuget.pkg.github.com/MondoPower/index.json\" --no-version-suffix false --package-id-regex Mondo.Aims.Field --package-id-replace Capio --commit-count 30",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\MondoPower\\Capio\\Capio\\src\\NationalInstruments"
+    },
     "Help": {
       "commandName": "Project",
       "commandLineArgs": "diff solution --help"
     },
     "newProfile1": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution C:\\Users\\rsking\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
+      "commandLineArgs": "diff solution $(UserProfile)\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\work\\MondoPower\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
+    },
+    "Jarrad": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"$(UserProfile)\\Source\\Repos\\github\\work\\MondoPower\\Aims.Swagger.Extensions\\src\\Aims.Swagger.Extensions.sln\" --no-version-suffix --version-suffix main --source https://nuget.pkg.github.com/MondoPower/index.json --output Json --direct-download --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": "ubuntu"
     }
   }
 }
