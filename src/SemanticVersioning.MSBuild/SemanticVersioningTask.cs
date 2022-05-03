@@ -139,6 +139,8 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     /// <inheritdoc/>
     public override bool Execute()
     {
+        AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveInDirectory;
+
         var regex = this.PackageIdRegex is null
             ? null
             : new System.Text.RegularExpressions.Regex(this.PackageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));

@@ -284,9 +284,6 @@ public static class MSBuildApplication
             return false;
         }
 
-        public int GetHashCode(NuGet.Frameworks.NuGetFramework obj)
-        {
-            return obj is null ? 0 : HashCode.Combine(obj.Framework, obj.Version, obj.Profile);
-        }
+        public int GetHashCode(NuGet.Frameworks.NuGetFramework obj) => obj is null ? 0 : HashCode.Combine(obj.Framework, obj.Version, obj.Profile);
     }
 }
