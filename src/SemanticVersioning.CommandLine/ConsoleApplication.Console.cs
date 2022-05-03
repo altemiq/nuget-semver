@@ -66,7 +66,7 @@ internal static partial class ConsoleApplication
 
             public OutputTypes Output { get; }
 
-            public void Write(string value)
+            public void Write(string? value)
             {
                 if (this.isError)
                 {
@@ -75,22 +75,6 @@ internal static partial class ConsoleApplication
                 else
                 {
                     this.console.Out.Write(value);
-                }
-            }
-
-            public void Write(string value, OutputTypes output)
-            {
-                if (this.Output.HasFlag(output))
-                {
-                    this.Write(value);
-                }
-            }
-
-            public void WriteLine(string value, OutputTypes output)
-            {
-                if (this.Output.HasFlag(output))
-                {
-                    this.WriteLine(value);
                 }
             }
         }
