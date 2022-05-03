@@ -639,9 +639,10 @@ public static class NuGetInstaller
         {
             var stream = File.OpenRead(tempFile);
 #if NETSTANDARD2_1_OR_GREATER
-            await
-#endif
+            await using (stream.ConfigureAwait(false))
+#else
             using (stream)
+#endif
             {
                 var downloadCacheContext = new PackageDownloadContext(cacheContext);
                 var clientPolicy = NuGet.Packaging.Signing.ClientPolicyContext.GetClientPolicy(settings, logger);
