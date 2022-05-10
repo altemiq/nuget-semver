@@ -56,7 +56,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
             yield break;
         }
 
-        var projectDir = Path.GetDirectoryName(project);
+        var projectDir = Path.GetDirectoryName(project) ?? string.Empty;
 
         foreach (System.Xml.XmlNode projectReference in projectReferences)
         {
@@ -86,6 +86,11 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
 
         static IEnumerable<string> GetIncludes(System.Xml.XmlNode node)
         {
+            if (node.Attributes is null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
             if (TryGetIncludes(node.Attributes, out var includes))
             {
                 return includes;
@@ -104,7 +109,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
                 var node = nodes
                     .OfType<System.Xml.XmlNode>()
                     .FirstOrDefault(node => string.Equals(node.Name, Include, StringComparison.Ordinal));
-                if (node is not null)
+                if (node?.Value is not null)
                 {
                     includes = node.Value.Split(';');
                     return true;

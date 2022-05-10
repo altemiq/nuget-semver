@@ -20,7 +20,7 @@ internal static class AssemblyHelper
     /// <param name="args">the arguments.</param>
     /// <returns>The resolved assembly.</returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1163:Unused parameter.", Justification = "This is a delegate.")]
-    public static System.Reflection.Assembly? ResolveInDirectory(object sender, ResolveEventArgs args)
+    public static System.Reflection.Assembly? ResolveInDirectory(object? sender, ResolveEventArgs args)
     {
         var assemblyName = new System.Reflection.AssemblyName(args.Name);
         var requestingAssembly = args.RequestingAssembly ?? typeof(AssemblyHelper).Assembly;

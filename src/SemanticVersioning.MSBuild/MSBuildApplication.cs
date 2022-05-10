@@ -66,7 +66,7 @@ public static class MSBuildApplication
         if (packageIdRegex is not null)
         {
             projectPackageIds = projectPackageIds
-                .Union(CreateEnumerable(packageIdRegex.Replace(projectPackageId, packageIdReplace)), StringComparer.Ordinal)
+                .Union(CreateEnumerable(packageIdRegex.Replace(projectPackageId, packageIdReplace ?? string.Empty)), StringComparer.Ordinal)
                 .Distinct(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -255,7 +255,7 @@ public static class MSBuildApplication
     {
         private readonly NuGet.Frameworks.DefaultCompatibilityProvider provider = new();
 
-        public bool Equals(NuGet.Frameworks.NuGetFramework x, NuGet.Frameworks.NuGetFramework y)
+        public bool Equals(NuGet.Frameworks.NuGetFramework? x, NuGet.Frameworks.NuGetFramework? y)
         {
             if (ReferenceEquals(x, y))
             {
