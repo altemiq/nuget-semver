@@ -47,7 +47,7 @@
       <SemanticVersion_ProjectDir Condition=" '$(SemanticVersion_ProjectDir)' == '' ">$(MSBuildProjectDirectory)</SemanticVersion_ProjectDir>
       <SemanticVersion_ProjectPath>$(ProjectPath)</SemanticVersion_ProjectPath>
       <SemanticVersion_ProjectPath Condition=" '$(SemanticVersion_ProjectPath)' == '' ">$(MSBuildProjectFullPath)</SemanticVersion_ProjectPath>
-      <SemanticVersionOutputPath Condition=" '$(SemanticVersionOutputPath)' == '' ">$(IntermediateOutputPath)</SemanticVersionOutputPath>
+      <SemanticVersionOutputPath Condition=" '$(SemanticVersionOutputPath)' == '' ">$(BaseIntermediateOutputPath)$(Configuration)\</SemanticVersionOutputPath>
       <SemanticVersionOutputPath>$([MSBuild]::EnsureTrailingSlash('$(SemanticVersionOutputPath)'))</SemanticVersionOutputPath>
       <_VersionsFromFile>false</_VersionsFromFile>
     </PropertyGroup>
