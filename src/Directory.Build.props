@@ -8,7 +8,7 @@
     <Authors>Ross King</Authors>
     <Deterministic>true</Deterministic>
     <NeutralLanguage>en-AU</NeutralLanguage>
-    <Copyright>Copyright © $(Company) Pty Ltd 2021</Copyright>
+    <Copyright>Copyright © $(Company) Pty Ltd 2022</Copyright>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
     <Nullable>enable</Nullable>
@@ -34,19 +34,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meziantou.Analyzer" Version="1.0.688">
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.701">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.0.0">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.1.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.34.0.42011">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.38.0.46746">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.376">
+    <PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.406">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
