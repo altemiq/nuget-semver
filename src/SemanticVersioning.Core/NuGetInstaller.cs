@@ -112,8 +112,7 @@ public static class NuGetInstaller
             {
                 return await GetPackages(source, packageId, log, cancellationToken)
                     .Where(package => package.Listed && (!package.HasVersion || !package.Version.IsPrerelease || includePrerelease))
-                    .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
-                    .FirstOrDefaultAsync(cancellationToken)
+                    .MaxBy(package => package.Version, NuGet.Versioning.VersionComparer.Default)
                     .ConfigureAwait(false);
             }
         }
@@ -398,7 +397,7 @@ public static class NuGetInstaller
                 using var archive = new System.IO.Compression.ZipArchive(archiveStream, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: false);
                 var entry = archive.GetEntry(info.Id + PackagingCoreConstants.NuspecExtension);
 #if NETSTANDARD2_1_OR_GREATER
-                var entryStream = entry.Open();
+                var entryStream = entry!.Open();
                 await using (entryStream.ConfigureAwait(false))
                 {
                     return Manifest.ReadFrom(entryStream, validateSchema: true);
@@ -460,12 +459,27 @@ public static class NuGetInstaller
         this IAsyncEnumerable<PackageIdentity> packages,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var group in packages
-            .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease))
-            .ConfigureAwait(false)
-            .WithCancellation(cancellationToken))
+        IDictionary<(int Major, int Minor, bool IsPrerelease), PackageIdentity> maximums = new Dictionary<(int Major, int Minor, bool IsPrerelease), PackageIdentity>();
+
+        await foreach (var info in packages.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
-            yield return await group.MaxAsync(cancellationToken).ConfigureAwait(false);
+            var key = (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease);
+            if (maximums.TryGetValue(key, out var max))
+            {
+                if (info.CompareTo(max) > 0)
+                {
+                    maximums[key] = info;
+                }
+            }
+            else
+            {
+                maximums.Add(key, info);
+            }
+        }
+
+        foreach (var max in maximums)
+        {
+            yield return max.Value;
         }
     }
 
@@ -480,7 +494,10 @@ public static class NuGetInstaller
         foreach (var group in packages
             .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease)))
         {
-            yield return group.Max();
+            if (group.Max() is PackageIdentity packageIdentity)
+            {
+                yield return packageIdentity;
+            }
         }
     }
 
