@@ -34,7 +34,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
     var previousOption = new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, ParseVersion, isDefault: true, description: "The previous version");
     var buildNumberParameterOption = new Option<string>("--build-number-parameter", () => ConsoleApplication.DefaultBuildNumberParameter, "The parameter name for the build number");
     var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter", () => ConsoleApplication.DefaultVersionSuffixParameter, "The parameter name for the version suffix");
-    var incrementOption = new Option<SemanticVersionIncrement>("--increment",  () => default(SemanticVersionIncrement), "The location to increment the version");
+    var incrementOption = new Option<SemanticVersionIncrement>("--increment",  () => default, "The location to increment the version");
 
     var command = new Command("diff", "Calculates the differences")
     {
