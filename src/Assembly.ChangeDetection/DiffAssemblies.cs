@@ -1,12 +1,12 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="DiffAssemblies.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="DiffAssemblies.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection;
+namespace Altavec.Assembly.ChangeDetection;
 
-using Mondo.Assembly.ChangeDetection.Infrastructure;
+using Altavec.Assembly.ChangeDetection.Infrastructure;
 
 /// <summary>
 /// Gets the difference between two assemblies.

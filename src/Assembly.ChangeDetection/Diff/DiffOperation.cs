@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="DiffOperation.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="DiffOperation.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Diff;
+namespace Altavec.Assembly.ChangeDetection.Diff;
 
 /// <summary>
 /// The diff operation.

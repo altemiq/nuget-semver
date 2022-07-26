@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------
-// <copyright file="QueryAggregator.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="QueryAggregator.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Query;
+namespace Altavec.Assembly.ChangeDetection.Query;
 
-using Mondo.Assembly.ChangeDetection.Introspection;
+using Altavec.Assembly.ChangeDetection.Introspection;
 using Mono.Cecil;
 
 /// <summary>

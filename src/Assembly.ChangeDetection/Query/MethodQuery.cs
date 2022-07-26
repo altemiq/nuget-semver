@@ -1,14 +1,14 @@
 // -----------------------------------------------------------------------
-// <copyright file="MethodQuery.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="MethodQuery.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Query;
+namespace Altavec.Assembly.ChangeDetection.Query;
 
 using System.Text;
 using System.Text.RegularExpressions;
-using Mondo.Assembly.ChangeDetection.Introspection;
+using Altavec.Assembly.ChangeDetection.Introspection;
 using Mono.Cecil;
 
 /// <summary>

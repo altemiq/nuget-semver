@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <Company>Mondo</Company>
+    <Company>Altavec</Company>
     <RootNamespace>$(Company).$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

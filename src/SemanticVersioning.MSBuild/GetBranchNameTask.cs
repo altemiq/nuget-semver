@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetBranchNameTask.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="GetBranchNameTask.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// Get the branch name.

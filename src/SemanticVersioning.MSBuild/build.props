@@ -8,14 +8,14 @@
     <VersioningTaskAssembly>$(VersioningTaskDirectory)$(MSBuildThisFileName).dll</VersioningTaskAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetProjectCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetHeadCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetReferencedProjectsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.ReadVersionFromFile" AssemblyFile="$(VersioningTaskAssembly)"/>
-  <UsingTask TaskName="Mondo.SemanticVersioning.WriteVersionToFile" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.GetProjectCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.GetHeadCommitsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.GetReferencedProjectsTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.GetLatestCommitTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.GetBranchNameTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.SemanticVersioningTask" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.ReadVersionFromFile" AssemblyFile="$(VersioningTaskAssembly)"/>
+  <UsingTask TaskName="Altavec.SemanticVersioning.WriteVersionToFile" AssemblyFile="$(VersioningTaskAssembly)"/>
 
   <PropertyGroup>
     <ComputeSemanticVersion>false</ComputeSemanticVersion>

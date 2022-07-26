@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="Class1.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="Class1.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

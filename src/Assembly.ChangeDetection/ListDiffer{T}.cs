@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ListDiffer{T}.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ListDiffer{T}.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection;
+namespace Altavec.Assembly.ChangeDetection;
 
 /// <summary>
 /// Compares two lists and creates two diff lists with added and removed elements.

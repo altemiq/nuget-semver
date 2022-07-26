@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="WriteVersionToFile.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="WriteVersionToFile.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// Writes the version to a file.

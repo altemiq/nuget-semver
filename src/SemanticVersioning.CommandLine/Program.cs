@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="Program.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="Program.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -8,7 +8,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.CommandLine.Rendering;
-using Mondo.SemanticVersioning;
+using Altavec.SemanticVersioning;
 
 var noLogoOption = new Option<bool>(new string[] { "/nologo", "--nologo" }, () => ConsoleApplication.DefaultNoLogo, "Do not display the startup banner or the copyright message.");
 

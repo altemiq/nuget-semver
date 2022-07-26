@@ -1,13 +1,13 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="SemanticVersionAnalyzer.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="SemanticVersionAnalyzer.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.SemVer;
+namespace Altavec.Assembly.ChangeDetection.SemVer;
 
-using Mondo.Assembly.ChangeDetection.Infrastructure;
-using Mondo.Assembly.ChangeDetection.Rules;
+using Altavec.Assembly.ChangeDetection.Infrastructure;
+using Altavec.Assembly.ChangeDetection.Rules;
 
 /// <summary>
 /// The semantic version number.

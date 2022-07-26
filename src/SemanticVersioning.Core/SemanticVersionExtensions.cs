@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="SemanticVersionExtensions.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="SemanticVersionExtensions.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// The <see cref="NuGet.Versioning.SemanticVersion"/> extensions.

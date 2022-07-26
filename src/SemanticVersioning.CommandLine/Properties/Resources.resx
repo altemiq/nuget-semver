@@ -130,7 +130,7 @@
     <value>Checking {0}</value>
   </data>
   <data name="Copyright" xml:space="preserve">
-    <value>Copyright (C) Mondo Power. All rights reserved.</value>
+    <value>Copyright (C) Altavec. All rights reserved.</value>
   </data>
   <data name="Events" xml:space="preserve">
     <value>Events:</value>
@@ -142,7 +142,7 @@
     <value>Interfaces:</value>
   </data>
   <data name="Logo" xml:space="preserve">
-    <value>Mondo (R) Semantic Version Generator {0}</value>
+    <value>Altavec (R) Semantic Version Generator {0}</value>
   </data>
   <data name="Methods" xml:space="preserve">
     <value>Methods:</value>

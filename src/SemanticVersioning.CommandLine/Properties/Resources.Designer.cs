@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning.Properties {
+namespace Altavec.SemanticVersioning.Properties {
     using System;
     
     
@@ -19,7 +19,7 @@ namespace Mondo.SemanticVersioning.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -39,7 +39,7 @@ namespace Mondo.SemanticVersioning.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Mondo.SemanticVersioning.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Altavec.SemanticVersioning.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -97,7 +97,7 @@ namespace Mondo.SemanticVersioning.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Copyright (C) Mondo Power. All rights reserved..
+        ///   Looks up a localized string similar to Copyright (C) Altavec. All rights reserved..
         /// </summary>
         internal static string Copyright {
             get {
@@ -133,7 +133,7 @@ namespace Mondo.SemanticVersioning.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Mondo (R) Semantic Version Generator {0}.
+        ///   Looks up a localized string similar to Altavec (R) Semantic Version Generator {0}.
         /// </summary>
         internal static string Logo {
             get {

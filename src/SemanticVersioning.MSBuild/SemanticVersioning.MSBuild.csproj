@@ -76,7 +76,7 @@
     
     <PropertyGroup>
       <_PackageFilesSearchPath>bin\$(Configuration)\*\</_PackageFilesSearchPath>
-      <_PackageFilesToInclude>$(_PackageFilesSearchPath)Mondo.SemanticVersioning.Core.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesSearchPath)Altavec.SemanticVersioning.Core.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Mono.Cecil*.dll</_PackageFilesToInclude>

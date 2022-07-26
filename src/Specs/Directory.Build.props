@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <Company>Mondo</Company>
+    <Company>Altavec</Company>
     <RootNamespace>$(Company).$(MSBuildProjectName.Replace('.Specs', ''))</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
     <LangVersion>latest</LangVersion>

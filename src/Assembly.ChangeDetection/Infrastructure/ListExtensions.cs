@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="ListExtensions.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ListExtensions.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Infrastructure;
+namespace Altavec.Assembly.ChangeDetection.Infrastructure;
 
 /// <summary>
 /// The list extensions.

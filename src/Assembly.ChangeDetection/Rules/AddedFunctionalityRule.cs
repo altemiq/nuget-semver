@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="AddedFunctionalityRule.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AddedFunctionalityRule.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Rules;
+namespace Altavec.Assembly.ChangeDetection.Rules;
 
 /// <summary>
 /// The added functionality rule.

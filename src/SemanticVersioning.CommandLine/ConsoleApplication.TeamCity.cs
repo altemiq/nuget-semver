@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ConsoleApplication.TeamCity.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ConsoleApplication.TeamCity.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <content>
 /// Application class for writing the TeamCity version.

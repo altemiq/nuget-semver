@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------
-// <copyright file="TypeExtensions.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="TypeExtensions.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Introspection;
+namespace Altavec.Assembly.ChangeDetection.Introspection;
 
-using Mondo.Assembly.ChangeDetection.Diff;
+using Altavec.Assembly.ChangeDetection.Diff;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 

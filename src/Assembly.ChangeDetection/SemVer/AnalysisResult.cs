@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="AnalysisResult.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AnalysisResult.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.SemVer;
+namespace Altavec.Assembly.ChangeDetection.SemVer;
 
 /// <summary>
 /// The analysis result.

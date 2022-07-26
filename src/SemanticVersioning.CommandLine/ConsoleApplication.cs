@@ -1,12 +1,12 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ConsoleApplication.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ConsoleApplication.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Mondo.SemanticVersioning.CommandLine.Specs")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altavec.SemanticVersioning.CommandLine.Specs")]
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 using System.CommandLine.IO;
 

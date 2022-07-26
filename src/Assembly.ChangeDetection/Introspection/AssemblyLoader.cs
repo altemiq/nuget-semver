@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="AssemblyLoader.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AssemblyLoader.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Introspection;
+namespace Altavec.Assembly.ChangeDetection.Introspection;
 
 using Mono.Cecil;
 

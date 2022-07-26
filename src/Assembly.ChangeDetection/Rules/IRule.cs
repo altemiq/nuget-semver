@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="IRule.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="IRule.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Rules;
+namespace Altavec.Assembly.ChangeDetection.Rules;
 
 /// <summary>
 /// Represents a rule.

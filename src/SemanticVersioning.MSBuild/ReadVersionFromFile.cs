@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ReadVersionFromFile.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ReadVersionFromFile.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// Reads the version from the file.

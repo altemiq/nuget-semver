@@ -1,12 +1,12 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="BreakingChangeRule.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="BreakingChangeRule.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Rules;
+namespace Altavec.Assembly.ChangeDetection.Rules;
 
-using Mondo.Assembly.ChangeDetection.Diff;
+using Altavec.Assembly.ChangeDetection.Diff;
 
 /// <summary>
 /// Rules for breaking changes.

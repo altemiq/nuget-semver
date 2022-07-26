@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="AsyncEnumerable.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AsyncEnumerable.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

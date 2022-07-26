@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ConsoleApplication.Changes.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="ConsoleApplication.Changes.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 using System.CommandLine.IO;
 using System.Linq;

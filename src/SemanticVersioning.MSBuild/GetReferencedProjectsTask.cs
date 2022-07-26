@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="GetReferencedProjectsTask.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="GetReferencedProjectsTask.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// Gets the referenced projects.

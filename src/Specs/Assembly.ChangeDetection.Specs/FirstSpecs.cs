@@ -1,4 +1,4 @@
-﻿namespace Mondo.Assembly.ChangeDetection;
+﻿namespace Altavec.Assembly.ChangeDetection;
 
 using System.Linq;
 using FluentAssertions;

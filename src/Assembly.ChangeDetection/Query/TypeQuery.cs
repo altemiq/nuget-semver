@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="TypeQuery.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="TypeQuery.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Query;
+namespace Altavec.Assembly.ChangeDetection.Query;
 
 using Mono.Cecil;
 

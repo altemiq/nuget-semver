@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="AssemblyDiffCollection.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AssemblyDiffCollection.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Diff;
+namespace Altavec.Assembly.ChangeDetection.Diff;
 
 using System.Diagnostics;
 using Mono.Cecil;

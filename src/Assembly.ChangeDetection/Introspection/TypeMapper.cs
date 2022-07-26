@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="TypeMapper.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="TypeMapper.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Introspection;
+namespace Altavec.Assembly.ChangeDetection.Introspection;
 
 /// <summary>
 /// The type mapper.

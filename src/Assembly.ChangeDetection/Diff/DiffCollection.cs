@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="DiffCollection.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="DiffCollection.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Diff;
+namespace Altavec.Assembly.ChangeDetection.Diff;
 
 /// <summary>
 /// The difference collection.

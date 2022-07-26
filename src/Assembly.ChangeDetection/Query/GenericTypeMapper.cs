@@ -1,13 +1,13 @@
 // -----------------------------------------------------------------------
-// <copyright file="GenericTypeMapper.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="GenericTypeMapper.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Query;
+namespace Altavec.Assembly.ChangeDetection.Query;
 
 using System.Text;
-using Mondo.Assembly.ChangeDetection.Introspection;
+using Altavec.Assembly.ChangeDetection.Introspection;
 
 /// <summary>
 /// The generic type mapper.

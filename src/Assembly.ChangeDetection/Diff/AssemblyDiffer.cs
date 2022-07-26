@@ -1,14 +1,14 @@
 // -----------------------------------------------------------------------
-// <copyright file="AssemblyDiffer.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="AssemblyDiffer.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.Assembly.ChangeDetection.Diff;
+namespace Altavec.Assembly.ChangeDetection.Diff;
 
-using Mondo.Assembly.ChangeDetection.Infrastructure;
-using Mondo.Assembly.ChangeDetection.Introspection;
-using Mondo.Assembly.ChangeDetection.Query;
+using Altavec.Assembly.ChangeDetection.Infrastructure;
+using Altavec.Assembly.ChangeDetection.Introspection;
+using Altavec.Assembly.ChangeDetection.Query;
 using Mono.Cecil;
 
 /// <summary>

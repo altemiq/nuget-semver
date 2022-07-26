@@ -1,4 +1,4 @@
-﻿namespace Mondo.SemanticVersioning;
+﻿namespace Altavec.SemanticVersioning;
 
 using System;
 using System.Collections.Generic;

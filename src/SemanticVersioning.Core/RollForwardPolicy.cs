@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="RollForwardPolicy.cs" company="Mondo">
-// Copyright (c) Mondo. All rights reserved.
+// <copyright file="RollForwardPolicy.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Mondo.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
 /// <summary>
 /// The roll forward policy.
