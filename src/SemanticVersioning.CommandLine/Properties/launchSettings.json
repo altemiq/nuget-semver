@@ -10,7 +10,7 @@
     },
     "Solution - Hardware": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace GeomaticTechnologies",
+      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO.Devices"
     },
     "Solution - Math": {
@@ -20,12 +20,12 @@
     },
     "Solution - IO": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output All --package-id-regex Altemiq --package-id-replace GeomaticTechnologies --nologo",
+      "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output All --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace GeomaticTechnologies",
+      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Capio\\Capio.Core.Abstractions"
     },
     "Project - NationalInstruments": {
@@ -43,7 +43,7 @@
     },
     "Jarrad": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"$(UserProfile)\\Source\\Repos\\github\\personal\\altemiq\\Aims.Swagger.Extensions\\src\\Aims.Swagger.Extensions.sln\" --no-version-suffix --version-suffix main --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace GeomaticTechnologies --nologo"
+      "commandLineArgs": "diff solution \"$(UserProfile)\\Source\\Repos\\github\\personal\\altemiq\\Aims.Swagger.Extensions\\src\\Aims.Swagger.Extensions.sln\" --no-version-suffix --version-suffix main --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace Altemiq --nologo"
     },
     "WSL": {
       "commandName": "WSL2",
