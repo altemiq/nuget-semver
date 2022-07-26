@@ -10,22 +10,22 @@
     },
     "Solution - Hardware": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "commandLineArgs": "diff solution \"src/Hardware.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace GeomaticTechnologies",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO.Devices"
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Math.Converters/\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --output JSON --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo --increment ReleaseLabel --version-suffix personal",
+      "commandLineArgs": "diff solution \"src/\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --output JSON --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo --increment ReleaseLabel --version-suffix personal",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Math"
     },
     "Solution - IO": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output All --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
+      "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json --output All --package-id-regex Altemiq --package-id-replace GeomaticTechnologies --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq",
+      "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace GeomaticTechnologies",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Capio\\Capio.Core.Abstractions"
     },
     "Project - NationalInstruments": {
@@ -39,16 +39,21 @@
     },
     "newProfile1": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution $(UserProfile)\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source C:\\Users\\rsking\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
+      "commandLineArgs": "diff solution $(UserProfile)\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\Projects\\New\\New.csproj --source $(UserProfile)\\source\\repos\\github\\personal\\altemiq\\SemanticVersioning\\src\\Specs\\NuPkg\\OnlyRelease --no-cache --package-id-regex New --package-id-replace Original"
     },
     "Jarrad": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"$(UserProfile)\\Source\\Repos\\github\\personal\\altemiq\\Aims.Swagger.Extensions\\src\\Aims.Swagger.Extensions.sln\" --no-version-suffix --version-suffix main --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace Altemiq --nologo"
+      "commandLineArgs": "diff solution \"$(UserProfile)\\Source\\Repos\\github\\personal\\altemiq\\Aims.Swagger.Extensions\\src\\Aims.Swagger.Extensions.sln\" --no-version-suffix --version-suffix main --source https://nuget.pkg.github.com/altemiq/index.json --output Json --direct-download --package-id-regex Altemiq --package-id-replace GeomaticTechnologies --nologo"
     },
     "WSL": {
       "commandName": "WSL2",
       "environmentVariables": {},
       "distributionName": "ubuntu"
+    },
+    "Project - Shapefile": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution Geometry.Shapefile.csproj --output All  --source https://nuget.pkg.github.com/altemiq/index.json   --direct-download  --version-suffix personal",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\IO\\src\\Geometry.Shapefile"
     }
   }
 }
