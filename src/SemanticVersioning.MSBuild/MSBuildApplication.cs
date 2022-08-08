@@ -135,9 +135,17 @@ public static class MSBuildApplication
         if (installDir is null)
         {
             var previousVersion = previousPackages.Max(package => package.Version);
-            calculatedVersion = previousVersion is null
-                ? new NuGet.Versioning.SemanticVersion(1, 0, 0, getVersionSuffix(NuGetVersion.DefaultAlphaRelease)) // have this as being a 0.1.0 release
-                : new NuGet.Versioning.SemanticVersion(previousVersion.Major, previousVersion.Minor, previousVersion.Patch + 1, getVersionSuffix(previousVersion.Release));
+            calculatedVersion = (previousVersion, increment) switch
+            {
+                // increment patch
+                (not null, SemanticVersionIncrement.Patch) => NuGetVersion.IncrementPatch(previousVersion, getVersionSuffix(previousVersion.Release)),
+
+                // increment release label
+                (not null, SemanticVersionIncrement.ReleaseLabel) => NuGetVersion.IncrementReleaseLabel(previousVersion, getVersionSuffix(previousVersion.Release)),
+
+                // have this as being a 1.0.0 release
+                _ => new NuGet.Versioning.SemanticVersion(1, 0, 0, getVersionSuffix(NuGetVersion.DefaultAlphaRelease)),
+            };
         }
         else
         {
