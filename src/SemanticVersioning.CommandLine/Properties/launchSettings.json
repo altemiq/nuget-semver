@@ -23,6 +23,11 @@
       "commandLineArgs": "diff solution \"src/\" --version-suffix develop --source https://nuget.pkg.github.com/altavec/index.json --output All --package-id-regex Mondo --package-id-replace GeomaticTechnologies --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\altavec\\IO"
     },
+    "Solution - IO.Las": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution \"src/IO.Las.sln\" --version-suffix develop --source https://nuget.pkg.github.com/altavec/index.json  --increment ReleaseLabel --output Json --direct-download --package-id-regex Altavec --package-id-replace Mondo --nologo",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\altavec\\IO.Las"
+    },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",
       "commandLineArgs": "diff solution \"src/Capio.Core.Abstractions.sln\" --source \"https://nuget.pkg.github.com/altavec/index.json\" --direct-download --no-version-suffix false --package-id-regex Mondo --package-id-replace GeomaticTechnologies",

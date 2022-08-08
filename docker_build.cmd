@@ -1,4 +1,4 @@
-SET version=1.0.74
+SET version=2.0.1
 SET tag=latest
 
 docker pull mcr.microsoft.com/dotnet/sdk:%tag%

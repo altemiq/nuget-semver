@@ -43,6 +43,57 @@ public static class NuGetVersion
     public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, string? prerelease, SemanticVersionIncrement increment) =>
         CalculateVersion(semanticVersionChange, previousVersions, GetReleaseVersion(previousVersions), prerelease, increment);
 
+
+    /// <summary>
+    /// Increments the patch in a version.
+    /// </summary>
+    /// <param name="version">The version.</param>
+    /// <param name="prerelease">The prerelease label.</param>
+    /// <returns>The incremented version.</returns>
+    public static NuGet.Versioning.SemanticVersion IncrementPatch(NuGet.Versioning.SemanticVersion version, string? prerelease)
+    {
+        return version.With(patch: version.Patch + 1, releaseLabel: prerelease ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Increments the release label in a version.
+    /// </summary>
+    /// <param name="version">The version.</param>
+    /// <param name="prerelease">The prerelease label.</param>
+    /// <returns>The incremented version.</returns>
+    public static NuGet.Versioning.SemanticVersion IncrementReleaseLabel(NuGet.Versioning.SemanticVersion version, string? prerelease)
+    {
+        if (string.IsNullOrEmpty(prerelease))
+        {
+            // only increment the patch if the previous was a release as well
+            if (!version.IsPrerelease)
+            {
+                return version.With(patch: version.Patch + 1);
+            }
+
+            // return the patch version with no prerelease
+            return version.With(releaseLabel: string.Empty);
+        }
+
+        if (version.IsPrerelease)
+        {
+            // calculate using the prerelease
+            var releaseLabels = version.ReleaseLabels.ToList();
+
+            var releaseCount = 0;
+            if (releaseLabels.Count > 1
+                && int.TryParse(releaseLabels[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out releaseCount))
+            {
+                releaseCount++;
+            }
+
+            return version.With(releaseLabel: FormattableString.Invariant($"{prerelease}.{releaseCount}"));
+        }
+
+        // just add the prerelease label
+        return version.With(patch: version.Patch + 1, releaseLabel: prerelease);
+    }
+
     private static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion? previousVersion, string? prerelease, SemanticVersionIncrement increment)
     {
         var nextVersion = previousVersion is null
@@ -70,44 +121,6 @@ public static class NuGetVersion
             SemanticVersionIncrement.Patch => IncrementPatch(patchVersion, prerelease),
             _ => IncrementReleaseLabel(patchVersion, prerelease),
         };
-
-        static NuGet.Versioning.SemanticVersion IncrementPatch(NuGet.Versioning.SemanticVersion patchVersion, string? prerelease)
-        {
-            return patchVersion.With(patch: patchVersion.Patch + 1, releaseLabel: prerelease ?? string.Empty);
-        }
-
-        static NuGet.Versioning.SemanticVersion IncrementReleaseLabel(NuGet.Versioning.SemanticVersion patchVersion, string? prerelease)
-        {
-            if (string.IsNullOrEmpty(prerelease))
-            {
-                // only increment the patch if the previous was a release as well
-                if (!patchVersion.IsPrerelease)
-                {
-                    return patchVersion.With(patch: patchVersion.Patch + 1);
-                }
-
-                // return the patch version with no prerelease
-                return patchVersion.With(releaseLabel: string.Empty);
-            }
-
-            if (patchVersion.IsPrerelease)
-            {
-                // calculate using the prerelease
-                var releaseLabels = patchVersion.ReleaseLabels.ToList();
-
-                var releaseCount = 0;
-                if (releaseLabels.Count > 1
-                    && int.TryParse(releaseLabels[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out releaseCount))
-                {
-                    releaseCount++;
-                }
-
-                return patchVersion.With(releaseLabel: FormattableString.Invariant($"{prerelease}.{releaseCount}"));
-            }
-
-            // just add the prerelease label
-            return patchVersion.With(patch: patchVersion.Patch + 1, releaseLabel: prerelease!);
-        }
     }
 
     private static NuGet.Versioning.SemanticVersion CalculateNextVersion(NuGet.Versioning.SemanticVersion previousVersion, SemanticVersionChange semanticVersionChange) => semanticVersionChange switch
