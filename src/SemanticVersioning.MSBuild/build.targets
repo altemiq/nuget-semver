@@ -157,6 +157,8 @@
       <VersionBuildOutputTargetFolder Condition=" '$(VersionBuildOutputTargetFolder)' == '' ">$(BuildOutputTargetFolder)</VersionBuildOutputTargetFolder>
       <VersionRestoreSources Condition=" '$(VersionRestoreSources)' == '' ">$(RestoreSources)</VersionRestoreSources>
       <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' and '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
+      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' ">false</NoVersionSuffix>
+      <VersionSuffix Condition=" '$(NoVersionSuffix)' != 'true' and '$(VersionSuffix)' == '' ">$(VersionRepositoryBranch)</VersionSuffix>
     </PropertyGroup>
 
     <!-- Calculate the target extension -->
@@ -185,7 +187,7 @@
       NoCache="$(NoCache)"
       DirectDownload="$(DirectDownload)"
       NoVersionSuffix="$(NoVersionSuffix)"
-      VersionSuffix="$(VersionRepositoryBranch)"
+      VersionSuffix="$(VersionSuffix)"
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
       ReferenceCommit="$(_ReferenceCommit)"
