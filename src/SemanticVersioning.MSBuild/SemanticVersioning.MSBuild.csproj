@@ -91,7 +91,8 @@
     <PropertyGroup>
       <_TargetFrameworkIdentity>%(_TargetFrameworks.Identity)</_TargetFrameworkIdentity>
       <_PackageFilesSearchPath>bin\$(Configuration)\$(_TargetFrameworkIdentity)\</_PackageFilesSearchPath>
-      <_PackageFilesToInclude>$(_PackageFilesSearchPath)Altemiq.SemanticVersioning.Core.dll</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesSearchPath)$(Company).SemanticVersioning.*.deps.json</_PackageFilesToInclude>
+      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)$(Company).SemanticVersioning.Core.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Mono.Cecil*.dll</_PackageFilesToInclude>
