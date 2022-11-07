@@ -165,7 +165,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             ? new List<PackageCommitIdentity>()
             : this.ReferencedPackages.Select(itemTask => new PackageCommitIdentity(itemTask.ItemSpec, NuGet.Versioning.NuGetVersion.Parse(itemTask.GetMetadata("Version")), itemTask.GetMetadata("Commit"))).ToList();
 
-        var (packageId, differences, published) = MSBuildApplication.ProcessProject(
+        var (packageId, _, _) = MSBuildApplication.ProcessProject(
             this.ProjectDir,
             this.AssemblyName,
             this.PackageId,

@@ -43,17 +43,13 @@ public static class NuGetVersion
     public static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, string? prerelease, SemanticVersionIncrement increment) =>
         CalculateVersion(semanticVersionChange, previousVersions, GetReleaseVersion(previousVersions), prerelease, increment);
 
-
     /// <summary>
     /// Increments the patch in a version.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="prerelease">The prerelease label.</param>
     /// <returns>The incremented version.</returns>
-    public static NuGet.Versioning.SemanticVersion IncrementPatch(NuGet.Versioning.SemanticVersion version, string? prerelease)
-    {
-        return version.With(patch: version.Patch + 1, releaseLabel: prerelease ?? string.Empty);
-    }
+    public static NuGet.Versioning.SemanticVersion IncrementPatch(NuGet.Versioning.SemanticVersion version, string? prerelease) => version.With(patch: version.Patch + 1, releaseLabel: prerelease ?? string.Empty);
 
     /// <summary>
     /// Increments the release label in a version.
@@ -66,13 +62,11 @@ public static class NuGetVersion
         if (string.IsNullOrEmpty(prerelease))
         {
             // only increment the patch if the previous was a release as well
-            if (!version.IsPrerelease)
+            return version switch
             {
-                return version.With(patch: version.Patch + 1);
-            }
-
-            // return the patch version with no prerelease
-            return version.With(releaseLabel: string.Empty);
+                { IsPrerelease: false } v => v.With(patch: v.Patch + 1),
+                var v => v.With(releaseLabel: string.Empty),
+            };
         }
 
         if (version.IsPrerelease)
