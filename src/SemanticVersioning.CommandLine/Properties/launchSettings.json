@@ -25,8 +25,8 @@
     },
     "Solution - IO.Las": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/IO.Las.sln\" --version-suffix develop --source https://nuget.pkg.github.com/altavec/index.json  --increment ReleaseLabel --output Json --direct-download --package-id-regex Altavec --package-id-replace Mondo --nologo",
-      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\altavec\\IO.Las"
+      "commandLineArgs": "diff solution \"src/IO.Las.sln\" --version-suffix develop --source https://nuget.pkg.github.com/altemiq/index.json  --increment ReleaseLabel --output Json --direct-download --package-id-regex Altemiq --package-id-replace Mondo --nologo",
+      "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\altemiq\\IO.Las"
     },
     "Solution - Capio.Core.Abstractions": {
       "commandName": "Project",

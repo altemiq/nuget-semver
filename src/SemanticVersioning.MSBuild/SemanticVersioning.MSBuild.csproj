@@ -4,6 +4,8 @@
     <TargetFrameworks>netstandard2.1;netstandard2.0;net461</TargetFrameworks>
     <RootNamespace>$(Company).$(Title)</RootNamespace>
     <NoWarn>$(NoWarn);MA0051</NoWarn>
+
+    <GenerateNuspecDependsOn>$(GenerateNuspecDependsOn);_ExcludeTargetFramework;_ExcludeTargetFrameworkDependency</GenerateNuspecDependsOn>
   </PropertyGroup>
 
   <PropertyGroup Label="Packaging">
@@ -31,8 +33,20 @@
     <NuGetVersion>6.0.0</NuGetVersion>
   </PropertyGroup>
 
+  <Target Name="_ExcludeTargetFramework" AfterTargets="_GetTargetFrameworksOutput" BeforeTargets="_WalkEachTargetPerFramework">
+    <ItemGroup>
+      <_TargetFrameworks Remove="netstandard2.1" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_ExcludeTargetFrameworkDependency" AfterTargets="_WalkEachTargetPerFramework" BeforeTargets="GenerateNuspec">
+    <ItemGroup>
+      <_FrameworksWithSuppressedDependencies Include="netstandard2.1" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup Label="Build">
-    <PackageReference Include="IsExternalInit" Version="1.0.2">
+    <PackageReference Include="IsExternalInit" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -40,7 +54,7 @@
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="$(MicrosoftBuildVersion)">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -48,7 +62,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Nullable" Version="1.3.0">
+    <PackageReference Include="Nullable" Version="1.3.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -56,7 +70,7 @@
 
   <ItemGroup Label="Upgrades">
     <PackageReference Include="NuGet.Common" Version="$(NuGetVersion)" />
-    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />    
+    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />
   </ItemGroup>
 
   <ItemGroup Label="Downgrades">
@@ -72,10 +86,11 @@
     <Content Include="buildMultiTargeting.*" PackagePath="%(Filename)/$(PackageId)%(Extension)" />
   </ItemGroup>
 
-  <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
-    
+  <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec" Outputs="%(_TargetFrameworks.Identity)">
+
     <PropertyGroup>
-      <_PackageFilesSearchPath>bin\$(Configuration)\*\</_PackageFilesSearchPath>
+      <_TargetFrameworkIdentity>%(_TargetFrameworks.Identity)</_TargetFrameworkIdentity>
+      <_PackageFilesSearchPath>bin\$(Configuration)\$(_TargetFrameworkIdentity)\</_PackageFilesSearchPath>
       <_PackageFilesToInclude>$(_PackageFilesSearchPath)Altemiq.SemanticVersioning.Core.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.*.dll</_PackageFilesToInclude>
@@ -91,7 +106,7 @@
     -->
     <ItemGroup>
       <_PackageFiles Include="$(_PackageFilesToInclude)">
-        <PackagePath>$(BuildOutputTargetFolder)\%(RecursiveDir)</PackagePath>
+        <PackagePath>$(BuildOutputTargetFolder)\$(_TargetFrameworkIdentity)\%(RecursiveDir)</PackagePath>
         <Visible>false</Visible>
         <BuildAction>Content</BuildAction>
       </_PackageFiles>
