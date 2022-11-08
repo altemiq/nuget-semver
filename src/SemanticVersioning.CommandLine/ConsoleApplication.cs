@@ -164,7 +164,12 @@ internal static partial class ConsoleApplication
         var instance = RegisterMSBuild(options.ProjectOrSolution);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
-        consoleWithOutput.Out.WriteLine(FormattableString.CurrentCulture($"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
+        consoleWithOutput.Out
+#if NET6_0_OR_GREATER
+            .WriteLine(string.Create(System.Globalization.CultureInfo.CurrentCulture, $"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
+#else
+            .WriteLine(FormattableString.CurrentCulture($"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
+#endif
 
         var regex = string.IsNullOrEmpty(options.PackageIdRegex)
             ? null
@@ -296,7 +301,7 @@ internal static partial class ConsoleApplication
             ? new NuGetConsole(console)
             : NuGet.Common.NullLogger.Instance;
 
-        (var referenceVersion, var results, var published) = await MSBuildApplication.ProcessProject(
+        (var referenceVersion, var results, _) = await MSBuildApplication.ProcessProject(
             project.DirectoryPath,
             project.GetPropertyValue(AssemblyNamePropertyName),
             project.GetPropertyValue(PackageIdPropertyName),
