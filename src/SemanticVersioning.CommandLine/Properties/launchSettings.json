@@ -15,7 +15,7 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/\" --source \"https://nuget.pkg.github.com/altavec/index.json\" --output JSON --direct-download --no-version-suffix false --package-id-regex Altavec --package-id-replace Mondo --nologo --increment ReleaseLabel --version-suffix personal",
+      "commandLineArgs": "diff solution \"src/\" --version-suffix personal --source \"https://nuget.pkg.github.com/altavec/index.json\" --increment ReleaseLabel --output Json --direct-download --package-id-regex Altavec --package-id-replace Mondo --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\work\\altavec\\Math"
     },
     "Solution - IO": {

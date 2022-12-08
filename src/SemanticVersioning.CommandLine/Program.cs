@@ -8,6 +8,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.CommandLine.Rendering;
+using Aims.SemanticVersioning;
 using Altavec.SemanticVersioning;
 
 var noLogoOption = new Option<bool>(new string[] { "/nologo", "--nologo" }, () => ConsoleApplication.DefaultNoLogo, "Do not display the startup banner or the copyright message.");
@@ -89,8 +90,9 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
             secondArgument,
             buildOption);
 
-        command.SetHandler<IConsole, ConsoleApplication.FileFunctionOptions, NuGet.Versioning.SemanticVersion, OutputTypes, string, string, SemanticVersionIncrement, bool>(
+        command.SetHandler(
             ConsoleApplication.FileFunction,
+            Bind.Console,
             optionsHandler,
             previousOption,
             outputTypesOption,
@@ -156,8 +158,9 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
             directDownloadOption,
             commitCountOption);
 
-        command.SetHandler<IConsole, ConsoleApplication.ProcessProjectOrSolutionOptions, NuGet.Versioning.SemanticVersion?, OutputTypes, string, string, SemanticVersionIncrement, bool>(
+        command.SetHandler(
             ConsoleApplication.ProcessProjectOrSolution,
+            Bind.Console,
             optionsHandler,
             previousOption,
             outputTypesOption,
@@ -171,7 +174,7 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
         static FileSystemInfo? GetFileSystemInformation(ArgumentResult argumentResult)
         {
             var pathToken = argumentResult.Tokens.SingleOrDefault();
-            if (pathToken.Value is null)
+            if (pathToken?.Value is null)
             {
                 return default;
             }
@@ -190,7 +193,6 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
     }
 }
 
-#pragma warning disable S3903 // Types should be defined in named namespaces
 /// <content>
 /// The binder base classes.
 /// </content>
@@ -282,4 +284,3 @@ internal partial class Program
         };
     }
 }
-#pragma warning restore S3903 // Types should be defined in named namespaces

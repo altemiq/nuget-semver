@@ -34,15 +34,15 @@
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <PackageReference Include="Meziantou.Analyzer" Version="1.0.745">
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.756">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.1.2">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.2.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.47.0.55603">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.50.0.58025">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

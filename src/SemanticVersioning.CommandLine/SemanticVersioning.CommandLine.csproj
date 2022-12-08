@@ -21,36 +21,36 @@
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
-  <PropertyGroup Label="Versions">
-    <SystemVersion>5.0.0</SystemVersion>
-    <DotnetVersion>6.0.0</DotnetVersion>
-  </PropertyGroup>
-
   <ItemGroup>
     <Compile Update="ConsoleApplication.*.cs" DependentUpon="ConsoleApplication.cs" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <SystemVersion>5.0.0</SystemVersion>
+    <SystemVersion Condition=" ($([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)')) == '.NETCoreApp' and $([MSBuild]::VersionGreaterThanOrEquals($([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')), '6.0'))) ">7.0.0</SystemVersion>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="IsExternalInit" Version="1.0.2">
+    <PackageReference Include="IsExternalInit" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="LibGit2Sharp" Version="0.27.0-preview-0175" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(DotnetVersion)" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.22114.1" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.22272.1" />
   </ItemGroup>
 
   <ItemGroup Label="Downgrades">
-    <PackageReference Include="Microsoft.Win32.Registry" Version="$(SystemVersion)" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.CodeDom" Version="$(SystemVersion)" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="$(SystemVersion)" />
-    <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemVersion)" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
