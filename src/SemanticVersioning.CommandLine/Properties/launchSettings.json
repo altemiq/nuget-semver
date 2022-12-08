@@ -15,7 +15,7 @@
     },
     "Solution - Math": {
       "commandName": "Project",
-      "commandLineArgs": "diff solution \"src/\" --source \"https://nuget.pkg.github.com/altemiq/index.json\" --output JSON --direct-download --no-version-suffix false --package-id-regex Altemiq --package-id-replace Altemiq --nologo --increment ReleaseLabel --version-suffix personal",
+      "commandLineArgs": "diff solution \"src/\" --version-suffix personal --source \"https://nuget.pkg.github.com/altemiq/index.json\" --increment ReleaseLabel --output Json --direct-download --package-id-regex Altemiq --package-id-replace Altemiq --nologo",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Math"
     },
     "Solution - IO": {
