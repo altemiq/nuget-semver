@@ -395,7 +395,7 @@ public static class NuGetInstaller
                 }
 
                 using var archive = new System.IO.Compression.ZipArchive(archiveStream, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: false);
-                var entry = archive.GetEntry(info.Id + PackagingCoreConstants.NuspecExtension);
+                var entry = archive.GetEntry(info.Id + PackagingCoreConstants.NuspecExtension, StringComparison.OrdinalIgnoreCase);
 #if NETSTANDARD2_1_OR_GREATER
                 var entryStream = entry!.Open();
                 await using (entryStream.ConfigureAwait(false))
