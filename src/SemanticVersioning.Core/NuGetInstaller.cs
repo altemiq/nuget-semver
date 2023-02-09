@@ -494,10 +494,27 @@ public static class NuGetInstaller
         foreach (var group in packages
             .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease)))
         {
-            if (group.Max() is PackageIdentity packageIdentity)
+            if (MaxVersion(group) is PackageIdentity packageIdentity)
             {
                 yield return packageIdentity;
             }
+        }
+
+        static PackageIdentity? MaxVersion(IEnumerable<PackageIdentity> packages)
+        {
+            var currentMax = new NuGet.Versioning.NuGetVersion(0, 0, 0);
+            PackageIdentity? maximum = default;
+
+            foreach (var package in packages)
+            {
+                if (package.HasVersion && package.Version > currentMax)
+                {
+                    currentMax = package.Version;
+                    maximum = package;
+                }
+            }
+
+            return maximum;
         }
     }
 
