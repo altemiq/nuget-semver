@@ -111,13 +111,18 @@ internal static partial class ConsoleApplication
     public static void FileFunction(
         System.CommandLine.IConsole console,
         FileFunctionOptions options,
-        NuGet.Versioning.SemanticVersion previous,
+        NuGet.Versioning.SemanticVersion? previous,
         OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
         SemanticVersionIncrement increment = default,
         bool noLogo = DefaultNoLogo)
     {
+        if (previous is null)
+        {
+            throw new ArgumentNullException(nameof(previous));
+        }
+
         if (!noLogo)
         {
             WriteHeader(console);
@@ -289,7 +294,8 @@ internal static partial class ConsoleApplication
                 throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow.", ex);
             }
 
-            headCommits = GetHeadCommits(repository, folderCommits[0]).ToList();
+            headCommits = GetHeadCommits(repository, folderCommits.FirstOrDefault()).ToList();
+
             var referencePaths = GetDependentProjects(project)
                 .Select(reference => reference.DirectoryPath)
                 .Distinct(StringComparer.Ordinal)
@@ -435,7 +441,7 @@ internal static partial class ConsoleApplication
         return currentLogEntry?.Commit.Sha;
     }
 
-    private static IEnumerable<string> GetHeadCommits(LibGit2Sharp.Repository repository, string commit)
+    private static IEnumerable<string> GetHeadCommits(LibGit2Sharp.Repository repository, string? commit)
     {
         foreach (var c in repository.Commits.TakeWhile(c => !string.Equals(c.Sha, commit, StringComparison.Ordinal)))
         {

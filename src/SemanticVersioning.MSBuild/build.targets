@@ -224,7 +224,7 @@
       VersionPrefix="$(SemanticVersionPrefix)"
       VersionSuffix="$(SemanticVersionSuffix)"
       RepositoryCommit="$(SemanticRepositoryCommit)"
-	  PackageId="$(PackageId)"
+      PackageId="$(PackageId)"
       Overwrite="true" />
 
     <ItemGroup>
