@@ -1,5 +1,5 @@
-SET version=2.0.1
+SET version=2.1.3
 
-REM CALL test.cmd %version%
+CALL test.cmd %version%
 CALL release.cmd %version%
 CALL pack.cmd %version%

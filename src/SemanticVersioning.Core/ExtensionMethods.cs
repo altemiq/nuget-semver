@@ -18,6 +18,7 @@ internal static class ExtensionMethods
     /// <param name="entryName">A path, relative to the root of the archive, that identifies the entry to retrieve.</param>
     /// <param name="comparisonType">One of the enumeration values that specifies the rules for the comparison.</param>
     /// <returns>A wrapper for the specified entry in the archive; <see langword="null"/> if the entry does not exist in the archive.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0074:Avoid implicit culture-sensitive methods", Justification = "This would cause recursion")]
     public static System.IO.Compression.ZipArchiveEntry? GetEntry(this System.IO.Compression.ZipArchive archive, string entryName, StringComparison comparisonType)
     {
         if (comparisonType is StringComparison.Ordinal)
