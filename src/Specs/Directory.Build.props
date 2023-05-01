@@ -12,14 +12,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TestSdkVersion>17.1.0</TestSdkVersion>
+    <TestSdkVersion>17.5.0</TestSdkVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.8.0" />
-    <PackageReference Include="Machine.Specifications" Version="1.1.0" />
+    <PackageReference Include="FluentAssertions" Version="6.11.0" />
+    <PackageReference Include="Machine.Specifications" Version="1.1.1" />
     <PackageReference Include="Machine.Specifications.Runner.VisualStudio" Version="2.10.2" TreatAsUsed="true" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.4" NoWarn="NU1608" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.5" NoWarn="NU1608" />
   </ItemGroup>
 
 </Project>
