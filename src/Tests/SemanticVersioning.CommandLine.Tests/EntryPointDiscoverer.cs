@@ -1,18 +1,15 @@
-﻿namespace Altavec.SemanticVersioning;
+namespace Altavec.SemanticVersioning;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 public class EntryPointDiscoverer
 {
-    public static MethodInfo FindStaticEntryMethod(Assembly assembly, string entryPointFullTypeName = default)
+    public static MethodInfo FindStaticEntryMethod(Assembly assembly, string? entryPointFullTypeName = default)
     {
         if (Microsoft.Build.Locator.MSBuildLocator.CanRegister)
         {
             var finder = new VisualStudioInstanceFinder();
-            var instance = finder.GetVisualStudioInstance(default(System.IO.FileInfo));
+            var instance = finder.GetVisualStudioInstance(default(FileInfo));
             Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
         }
 
@@ -20,12 +17,7 @@ public class EntryPointDiscoverer
 
         if (!string.IsNullOrWhiteSpace(entryPointFullTypeName))
         {
-            var typeInfo = assembly.GetType(entryPointFullTypeName, false, false)?.GetTypeInfo();
-            if (typeInfo is null)
-            {
-                throw new InvalidProgramException($"Could not find '{entryPointFullTypeName}' specified for Main method. See <StartupObject> project property.");
-            }
-
+            var typeInfo = (assembly.GetType(entryPointFullTypeName, false, false)?.GetTypeInfo()) ?? throw new InvalidProgramException($"Could not find '{entryPointFullTypeName}' specified for Main method. See <StartupObject> project property.");
             FindMainMethodCandidates(typeInfo, candidates);
         }
         else
@@ -62,6 +54,6 @@ public class EntryPointDiscoverer
             || string.Equals("<Main>", m.Name, StringComparison.OrdinalIgnoreCase))
         .Where(method => method.ReturnType == typeof(void)
                 || method.ReturnType == typeof(int)
-                || method.ReturnType == typeof(System.Threading.Tasks.Task)
-                || method.ReturnType == typeof(System.Threading.Tasks.Task<int>)));
+                || method.ReturnType == typeof(Task)
+                || method.ReturnType == typeof(Task<int>)));
 }

@@ -4,8 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altavec.SemanticVersioning.CommandLine.Specs")]
-
 namespace Altavec.SemanticVersioning;
 
 using System.CommandLine.IO;
