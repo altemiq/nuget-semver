@@ -4,8 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Altemiq.SemanticVersioning.CommandLine.Specs")]
-
 namespace Altemiq.SemanticVersioning;
 
 using System.CommandLine.IO;

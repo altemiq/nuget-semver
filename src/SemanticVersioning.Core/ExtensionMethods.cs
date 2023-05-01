@@ -1,10 +1,10 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="ExtensionMethods.cs" company="Altavec">
-// Copyright (c) Altavec. All rights reserved.
+// <copyright file="ExtensionMethods.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altavec.SemanticVersioning;
+namespace Altemiq.SemanticVersioning;
 
 /// <summary>
 /// Extension methods.
