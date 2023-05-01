@@ -25,7 +25,7 @@
   <PropertyGroup Label="Versions">
     <MicrosoftBuildVersion>16.3.0</MicrosoftBuildVersion>
     <Title>SemanticVersioning</Title>
-    <NuGetVersion>6.0.0</NuGetVersion>
+    <NuGetVersion>6.5.0</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
