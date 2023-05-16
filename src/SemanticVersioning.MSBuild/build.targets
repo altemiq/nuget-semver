@@ -97,7 +97,7 @@
       SkipNonexistentTargets="true"
       SkipNonexistentProjects="true"
       Properties="BuildProjectReferences=false;"
-      Condition="!$(_VersionsFromFile)">
+      Condition="!$(_VersionsFromFile) and %(ProjectReference.ReferenceOutputAssembly) != 'false' ">
       <Output
         TaskParameter="TargetOutputs"
         ItemName="_ReferencedPackages"/>
