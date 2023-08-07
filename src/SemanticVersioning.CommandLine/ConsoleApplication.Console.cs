@@ -13,6 +13,41 @@ using System.CommandLine.IO;
 /// </content>
 internal static partial class ConsoleApplication
 {
+    /// <summary>
+    /// The basic console.
+    /// </summary>
+    public sealed class Console : System.CommandLine.IConsole
+    {
+        private Console(TextWriter output, TextWriter error)
+        {
+            this.Out = StandardStreamWriter.Create(output);
+            this.Error = StandardStreamWriter.Create(error);
+        }
+
+        /// <inheritdoc/>
+        public IStandardStreamWriter Out { get; }
+
+        /// <inheritdoc/>
+        public bool IsOutputRedirected => this.Out != System.Console.Out || System.Console.IsOutputRedirected;
+
+        /// <inheritdoc/>
+        public IStandardStreamWriter Error { get; }
+
+        /// <inheritdoc/>
+        public bool IsErrorRedirected => this.Error != System.Console.Error || System.Console.IsInputRedirected;
+
+        /// <inheritdoc/>
+        public bool IsInputRedirected => true;
+
+        /// <summary>
+        /// Creates an instance of the <see cref="System.CommandLine.IConsole"/>.
+        /// </summary>
+        /// <param name="output">The output.</param>
+        /// <param name="error">The error.</param>
+        /// <returns>The console.</returns>
+        public static System.CommandLine.IConsole Create(TextWriter output, TextWriter error) => new Console(output, error);
+    }
+
     private class ConsoleWithOutput : IConsoleWithOutput
     {
         private readonly System.CommandLine.IConsole console;
