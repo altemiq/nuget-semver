@@ -99,7 +99,9 @@ internal static partial class ConsoleApplication
     /// The file function.
     /// </summary>
     /// <param name="console">The console.</param>
-    /// <param name="options">The options.</param>
+    /// <param name="first">The first assembly.</param>
+    /// <param name="second">The second assembly.</param>
+    /// <param name="build">The build label.</param>
     /// <param name="previous">The previous version.</param>
     /// <param name="output">The output.</param>
     /// <param name="buildNumberParameter">The build number parameter.</param>
@@ -108,25 +110,22 @@ internal static partial class ConsoleApplication
     /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
     public static void FileFunction(
         System.CommandLine.IConsole console,
-        FileFunctionOptions options,
-        NuGet.Versioning.SemanticVersion? previous,
+        FileInfo first,
+        FileInfo second,
+        string? build,
+        NuGet.Versioning.SemanticVersion previous,
         OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
         SemanticVersionIncrement increment = default,
         bool noLogo = DefaultNoLogo)
     {
-        if (previous is null)
-        {
-            throw new ArgumentNullException(nameof(previous));
-        }
-
         if (!noLogo)
         {
             WriteHeader(console);
         }
 
-        (var version, _, var differences) = LibraryComparison.Analyze(options.First.FullName, options.Second.FullName, new[] { previous.ToString() }, build: options.Build, increment: increment);
+        (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build: build, increment: increment);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
         WriteChanges(consoleWithOutput, differences);
@@ -141,7 +140,19 @@ internal static partial class ConsoleApplication
     /// The process project of solution delegate.
     /// </summary>
     /// <param name="console">The console.</param>
-    /// <param name="options">The options.</param>
+    /// <param name="projectOrSolution">The project or solution.</param>
+    /// <param name="source">The source.</param>
+    /// <param name="packageId">The package ID.</param>
+    /// <param name="exclude">The packages to exclude.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="platform">The platform.</param>
+    /// <param name="packageIdRegex">The package ID regex.</param>
+    /// <param name="packageIdReplace">The value to replace in <paramref name="packageIdRegex"/>.</param>
+    /// <param name="versionSuffix">The version suffix.</param>
+    /// <param name="noVersionSuffix">Set to <see langword="true"/> to ignore <paramref name="versionSuffix"/>.</param>
+    /// <param name="noCache">Do not send the packages to the cache.</param>
+    /// <param name="directDownload">Bypass the package cache.</param>
+    /// <param name="commitCount">The commit count.</param>
     /// <param name="previous">The previous version.</param>
     /// <param name="output">The output type.</param>
     /// <param name="buildNumberParameter">The parameter name for the build number.</param>
@@ -151,7 +162,19 @@ internal static partial class ConsoleApplication
     /// <returns>The task.</returns>
     public static async Task<int> ProcessProjectOrSolution(
         System.CommandLine.IConsole console,
-        ProcessProjectOrSolutionOptions options,
+        FileSystemInfo? projectOrSolution,
+        IEnumerable<string> source,
+        IEnumerable<string> packageId,
+        IEnumerable<string> exclude,
+        string? configuration,
+        string? platform,
+        string? packageIdRegex,
+        string? packageIdReplace,
+        string? versionSuffix,
+        bool noVersionSuffix,
+        bool noCache,
+        bool directDownload,
+        int commitCount,
         NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
         OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
@@ -164,7 +187,7 @@ internal static partial class ConsoleApplication
             WriteHeader(console);
         }
 
-        var instance = RegisterMSBuild(options.ProjectOrSolution);
+        var instance = RegisterMSBuild(projectOrSolution);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
         consoleWithOutput.Out
@@ -174,26 +197,26 @@ internal static partial class ConsoleApplication
             .WriteLine(FormattableString.CurrentCulture($"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
 #endif
 
-        var regex = string.IsNullOrEmpty(options.PackageIdRegex)
+        var regex = string.IsNullOrEmpty(packageIdRegex)
             ? null
-            : new System.Text.RegularExpressions.Regex(options.PackageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
+            : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         var version = await ProcessProjectOrSolutionCore(
             consoleWithOutput,
-            options.ProjectOrSolution,
-            options.Configuration,
-            options.Platform,
-            options.Source,
-            options.PackageId,
-            options.Exclude,
+            projectOrSolution,
+            configuration,
+            platform,
+            source,
+            packageId,
+            exclude,
             regex,
-            options.PackageIdReplace,
-            string.IsNullOrEmpty(options.VersionSuffix) ? default : options.VersionSuffix,
+            packageIdReplace,
+            string.IsNullOrEmpty(versionSuffix) ? default : versionSuffix,
             previous,
-            options.NoVersionSuffix,
-            options.NoCache,
-            options.DirectDownload,
-            options.CommitCount,
+            noVersionSuffix,
+            noCache,
+            directDownload,
+            commitCount,
             increment).ConfigureAwait(false);
 
         // write out the version and the suffix
@@ -670,98 +693,6 @@ internal static partial class ConsoleApplication
 
             return (projectConfiguration.ConfigurationName, projectConfiguration.PlatformName, projectConfiguration.IncludeInBuild);
         }
-    }
-
-    /// <summary>
-    /// The file function options.
-    /// </summary>
-    public sealed class FileFunctionOptions
-    {
-        /// <summary>
-        /// Gets or sets the first file.
-        /// </summary>
-        public FileInfo First { get; set; } = default!;
-
-        /// <summary>
-        /// Gets or sets the second file.
-        /// </summary>
-        public FileInfo Second { get; set; } = default!;
-
-        /// <summary>
-        /// Gets or sets the build value.
-        /// </summary>
-        public string? Build { get; set; }
-    }
-
-    /// <summary>
-    /// The process project or solution options.
-    /// </summary>
-    public sealed class ProcessProjectOrSolutionOptions
-    {
-        /// <summary>
-        /// Gets or sets the project or solution.
-        /// </summary>
-        public FileSystemInfo? ProjectOrSolution { get; set; }
-
-        /// <summary>
-        /// Gets or sets the NuGet sources.
-        /// </summary>
-        public IEnumerable<string> Source { get; set; } = Enumerable.Empty<string>();
-
-        /// <summary>
-        /// Gets or sets the package IDs.
-        /// </summary>
-        public IEnumerable<string> PackageId { get; set; } = Enumerable.Empty<string>();
-
-        /// <summary>
-        /// Gets or sets the values to exclude.
-        /// </summary>
-        public IEnumerable<string> Exclude { get; set; } = Enumerable.Empty<string>();
-
-        /// <summary>
-        /// Gets or sets the configuration.
-        /// </summary>
-        public string? Configuration { get; set; } = DefaultConfiguration;
-
-        /// <summary>
-        /// Gets or sets the platform.
-        /// </summary>
-        public string? Platform { get; set; } = DefaultPlatform;
-
-        /// <summary>
-        /// Gets or sets the package ID regex.
-        /// </summary>
-        public string? PackageIdRegex { get; set; } = DefaultPackageIdRegex;
-
-        /// <summary>
-        /// Gets or sets the package ID replacement value.
-        /// </summary>
-        public string? PackageIdReplace { get; set; } = DefaultPackageIdReplace;
-
-        /// <summary>
-        /// Gets or sets the version suffix.
-        /// </summary>
-        public string? VersionSuffix { get; set; } = DefaultVersionSuffix;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether there should be no version suffix.
-        /// </summary>
-        public bool NoVersionSuffix { get; set; } = DefaultNoVersionSuffix;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to disable using the machine cache as the first package source.
-        /// </summary>
-        public bool NoCache { get; set; } = DefaultNoCache;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to download directly without populating any caches with metadata or binaries.
-        /// </summary>
-        public bool DirectDownload { get; set; } = DefaultDirectDownload;
-
-        /// <summary>
-        /// Gets or sets the number of commits to get.
-        /// </summary>
-        public int CommitCount { get; set; } = DefaultCommitCount;
     }
 
     private sealed record class ProjectWithDependencies(Microsoft.Build.Evaluation.Project Project, IList<Microsoft.Build.Evaluation.Project> Dependencies);

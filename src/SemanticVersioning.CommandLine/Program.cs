@@ -5,49 +5,42 @@
 // -----------------------------------------------------------------------
 
 using System.CommandLine;
-using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using System.CommandLine.Rendering;
-using Aims.SemanticVersioning;
 using Altavec.SemanticVersioning;
 
-var noLogoOption = new Option<bool>(new string[] { "/nologo", "--nologo" }, () => ConsoleApplication.DefaultNoLogo, "Do not display the startup banner or the copyright message.");
+var noLogoOption = new CliOption<bool>("/nologo", "--nologo") { Description = "Do not display the startup banner or the copyright message.", DefaultValueFactory = _ => ConsoleApplication.DefaultNoLogo, Recursive = true };
 
-var root = new RootCommand(description: "Semantic Version generator")
+var root = new CliRootCommand(description: "Semantic Version generator")
 {
     CreateDiffCommand(noLogoOption),
+    noLogoOption,
 };
 
-root.AddGlobalOption(noLogoOption);
+var configuration = new CliConfiguration(root);
 
-var commandLineBuilder = new CommandLineBuilder(root)
-    .UseDefaults()
-    .UseAnsiTerminalWhenAvailable();
-
-return await commandLineBuilder
-    .Build()
+return await configuration
     .InvokeAsync(args)
     .ConfigureAwait(false);
 
-static Command CreateDiffCommand(Option<bool> noLogoOption)
+static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
 {
-    var outputTypesOption = new Option<OutputTypes>("--output", () => ConsoleApplication.DefaultOutput, "The output type");
-    var previousOption = new Option<NuGet.Versioning.SemanticVersion?>(new string[] { "-p", "--previous" }, ParseVersion, isDefault: true, description: "The previous version");
-    var buildNumberParameterOption = new Option<string>("--build-number-parameter", () => ConsoleApplication.DefaultBuildNumberParameter, "The parameter name for the build number");
-    var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter", () => ConsoleApplication.DefaultVersionSuffixParameter, "The parameter name for the version suffix");
-    var incrementOption = new Option<SemanticVersionIncrement>("--increment",  () => default, "The location to increment the version");
+    var outputTypesOption = new CliOption<OutputTypes>("--output") { Description = "The output type", DefaultValueFactory = _ => ConsoleApplication.DefaultOutput, Recursive = true };
+    var previousOption = new CliOption<NuGet.Versioning.SemanticVersion?>("-p", "--previous") { Description = "The previous version", CustomParser = ParseVersion, DefaultValueFactory = ParseVersion, Recursive = true };
+    var buildNumberParameterOption = new CliOption<string>("--build-number-parameter") { Description = "The parameter name for the build number", DefaultValueFactory = _ => ConsoleApplication.DefaultBuildNumberParameter, Recursive = true };
+    var versionSuffixParameterOption = new CliOption<string>("--version-suffix-parameter") { Description = "The parameter name for the version suffix", DefaultValueFactory = _ => ConsoleApplication.DefaultVersionSuffixParameter, Recursive = true };
+    var incrementOption = new CliOption<SemanticVersionIncrement>("--increment") { Description = "The location to increment the version", DefaultValueFactory = _ => default, Recursive = true };
 
-    var command = new Command("diff", "Calculates the differences")
+    var command = new CliCommand("diff", "Calculates the differences")
     {
         CreateFileCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
         CreateSolutionCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
+        previousOption,
+        buildNumberParameterOption,
+        versionSuffixParameterOption,
+        outputTypesOption,
+        incrementOption,
     };
-
-    command.AddGlobalOption(previousOption);
-    command.AddGlobalOption(buildNumberParameterOption);
-    command.AddGlobalOption(versionSuffixParameterOption);
-    command.AddGlobalOption(outputTypesOption);
-    command.AddGlobalOption(incrementOption);
 
     return command;
 
@@ -66,67 +59,63 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
         return ConsoleApplication.DefaultPrevious;
     }
 
-    static Command CreateFileCommand(
-        Option<NuGet.Versioning.SemanticVersion?> previousOption,
-        Option<OutputTypes> outputTypesOption,
-        Option<string> buildNumberParameterOption,
-        Option<string> versionSuffixParameterOption,
-        Option<SemanticVersionIncrement> incrementOption,
-        Option<bool> noLogoOption)
+    static CliCommand CreateFileCommand(
+        CliOption<NuGet.Versioning.SemanticVersion?> previousOption,
+        CliOption<OutputTypes> outputTypesOption,
+        CliOption<string> buildNumberParameterOption,
+        CliOption<string> versionSuffixParameterOption,
+        CliOption<SemanticVersionIncrement> incrementOption,
+        CliOption<bool> noLogoOption)
     {
-        var firstArgument = new Argument<FileInfo>("first", "The first assembly");
-        var secondArgument = new Argument<FileInfo>("second", "The second assembly");
-        var buildOption = new Option<string>(new string[] { "-b", "--build" }, "Ths build label");
+        var firstArgument = new CliArgument<FileInfo>("first") { Description = "The first assembly" };
+        var secondArgument = new CliArgument<FileInfo>("second") { Description = "The second assembly" };
+        var buildOption = new CliOption<string>("-b", "--build") { Description = "Ths build label" };
 
-        var command = new Command("file", "Calculated the differences between two assemblies")
+        var command = new CliCommand("file", "Calculated the differences between two assemblies")
         {
             firstArgument,
             secondArgument,
             buildOption,
         };
 
-        var optionsHandler = new FileFunctionsOptionsHandler(
-            firstArgument,
-            secondArgument,
-            buildOption);
-
-        command.SetHandler(
-            ConsoleApplication.FileFunction,
-            Bind.Console,
-            optionsHandler,
-            previousOption,
-            outputTypesOption,
-            buildNumberParameterOption,
-            versionSuffixParameterOption,
-            incrementOption,
-            noLogoOption);
+        command.SetAction(parseResult => ConsoleApplication.FileFunction(
+            new SystemConsoleTerminal(ConsoleApplication.Console.Create(parseResult.Configuration.Output, parseResult.Configuration.Error)),
+            parseResult.GetValue(firstArgument)!,
+            parseResult.GetValue(secondArgument)!,
+            parseResult.GetValue(buildOption),
+            parseResult.GetValue(previousOption) ?? throw new MissingFieldException(),
+            parseResult.GetValue(outputTypesOption),
+            parseResult.GetValue(buildNumberParameterOption) ?? ConsoleApplication.DefaultBuildNumberParameter,
+            parseResult.GetValue(versionSuffixParameterOption) ?? ConsoleApplication.DefaultVersionSuffixParameter,
+            parseResult.GetValue(incrementOption),
+            parseResult.GetValue(noLogoOption)));
 
         return command;
     }
 
-    static Command CreateSolutionCommand(
-        Option<NuGet.Versioning.SemanticVersion?> previousOption,
-        Option<OutputTypes> outputTypesOption,
-        Option<string> buildNumberParameterOption,
-        Option<string> versionSuffixParameterOption,
-        Option<SemanticVersionIncrement> incrementOption,
-        Option<bool> noLogoOption)
+    static CliCommand CreateSolutionCommand(
+        CliOption<NuGet.Versioning.SemanticVersion?> previousOption,
+        CliOption<OutputTypes> outputTypesOption,
+        CliOption<string> buildNumberParameterOption,
+        CliOption<string> versionSuffixParameterOption,
+        CliOption<SemanticVersionIncrement> incrementOption,
+        CliOption<bool> noLogoOption)
     {
-        var projectOrSolutionArgument = new Argument<FileSystemInfo?>("projectOrSolution", GetFileSystemInformation, description: "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.") { HelpName = "PROJECT | SOLUTION", Name = "PROJECT | SOLUTION" };
-        var configurationOption = new Option<string?>(new string[] { "--configuration", "-c" }, () => ConsoleApplication.DefaultConfiguration, "The configuration to use for analysing the project. The default for most projects is 'Debug'.") { ArgumentHelpName = "CONFIGURATON" };
-        var platformOption = new Option<string?>("--platform", () => ConsoleApplication.DefaultPlatform, "The platform to use for analysing the project. The default for most projects is 'AnyCPU'.") { ArgumentHelpName = "PLATFORM" };
-        var sourceOption = new Option<string[]>(new string[] { "--source", "-s" }, "Specifies the server URL.") { ArgumentHelpName = "SOURCE" };
-        var packageIdRegexOption = new Option<string?>("--package-id-regex", () => ConsoleApplication.DefaultPackageIdRegex, "The regular expression to match in the package id.");
-        var packageIdReplaceOption = new Option<string?>("--package-id-replace", () => ConsoleApplication.DefaultPackageIdReplace, "The text used to replace the match from --package-id-regex");
-        var packageIdOption = new Option<string[]>("--package-id", "The package ID to check for previous versions");
-        var excludeOption = new Option<string[]>("--exclude", "A package ID to check exclude from analysis") { ArgumentHelpName = "EXCLUDE" };
-        var noVersionSuffixOption = new Option<bool>("--no-version-suffix", () => ConsoleApplication.DefaultNoVersionSuffix, "Forces there to be no version suffix. This overrides --version-suffix");
-        var versionSuffixOption = new Option<string>("--version-suffix", () => ConsoleApplication.DefaultVersionSuffix, "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.") { ArgumentHelpName = "VERSION_SUFFIX" };
-        var noCacheOption = new Option<bool>("--no-cache", () => ConsoleApplication.DefaultNoCache, "Disable using the machine cache as the first package source.");
-        var directDownloadOption = new Option<bool>("--direct-download", () => ConsoleApplication.DefaultDirectDownload, "Download directly without populating any caches with metadata or binaries.");
-        var commitCountOption = new Option<int>("--commit-count", () => ConsoleApplication.DefaultCommitCount, "The number of commits to analyse for equivalent packages") { ArgumentHelpName = "COMMIT_COUNT" };
+        var projectOrSolutionArgument = new CliArgument<FileSystemInfo?>("projectOrSolution") { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.", CustomParser = GetFileSystemInformation, HelpName = "PROJECT | SOLUTION" };
+        var configurationOption = new CliOption<string?>("--configuration", "-c") { Description = "The configuration to use for analysing the project. The default for most projects is 'Debug'.", DefaultValueFactory = _ => ConsoleApplication.DefaultConfiguration, HelpName = "CONFIGURATON" };
+        var platformOption = new CliOption<string?>("--platform") { Description = "The platform to use for analysing the project. The default for most projects is 'AnyCPU'.", DefaultValueFactory = _ => ConsoleApplication.DefaultPlatform, HelpName = "PLATFORM" };
+        var sourceOption = new CliOption<string[]>("--source", "-s") { Description = "Specifies the server URL.", HelpName = "SOURCE" };
+        var packageIdRegexOption = new CliOption<string?>("--package-id-regex") { Description = "The regular expression to match in the package id.", DefaultValueFactory = _ => ConsoleApplication.DefaultPackageIdRegex };
+        var packageIdReplaceOption = new CliOption<string?>("--package-id-replace") { Description = "The text used to replace the match from --package-id-regex", DefaultValueFactory = _ => ConsoleApplication.DefaultPackageIdReplace };
+        var packageIdOption = new CliOption<string[]>("--package-id") { Description = "The package ID to check for previous versions" };
+        var excludeOption = new CliOption<string[]>("--exclude") { Description = "A package ID to check exclude from analysis", HelpName = "EXCLUDE" };
+        var noVersionSuffixOption = new CliOption<bool>("--no-version-suffix") { Description = "Forces there to be no version suffix. This overrides --version-suffix", DefaultValueFactory = _ => ConsoleApplication.DefaultNoVersionSuffix };
+        var versionSuffixOption = new CliOption<string>("--version-suffix") { Description = "Sets the pre-release value. If none is specified, the pre-release from the previous version is used.", DefaultValueFactory = _ => ConsoleApplication.DefaultVersionSuffix, HelpName = "VERSION_SUFFIX" };
+        var noCacheOption = new CliOption<bool>("--no-cache") { Description = "Disable using the machine cache as the first package source.", DefaultValueFactory = _ => ConsoleApplication.DefaultNoCache };
+        var directDownloadOption = new CliOption<bool>("--direct-download") { Description = "Download directly without populating any caches with metadata or binaries.", DefaultValueFactory = _ => ConsoleApplication.DefaultDirectDownload };
+        var commitCountOption = new CliOption<int>("--commit-count") { Description = "The number of commits to analyse for equivalent packages", DefaultValueFactory = _ => ConsoleApplication.DefaultCommitCount, HelpName = "COMMIT_COUNT" };
 
-        var command = new Command("solution", "Calculates the version based on a solution file")
+        var command = new CliCommand("solution", "Calculates the version based on a solution file")
         {
             projectOrSolutionArgument,
             configurationOption,
@@ -143,31 +132,27 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
             commitCountOption,
         };
 
-        var optionsHandler = new ProcessProjectOrSolutionOptionsHandler(
-            projectOrSolutionArgument,
-            configurationOption,
-            platformOption,
-            sourceOption,
-            packageIdRegexOption,
-            packageIdReplaceOption,
-            packageIdOption,
-            excludeOption,
-            noVersionSuffixOption,
-            versionSuffixOption,
-            noCacheOption,
-            directDownloadOption,
-            commitCountOption);
-
-        command.SetHandler(
-            ConsoleApplication.ProcessProjectOrSolution,
-            Bind.Console,
-            optionsHandler,
-            previousOption,
-            outputTypesOption,
-            buildNumberParameterOption,
-            versionSuffixParameterOption,
-            incrementOption,
-            noLogoOption);
+        command.SetAction((parseResult, _) => ConsoleApplication.ProcessProjectOrSolution(
+            new SystemConsoleTerminal(ConsoleApplication.Console.Create(parseResult.Configuration.Output, parseResult.Configuration.Error)),
+            parseResult.GetValue(projectOrSolutionArgument),
+            parseResult.GetValue(sourceOption) ?? Enumerable.Empty<string>(),
+            parseResult.GetValue(packageIdOption) ?? Enumerable.Empty<string>(),
+            parseResult.GetValue(excludeOption) ?? Enumerable.Empty<string>(),
+            parseResult.GetValue(configurationOption),
+            parseResult.GetValue(platformOption),
+            parseResult.GetValue(packageIdRegexOption),
+            parseResult.GetValue(packageIdReplaceOption),
+            parseResult.GetValue(versionSuffixOption),
+            parseResult.GetValue(noVersionSuffixOption),
+            parseResult.GetValue(noCacheOption),
+            parseResult.GetValue(directDownloadOption),
+            parseResult.GetValue(commitCountOption),
+            parseResult.GetValue(previousOption),
+            parseResult.GetValue(outputTypesOption),
+            parseResult.GetValue(buildNumberParameterOption) ?? ConsoleApplication.DefaultBuildNumberParameter,
+            parseResult.GetValue(versionSuffixParameterOption) ?? ConsoleApplication.DefaultVersionSuffixParameter,
+            parseResult.GetValue(incrementOption),
+            parseResult.GetValue(noLogoOption)));
 
         return command;
 
@@ -187,100 +172,8 @@ static Command CreateDiffCommand(Option<bool> noLogoOption)
                     : new System.IO.FileInfo(path);
             }
 
-            argumentResult.ErrorMessage = $"\"{pathToken}\" is not a valid file or directory";
+            argumentResult.AddError($"\"{pathToken}\" is not a valid file or directory");
             return default;
         }
-    }
-}
-
-/// <content>
-/// The binder base classes.
-/// </content>
-internal partial class Program
-{
-    private sealed class FileFunctionsOptionsHandler : System.CommandLine.Binding.BinderBase<ConsoleApplication.FileFunctionOptions>
-    {
-        private readonly Argument<FileInfo> firstArgument;
-        private readonly Argument<FileInfo> secondArgument;
-        private readonly Option<string> buildOption;
-
-        public FileFunctionsOptionsHandler(Argument<FileInfo> firstArgument, Argument<FileInfo> secondArgument, Option<string> buildOption)
-        {
-            this.firstArgument = firstArgument;
-            this.secondArgument = secondArgument;
-            this.buildOption = buildOption;
-        }
-
-        /// <inheritdoc/>
-        protected override ConsoleApplication.FileFunctionOptions GetBoundValue(System.CommandLine.Binding.BindingContext bindingContext) => new()
-        {
-            First = bindingContext.ParseResult.GetValueForArgument(this.firstArgument)!,
-            Second = bindingContext.ParseResult.GetValueForArgument(this.secondArgument)!,
-            Build = bindingContext.ParseResult.GetValueForOption(this.buildOption),
-        };
-    }
-
-    private sealed class ProcessProjectOrSolutionOptionsHandler : System.CommandLine.Binding.BinderBase<ConsoleApplication.ProcessProjectOrSolutionOptions>
-    {
-        private readonly Argument<FileSystemInfo?> projectOrSolutionArgument;
-        private readonly Option<string?> configurationOption;
-        private readonly Option<string?> platformOption;
-        private readonly Option<string[]> sourceOption;
-        private readonly Option<string?> packageIdRegexOption;
-        private readonly Option<string?> packageIdReplaceOption;
-        private readonly Option<string[]> packageIdOption;
-        private readonly Option<string[]> excludeOption;
-        private readonly Option<bool> noVersionSuffixOption;
-        private readonly Option<string> versionSuffixOption;
-        private readonly Option<bool> noCacheOption;
-        private readonly Option<bool> directDownloadOption;
-        private readonly Option<int> commitCountOption;
-
-        public ProcessProjectOrSolutionOptionsHandler(
-            Argument<FileSystemInfo?> projectOrSolutionArgument,
-            Option<string?> configurationOption,
-            Option<string?> platformOption,
-            Option<string[]> sourceOption,
-            Option<string?> packageIdRegexOption,
-            Option<string?> packageIdReplaceOption,
-            Option<string[]> packageIdOption,
-            Option<string[]> excludeOption,
-            Option<bool> noVersionSuffixOption,
-            Option<string> versionSuffixOption,
-            Option<bool> noCacheOption,
-            Option<bool> directDownloadOption,
-            Option<int> commitCountOption)
-        {
-            this.projectOrSolutionArgument = projectOrSolutionArgument;
-            this.configurationOption = configurationOption;
-            this.platformOption = platformOption;
-            this.sourceOption = sourceOption;
-            this.packageIdRegexOption = packageIdRegexOption;
-            this.packageIdReplaceOption = packageIdReplaceOption;
-            this.packageIdOption = packageIdOption;
-            this.excludeOption = excludeOption;
-            this.noVersionSuffixOption = noVersionSuffixOption;
-            this.versionSuffixOption = versionSuffixOption;
-            this.noCacheOption = noCacheOption;
-            this.directDownloadOption = directDownloadOption;
-            this.commitCountOption = commitCountOption;
-        }
-
-        protected override ConsoleApplication.ProcessProjectOrSolutionOptions GetBoundValue(System.CommandLine.Binding.BindingContext bindingContext) => new()
-        {
-            ProjectOrSolution = bindingContext.ParseResult.GetValueForArgument(this.projectOrSolutionArgument),
-            Source = bindingContext.ParseResult.GetValueForOption(this.sourceOption) ?? Enumerable.Empty<string>(),
-            PackageId = bindingContext.ParseResult.GetValueForOption(this.packageIdOption) ?? Enumerable.Empty<string>(),
-            Exclude = bindingContext.ParseResult.GetValueForOption(this.excludeOption) ?? Enumerable.Empty<string>(),
-            Configuration = bindingContext.ParseResult.GetValueForOption(this.configurationOption),
-            Platform = bindingContext.ParseResult.GetValueForOption(this.platformOption),
-            PackageIdRegex = bindingContext.ParseResult.GetValueForOption(this.packageIdRegexOption),
-            PackageIdReplace = bindingContext.ParseResult.GetValueForOption(this.packageIdReplaceOption),
-            VersionSuffix = bindingContext.ParseResult.GetValueForOption(this.versionSuffixOption),
-            NoVersionSuffix = bindingContext.ParseResult.GetValueForOption(this.noVersionSuffixOption),
-            NoCache = bindingContext.ParseResult.GetValueForOption(this.noCacheOption),
-            DirectDownload = bindingContext.ParseResult.GetValueForOption(this.directDownloadOption),
-            CommitCount = bindingContext.ParseResult.GetValueForOption(this.commitCountOption),
-        };
     }
 }
