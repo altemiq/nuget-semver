@@ -167,7 +167,8 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
             var path = pathToken.Value;
             if (File.Exists(path) || Directory.Exists(path))
             {
-                return (File.GetAttributes(path) & FileAttributes.Directory) != 0
+                const FileAttributes None = default;
+                return (File.GetAttributes(path) & FileAttributes.Directory) != None
                     ? new System.IO.DirectoryInfo(path)
                     : new System.IO.FileInfo(path);
             }

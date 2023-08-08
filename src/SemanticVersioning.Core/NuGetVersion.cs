@@ -145,6 +145,7 @@ public static class NuGetVersion
             return default;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "This is the simplification")]
         static IEnumerable<T> WhereNotNull<T>(IEnumerable<T?> source)
         {
             foreach (var item in source)

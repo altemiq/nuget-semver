@@ -19,6 +19,7 @@ internal record GitCommit(string Sha, DateTimeOffset AuthorDate, DateTimeOffset 
     /// </summary>
     /// <param name="line">The line.</param>
     /// <returns>The <see cref="GitCommit"/> record.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S6580:Use a format provider when parsing date and time", Justification = "This is correct")]
     public static GitCommit Parse(string line)
     {
         var split = line.Split(' ');

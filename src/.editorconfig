@@ -157,6 +157,9 @@ dotnet_diagnostic.MA0051.severity = none
 # S3928: Parameter names used into ArgumentException constructors should match an existing one 
 dotnet_diagnostic.S3928.severity = none
 
+# S6618: Use "string.Create" instead of "FormattableString"
+dotnet_diagnostic.S6618.severity = none
+
 #### C# Coding Conventions ####
 [*.cs]
 
