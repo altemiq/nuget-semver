@@ -361,7 +361,7 @@ public static class NuGetInstaller
                 if (index > 0)
                 {
                     // this is before the latest commit
-                    continue;
+                    break;
                 }
 
                 // this is the same commit
