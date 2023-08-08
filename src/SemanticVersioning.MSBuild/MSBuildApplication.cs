@@ -29,7 +29,6 @@ public static class MSBuildApplication
     /// <param name="previous">The previous version.</param>
     /// <param name="folderCommits">The commits for the folder.</param>
     /// <param name="headCommits">The commits for the head.</param>
-    /// <param name="referenceCommit">The reference commit.</param>
     /// <param name="referencePackageIds">The reference package IDs.</param>
     /// <param name="noCache">Set to <see langword="true"/> to disable using the machine cache as the first package source.</param>
     /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
@@ -51,7 +50,6 @@ public static class MSBuildApplication
         NuGet.Versioning.SemanticVersion? previous,
         IEnumerable<string> folderCommits,
         IEnumerable<string> headCommits,
-        string? referenceCommit,
         IEnumerable<PackageCommitIdentity> referencePackageIds,
         bool noCache,
         bool directDownload,
@@ -92,15 +90,14 @@ public static class MSBuildApplication
             if (commitPackage is not null && manifest is not null)
             {
                 var packageCommitId = new PackageCommitIdentity(commitPackage.Id, commitPackage.Version, manifest.Metadata.Repository.Commit);
-                if (referenceCommit is not null && headCommitsList.Contains(referenceCommit, StringComparer.Ordinal))
+
+                if (referenceVersionsList.Count > 0)
                 {
-                    // get the referenced package
-                    var referencedPackage = referenceVersionsList.Find(r => EqualCommits(r.Commit, referenceCommit));
-                    if (referencedPackage is not null
-                        && manifest.Metadata.DependencyGroups
-                            .SelectMany(dg => dg.Packages)
-                            .Where(dp => string.Equals(dp.Id, referencedPackage.Id, StringComparison.OrdinalIgnoreCase))
-                            .All(d => IsInBounds(referencedPackage, d)))
+                    var packageDependencies = manifest.Metadata.DependencyGroups
+                        .SelectMany(dg => dg.Packages)
+                        .Distinct();
+
+                    if (packageDependencies.All(packageDependency => referenceVersionsList.Find(referenceVersion => packageDependency.Id == referenceVersion.Id) is not PackageCommitIdentity referenceVersion || IsInBounds(referenceVersion, packageDependency)))
                     {
                         return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
                     }
@@ -114,16 +111,6 @@ public static class MSBuildApplication
             static bool IsInBounds(NuGet.Packaging.Core.PackageIdentity reference, NuGet.Packaging.Core.PackageDependency packageDependency)
             {
                 return reference.Version == packageDependency.VersionRange.MinVersion;
-            }
-
-            static bool EqualCommits(string? package, string reference)
-            {
-                if (package is null)
-                {
-                    return false;
-                }
-
-                return string.Compare(package, 0, reference, 0, Math.Min(package.Length, reference.Length), StringComparison.OrdinalIgnoreCase) == 0;
             }
         }
 
