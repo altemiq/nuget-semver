@@ -159,7 +159,8 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
         }
 
         var versionSuffix = this.VersionSuffix?
-            .Replace('/', '-');
+            .Replace('/', '-')
+            .Replace('_', '-');
 
         var referenceVersions = this.ReferencedPackages is null
             ? new List<PackageCommitIdentity>()
