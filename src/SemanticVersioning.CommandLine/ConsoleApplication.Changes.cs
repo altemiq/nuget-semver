@@ -83,8 +83,8 @@ internal static partial class ConsoleApplication
 
         bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
         {
-            return (breakingChanges && collection.Any(method => method.Operation.IsRemoved))
-                || (functionalChanges && collection.Any(method => method.Operation.IsAdded));
+            return (breakingChanges && collection.Exists(method => method.Operation.IsRemoved))
+                || (functionalChanges && collection.Exists(method => method.Operation.IsAdded));
         }
 
         bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)

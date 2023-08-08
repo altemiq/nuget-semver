@@ -105,22 +105,22 @@ public static class LibraryComparison
     /// <returns>The minimum version number change acceptable in Semantic Versioning.</returns>
     public static SemanticVersionChange GetMinimumAcceptableChange(AssemblyDiffCollection libraryChanges)
     {
-        bool typesRemoved = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsRemoved);
-        bool constructorsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => md.IsConstructor));
-        bool methodsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: false).Any(md => !md.IsSpecialName));
-        bool propertiesRemoved = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: false).Any());
-        bool fieldsRemoved = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: false).Any());
+        bool typesRemoved = libraryChanges.AddedRemovedTypes.Exists(type => type.Operation.IsRemoved);
+        bool constructorsRemoved = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Methods, added: false).Any(md => md.IsConstructor));
+        bool methodsRemoved = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Methods, added: false).Any(md => !md.IsSpecialName));
+        bool propertiesRemoved = libraryChanges.ChangedTypes.Exists(td => GetProperties(td, added: false).Any());
+        bool fieldsRemoved = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Fields, added: false).Any());
 
         if (typesRemoved || constructorsRemoved || methodsRemoved || propertiesRemoved || fieldsRemoved)
         {
             return SemanticVersionChange.Major;
         }
 
-        bool typesAdded = libraryChanges.AddedRemovedTypes.Any(type => type.Operation.IsAdded);
-        bool constructorsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => md.IsConstructor));
-        bool methodsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Methods, added: true).Any(md => !md.IsSpecialName));
-        bool propertiesAdded = libraryChanges.ChangedTypes.Any(td => GetProperties(td, added: true).Any());
-        bool fieldsAdded = libraryChanges.ChangedTypes.Any(td => FromDiff(td.Fields, added: true).Any());
+        bool typesAdded = libraryChanges.AddedRemovedTypes.Exists(type => type.Operation.IsAdded);
+        bool constructorsAdded = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Methods, added: true).Any(md => md.IsConstructor));
+        bool methodsAdded = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Methods, added: true).Any(md => !md.IsSpecialName));
+        bool propertiesAdded = libraryChanges.ChangedTypes.Exists(td => GetProperties(td, added: true).Any());
+        bool fieldsAdded = libraryChanges.ChangedTypes.Exists(td => FromDiff(td.Fields, added: true).Any());
 
         return typesAdded || constructorsAdded || methodsAdded || propertiesAdded || fieldsAdded
             ? SemanticVersionChange.Minor
