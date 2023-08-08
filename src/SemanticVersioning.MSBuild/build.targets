@@ -191,7 +191,7 @@
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
       ReferenceCommit="$(_ReferenceCommit)"
-      ReferencedPackages="$(_ReferencedPackages)"
+      ReferencedPackages="@(_ReferencedPackages)"
       Increment="$(SemanticVersionIncrement)"
       Condition="!$(_VersionsFromFile)">
       <Output TaskParameter="ComputedVersion" PropertyName="_ComputedVersion" />
