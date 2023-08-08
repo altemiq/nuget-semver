@@ -128,18 +128,6 @@
       <Output TaskParameter="ReferencedProjectDirs" ItemName="_ReferencedProjectDirs" />
     </GetReferencedProjectsTask>
 
-    <!-- Get the latest commit for the referenced projects -->
-    <GetLatestCommitTask
-      Paths="@(_ReferencedProjectDirs)"
-      Condition="!$(_VersionsFromFile)">
-      <Output TaskParameter="Commit" PropertyName="_ReferenceCommit" />
-    </GetLatestCommitTask>
-
-    <Message
-      Text="$(SemanticVersion_ProjectName) -> Reference Commit: $(_ReferenceCommit)"
-      Condition=" '$(_ReferenceCommit)' != '' "
-      Importance="Normal" />
-
     <!-- Set the version repository branch to use -->
     <PropertyGroup>
       <VersionRepositoryBranch Condition=" '$(VersionRepositoryBranch)' == '' ">$(RepositoryBranch)</VersionRepositoryBranch>
@@ -190,7 +178,6 @@
       VersionSuffix="$(VersionSuffix)"
       Commits="$(_RepositoryCommits)"
       HeadCommits="$(_HeadCommits)"
-      ReferenceCommit="$(_ReferenceCommit)"
       ReferencedPackages="@(_ReferencedPackages)"
       Increment="$(SemanticVersionIncrement)"
       Condition="!$(_VersionsFromFile)">

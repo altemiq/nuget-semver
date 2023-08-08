@@ -100,11 +100,6 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     public string[] HeadCommits { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Gets or sets the latest reference commit.
-    /// </summary>
-    public string? ReferenceCommit { get; set; }
-
-    /// <summary>
     /// Gets or sets the referenced packages.
     /// </summary>
     public ITaskItem[] ReferencedPackages { get; set; } = Array.Empty<ITaskItem>();
@@ -180,7 +175,6 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             previousVersion,
             projectCommmits,
             headCommits,
-            this.ReferenceCommit,
             referenceVersions,
             this.NoCache,
             this.DirectDownload,

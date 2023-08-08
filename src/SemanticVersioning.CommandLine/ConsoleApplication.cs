@@ -300,7 +300,6 @@ internal static partial class ConsoleApplication
 
         IList<string>? folderCommits = default;
         IList<string>? headCommits = default;
-        string? referenceCommit = default;
         var baseDir = GetBaseDirectory(project.DirectoryPath);
         if (baseDir is not null)
         {
@@ -316,12 +315,6 @@ internal static partial class ConsoleApplication
             }
 
             headCommits = GetHeadCommits(repository, folderCommits.FirstOrDefault()).ToList();
-
-            var referencePaths = GetDependentProjects(project)
-                .Select(reference => reference.DirectoryPath)
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
-            referenceCommit = GetLatestCommit(repository, referencePaths);
         }
 
         var nugetLogger = console.Output.HasFlag(OutputTypes.Diagnostic)
@@ -342,7 +335,6 @@ internal static partial class ConsoleApplication
             previous,
             folderCommits ?? Array.Empty<string>(),
             headCommits ?? Array.Empty<string>(),
-            referenceCommit,
             referencePackageIds,
             noCache,
             directDownload,
@@ -437,29 +429,6 @@ internal static partial class ConsoleApplication
         {
             yield return logEntry.Commit.Sha;
         }
-    }
-
-    private static string? GetLatestCommit(LibGit2Sharp.Repository repository, IEnumerable<string> paths)
-    {
-        var baseDir = repository.Info.WorkingDirectory;
-        LibGit2Sharp.LogEntry? currentLogEntry = default;
-
-        foreach (var path in paths)
-        {
-            var relativePath = path
-                .Substring(baseDir.Length)
-                .Replace("\\", "/", StringComparison.Ordinal)
-                .TrimStart('/');
-
-            foreach (var logEntry in new FolderHistory(repository, relativePath)
-                .Take(1)
-                .Where(logEntry => currentLogEntry is null || currentLogEntry.Commit.Author.When < logEntry.Commit.Author.When))
-            {
-                currentLogEntry = logEntry;
-            }
-        }
-
-        return currentLogEntry?.Commit.Sha;
     }
 
     private static IEnumerable<string> GetHeadCommits(LibGit2Sharp.Repository repository, string? commit)

@@ -149,6 +149,7 @@ public static class SemanticVersionAnalyzer
         return default;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "This is the simplified version.")]
     private static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
     {
         foreach (var item in source)
