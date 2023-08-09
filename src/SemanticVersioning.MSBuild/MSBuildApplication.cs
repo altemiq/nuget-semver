@@ -97,7 +97,7 @@ public static class MSBuildApplication
                         .SelectMany(dg => dg.Packages)
                         .Distinct();
 
-                    if (packageDependencies.All(packageDependency => referenceVersionsList.Find(referenceVersion => packageDependency.Id == referenceVersion.Id) is not PackageCommitIdentity referenceVersion || IsInBounds(referenceVersion, packageDependency)))
+                    if (packageDependencies.All(packageDependency => referenceVersionsList.Find(referenceVersion => string.Equals(packageDependency.Id, referenceVersion.Id, StringComparison.OrdinalIgnoreCase)) is not PackageCommitIdentity referenceVersion || IsInBounds(referenceVersion, packageDependency)))
                     {
                         return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
                     }

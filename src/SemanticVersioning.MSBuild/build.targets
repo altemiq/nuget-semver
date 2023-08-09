@@ -144,7 +144,7 @@
     <PropertyGroup>
       <VersionBuildOutputTargetFolder Condition=" '$(VersionBuildOutputTargetFolder)' == '' ">$(BuildOutputTargetFolder)</VersionBuildOutputTargetFolder>
       <VersionRestoreSources Condition=" '$(VersionRestoreSources)' == '' ">$(RestoreSources)</VersionRestoreSources>
-      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' and '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
+      <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' and '$(VersionRepositoryBranch)' != '' and '$(VersionRepositoryBranch)' == '$(DefaultRepositoryBranch)' ">true</NoVersionSuffix>
       <NoVersionSuffix Condition=" '$(NoVersionSuffix)' == '' ">false</NoVersionSuffix>
       <VersionSuffix Condition=" '$(NoVersionSuffix)' != 'true' and '$(VersionSuffix)' == '' ">$(VersionRepositoryBranch)</VersionSuffix>
     </PropertyGroup>
