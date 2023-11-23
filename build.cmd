@@ -1,4 +1,4 @@
-SET version=2.1.5
+SET version=2.1.6
 
 CALL test.cmd
 CALL release.cmd %version%
