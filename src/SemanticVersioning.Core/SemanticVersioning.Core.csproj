@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>5.7.0</NuGetVersion>
+    <NuGetVersion>5.11.5</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
