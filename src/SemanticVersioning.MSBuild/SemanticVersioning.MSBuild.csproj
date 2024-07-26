@@ -30,7 +30,7 @@
 
   <PropertyGroup Label="Versions">
     <SystemVersion>4.3.0</SystemVersion>
-    <NuGetVersion>6.0.0</NuGetVersion>
+    <NuGetVersion>6.0.5</NuGetVersion>
   </PropertyGroup>
 
   <Target Name="_ExcludeTargetFramework" AfterTargets="_GetTargetFrameworksOutput" BeforeTargets="_WalkEachTargetPerFramework">
