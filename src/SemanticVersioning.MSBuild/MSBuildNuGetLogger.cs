@@ -32,7 +32,7 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
         }
         else
         {
-            var messageImportance = level switch
+            var importance = level switch
             {
                 NuGet.Common.LogLevel.Debug or NuGet.Common.LogLevel.Verbose or NuGet.Common.LogLevel.Minimal => MessageImportance.Low,
                 NuGet.Common.LogLevel.Information => MessageImportance.Normal,
@@ -40,7 +40,7 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
                 _ => default,
             };
 
-            this.logger.LogMessage(messageImportance, data);
+            this.LogMessageCore(importance, data);
         }
     }
 
@@ -54,23 +54,78 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
     public System.Threading.Tasks.Task LogAsync(NuGet.Common.ILogMessage message) => System.Threading.Tasks.Task.Factory.StartNew(() => this.Log(message));
 
     /// <inheritdoc/>
-    public void LogDebug(string data) => this.logger.LogMessage(MessageImportance.Low, data);
+    public void LogDebug(string data) => this.LogMessageCore(MessageImportance.Low, data);
 
     /// <inheritdoc/>
-    public void LogError(string data) => this.logger.LogError(data);
+    public void LogError(string data)
+    {
+        (var code, data) = Process(data);
+        this.logger.LogError(
+            subcategory: null,
+            errorCode: code,
+            helpKeyword: null,
+            file: null,
+            lineNumber: 0,
+            columnNumber: 0,
+            endLineNumber: 0,
+            endColumnNumber: 0,
+            message: data);
+    }
 
     /// <inheritdoc/>
-    public void LogInformation(string data) => this.logger.LogMessage(MessageImportance.Normal, data);
+    public void LogInformation(string data) => this.LogMessageCore(MessageImportance.Normal, data);
 
     /// <inheritdoc/>
-    public void LogInformationSummary(string data) => this.logger.LogMessage(MessageImportance.Normal, data);
+    public void LogInformationSummary(string data) => this.LogMessageCore(MessageImportance.Normal, data);
 
     /// <inheritdoc/>
-    public void LogMinimal(string data) => this.logger.LogMessage(MessageImportance.Low, data);
+    public void LogMinimal(string data) => this.LogMessageCore(MessageImportance.Low, data);
 
     /// <inheritdoc/>
-    public void LogVerbose(string data) => this.logger.LogMessage(MessageImportance.Low, data);
+    public void LogVerbose(string data) => this.LogMessageCore(MessageImportance.Low, data);
 
     /// <inheritdoc/>
-    public void LogWarning(string data) => this.logger.LogWarning(data);
+    public void LogWarning(string data)
+    {
+        (var code, data) = Process(data);
+        this.logger.LogWarning(
+            subcategory: null,
+            warningCode: code,
+            helpKeyword: null,
+            file: null,
+            lineNumber: 0,
+            columnNumber: 0,
+            endLineNumber: 0,
+            endColumnNumber: 0,
+            message: data);
+    }
+
+    private static (string? Code, string Data) Process(string data)
+    {
+        string? code = default;
+        var split = data.Split('|');
+        if (split.Length is 2)
+        {
+            code = split[0];
+            data = split[1];
+        }
+
+        return (code, data);
+    }
+
+    private void LogMessageCore(MessageImportance importance, string data)
+    {
+        (var code, data) = Process(data);
+        this.logger.LogMessage(
+            subcategory: null,
+            code: code,
+            helpKeyword: null,
+            file: null,
+            lineNumber: 0,
+            columnNumber: 0,
+            endLineNumber: 0,
+            endColumnNumber: 0,
+            importance: importance,
+            message: data);
+    }
 }

@@ -165,6 +165,9 @@ internal static partial class ConsoleApplication
 
         public void Log(NuGet.Common.LogLevel level, string data)
         {
+            // trim off the code
+            data = data.Substring(data.IndexOf('|', StringComparison.Ordinal) + 1);
+
             switch (level)
             {
                 case NuGet.Common.LogLevel.Debug:
