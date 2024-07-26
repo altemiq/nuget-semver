@@ -162,14 +162,8 @@ public static class NuGetInstaller
         string? root = default,
         CancellationToken cancellationToken = default)
     {
-        var package = version is null
-            ? GetLatestPackage(packages, includePrerelease: false)
-            : GetPackage(packages, version);
-
-        if (package is null)
-        {
-            throw new InvalidOperationException($"Failed to find any release version of {string.Join(" or ", packages.Select(package => package.Id).Distinct(StringComparer.OrdinalIgnoreCase))}");
-        }
+        var package = GetPackage(packages, version)
+            ?? throw new KeyNotFoundException($"Failed to find any release version of {string.Join(" or ", packages.Select(package => package.Id).Distinct(StringComparer.OrdinalIgnoreCase))}");
 
         return await InstallPackage(
             package,
@@ -181,17 +175,24 @@ public static class NuGetInstaller
             log ?? NuGet.Common.NullLogger.Instance,
             cancellationToken).ConfigureAwait(false);
 
-        static PackageIdentity? GetLatestPackage(IEnumerable<PackageIdentity> packages, bool includePrerelease)
+        static PackageIdentity? GetPackage(IEnumerable<PackageIdentity> packages, NuGet.Versioning.SemanticVersion? version)
         {
-            return packages
-                .Where(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && (!package.Version.IsPrerelease || includePrerelease))
-                .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
-                .FirstOrDefault();
-        }
+            return version is null
+                ? GetLatestPackage(packages, includePrerelease: false)
+                : GetPackageCore(packages, version);
 
-        static PackageIdentity? GetPackage(IEnumerable<PackageIdentity> packages, NuGet.Versioning.SemanticVersion version)
-        {
-            return packages.FirstOrDefault(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0);
+            static PackageIdentity? GetLatestPackage(IEnumerable<PackageIdentity> packages, bool includePrerelease)
+            {
+                return packages
+                    .Where(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && (!package.Version.IsPrerelease || includePrerelease))
+                    .OrderByDescending(package => package.Version, NuGet.Versioning.VersionComparer.Default)
+                    .FirstOrDefault();
+            }
+
+            static PackageIdentity? GetPackageCore(IEnumerable<PackageIdentity> packages, NuGet.Versioning.SemanticVersion version)
+            {
+                return packages.FirstOrDefault(package => (package is not SourcePackageDependencyInfo info || info.Listed) && package.HasVersion && NuGet.Versioning.VersionComparer.Default.Compare(package.Version, version) == 0);
+            }
         }
 
         static async Task<string> InstallPackage(PackageIdentity package, IEnumerable<string> sources, ISettings settings, string installPath, bool useCache, bool addToCache, NuGet.Common.ILogger log, CancellationToken cancellationToken)
