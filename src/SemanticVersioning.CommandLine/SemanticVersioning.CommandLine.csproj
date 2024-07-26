@@ -27,7 +27,11 @@
 
   <PropertyGroup>
     <SystemVersion>5.0.0</SystemVersion>
-    <SystemVersion Condition=" ($([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)')) == '.NETCoreApp' and $([MSBuild]::VersionGreaterThanOrEquals($([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')), '6.0'))) ">7.0.0</SystemVersion>
+    <SystemVersion Condition=" ($([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)')) == '.NETCoreApp' and $([MSBuild]::VersionGreaterThanOrEquals($([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')), '6.0'))) ">8.0.0</SystemVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Versions">
+    <NuGetVersion>6.10.1</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,15 +39,20 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="LibGit2Sharp" Version="0.27.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(SystemVersion)" />
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.23326.1" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.4.0-alpha.24324.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Upgrades">
+    <PackageReference Include="NuGet.Common" Version="$(NuGetVersion)" />
+    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />
   </ItemGroup>
 
   <ItemGroup Label="Downgrades">

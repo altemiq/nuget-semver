@@ -8,7 +8,7 @@
     <Authors>Ross King</Authors>
     <Deterministic>true</Deterministic>
     <NeutralLanguage>en-AU</NeutralLanguage>
-    <Copyright>Copyright © $(Company) Pty Ltd 2022</Copyright>
+    <Copyright>Copyright © $(Company) Pty Ltd 2024</Copyright>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
     <Nullable>enable</Nullable>
@@ -29,24 +29,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="$([MSBuild]::GetPathOfFileAbove(stylecop.json))" />
-    <None Include="$([MSBuild]::GetPathOfFileAbove(.editorconfig))" />
+    <AdditionalFiles Include="$([MSBuild]::GetPathOfFileAbove('stylecop.json'))" />
+    <None Include="$([MSBuild]::GetPathOfFileAbove('.editorconfig'))" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.81">
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.161">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.4.0">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.7.0.75501">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.30.0.95878">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.507">
+    <PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
