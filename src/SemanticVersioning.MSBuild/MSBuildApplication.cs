@@ -227,9 +227,13 @@ public static class MSBuildApplication
             {
                 return await NuGetInstaller.InstallAsync(packages, source, version: previousVersion, noCache: noCache, directDownload: directDownload, log: logger, root: projectDirectory).ConfigureAwait(false);
             }
+            catch (KeyNotFoundException ex)
+            {
+                logger?.LogWarning($"SV0001: {ex.Message}");
+            }
             catch (InvalidOperationException ex)
             {
-                logger?.LogWarning(ex.Message);
+                logger?.LogWarning($"SV0002: {ex.Message}");
             }
 
             return default;
