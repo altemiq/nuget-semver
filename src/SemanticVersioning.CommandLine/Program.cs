@@ -114,6 +114,7 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
         var noCacheOption = new CliOption<bool>("--no-cache") { Description = "Disable using the machine cache as the first package source.", DefaultValueFactory = _ => ConsoleApplication.DefaultNoCache };
         var directDownloadOption = new CliOption<bool>("--direct-download") { Description = "Download directly without populating any caches with metadata or binaries.", DefaultValueFactory = _ => ConsoleApplication.DefaultDirectDownload };
         var commitCountOption = new CliOption<int>("--commit-count") { Description = "The number of commits to analyse for equivalent packages", DefaultValueFactory = _ => ConsoleApplication.DefaultCommitCount, HelpName = "COMMIT_COUNT" };
+        var forceOption = new CliOption<bool>("--force", "-f") { Description = "Force the computation of the version" };
 
         var command = new CliCommand("solution", "Calculates the version based on a solution file")
         {
@@ -130,6 +131,7 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
             noCacheOption,
             directDownloadOption,
             commitCountOption,
+            forceOption,
         };
 
         command.SetAction((parseResult, _) => ConsoleApplication.ProcessProjectOrSolution(
@@ -152,7 +154,8 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
             parseResult.GetValue(buildNumberParameterOption) ?? ConsoleApplication.DefaultBuildNumberParameter,
             parseResult.GetValue(versionSuffixParameterOption) ?? ConsoleApplication.DefaultVersionSuffixParameter,
             parseResult.GetValue(incrementOption),
-            parseResult.GetValue(noLogoOption)));
+            parseResult.GetValue(noLogoOption),
+            parseResult.GetValue(forceOption)));
 
         return command;
 

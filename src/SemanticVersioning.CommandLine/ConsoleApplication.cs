@@ -83,6 +83,11 @@ internal static partial class ConsoleApplication
     /// </summary>
     public const string? DefaultPlatform = default;
 
+    /// <summary>
+    /// The default for the force option.
+    /// </summary>
+    public const bool DefaultForce = default;
+
     private const string DisableSemanticVersioningPropertyName = "DisableSemanticVersioning";
 
     private const string IsPackablePropertyName = "IsPackable";
@@ -159,6 +164,7 @@ internal static partial class ConsoleApplication
     /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
     /// <param name="increment">The increment location.</param>
     /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
+    /// <param name="force">Set to <see langword="true"/> to force the computation of the version.</param>
     /// <returns>The task.</returns>
     public static async Task<int> ProcessProjectOrSolution(
         System.CommandLine.IConsole console,
@@ -180,7 +186,8 @@ internal static partial class ConsoleApplication
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
         SemanticVersionIncrement increment = default,
-        bool noLogo = DefaultNoLogo)
+        bool noLogo = DefaultNoLogo,
+        bool force = DefaultForce)
     {
         if (!noLogo)
         {
@@ -217,7 +224,8 @@ internal static partial class ConsoleApplication
             noCache,
             directDownload,
             commitCount,
-            increment).ConfigureAwait(false);
+            increment,
+            force).ConfigureAwait(false);
 
         // write out the version and the suffix
         WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
@@ -242,7 +250,8 @@ internal static partial class ConsoleApplication
         bool noCache,
         bool directDownload,
         int commitCount,
-        SemanticVersionIncrement increment)
+        SemanticVersionIncrement increment,
+        bool force)
     {
         var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
@@ -263,6 +272,7 @@ internal static partial class ConsoleApplication
                 directDownload,
                 commitCount,
                 increment,
+                force,
                 GetVersionSuffix).ConfigureAwait(false);
 
             if (calculatedVersion?.HasVersion == true)
@@ -293,6 +303,7 @@ internal static partial class ConsoleApplication
         bool directDownload,
         int commitCount,
         SemanticVersionIncrement increment,
+        bool force,
         Func<string?, string?> getVersionSuffix)
     {
         var projectName = project.GetPropertyValue(MSBuildProjectNamePropertyName);
@@ -300,21 +311,24 @@ internal static partial class ConsoleApplication
 
         IList<string>? folderCommits = default;
         IList<string>? headCommits = default;
-        var baseDir = GetBaseDirectory(project.DirectoryPath);
-        if (baseDir is not null)
+        if (!force)
         {
-            using var repository = new LibGit2Sharp.Repository(baseDir);
-            try
+            var baseDir = GetBaseDirectory(project.DirectoryPath);
+            if (baseDir is not null)
             {
-                folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
-            }
-            catch (LibGit2Sharp.NotFoundException ex)
-            {
-                // this indicates that the fetch is too shallow
-                throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow.", ex);
-            }
+                using var repository = new LibGit2Sharp.Repository(baseDir);
+                try
+                {
+                    folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
+                }
+                catch (LibGit2Sharp.NotFoundException ex)
+                {
+                    // this indicates that the fetch is too shallow
+                    throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow.", ex);
+                }
 
-            headCommits = GetHeadCommits(repository, folderCommits.FirstOrDefault()).ToList();
+                headCommits = GetHeadCommits(repository, folderCommits.FirstOrDefault()).ToList();
+            }
         }
 
         var nugetLogger = console.Output.HasFlag(OutputTypes.Diagnostic)
