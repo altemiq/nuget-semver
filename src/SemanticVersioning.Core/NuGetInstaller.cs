@@ -39,7 +39,7 @@ public static class NuGetInstaller
         string? root = default,
         CancellationToken cancellationToken = default)
     {
-        var enumerableSources = sources ?? Enumerable.Empty<string>();
+        var enumerableSources = sources ?? [];
         var settings = Settings.LoadDefaultSettings(root);
         SourcePackageDependencyInfo? latest = default;
         foreach (var packageName in packageNames)
@@ -167,7 +167,7 @@ public static class NuGetInstaller
 
         return await InstallPackage(
             package,
-            sources ?? Enumerable.Empty<string>(),
+            sources ?? [],
             Settings.LoadDefaultSettings(root),
             Path.Combine(Path.GetTempPath(), Path.GetRandomFileName(), package.Id),
             !noCache,
@@ -240,7 +240,7 @@ public static class NuGetInstaller
         var settings = Settings.LoadDefaultSettings(root);
         var packageReader = package is SourcePackageDependencyInfo info
             ? await DownloadPackage(info, info.Source, settings, useCache: true, addToCache: false, log, cancellationToken).ConfigureAwait(false)
-            : await DownloadPackage(package, sources ?? Enumerable.Empty<string>(), settings, useCache: true, addToCache: false, log, cancellationToken).ConfigureAwait(false);
+            : await DownloadPackage(package, sources ?? [], settings, useCache: true, addToCache: false, log, cancellationToken).ConfigureAwait(false);
 
         var installDir = await InstallToTemp(packageReader, log, PackageSaveMode.Nuspec, XmlDocFileSaveMode.None, cancellationToken).ConfigureAwait(false);
 

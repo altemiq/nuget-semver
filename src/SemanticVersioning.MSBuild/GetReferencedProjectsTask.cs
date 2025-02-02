@@ -36,7 +36,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
         }
         else
         {
-            this.ReferencedProjectDirs = Array.Empty<ITaskItem>();
+            this.ReferencedProjectDirs = [];
         }
 
         return true;
@@ -88,7 +88,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
         {
             if (node.Attributes is null)
             {
-                return Enumerable.Empty<string>();
+                return [];
             }
 
             if (TryGetIncludes(node.Attributes, out var includes))
@@ -101,7 +101,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
                 return includes;
             }
 
-            return Enumerable.Empty<string>();
+            return [];
 
             static bool TryGetIncludes(System.Collections.IEnumerable nodes, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out IEnumerable<string>? includes)
             {

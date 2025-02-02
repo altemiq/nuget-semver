@@ -52,7 +52,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     /// <summary>
     /// Gets or sets the semicolon-delimited list of package sources.
     /// </summary>
-    public string[] RestoreSources { get; set; } = Array.Empty<string>();
+    public string[] RestoreSources { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the package ID regular expression.
@@ -92,17 +92,17 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     /// <summary>
     /// Gets or sets the project commits.
     /// </summary>
-    public string[] Commits { get; set; } = Array.Empty<string>();
+    public string[] Commits { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the head commits.
     /// </summary>
-    public string[] HeadCommits { get; set; } = Array.Empty<string>();
+    public string[] HeadCommits { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the referenced packages.
     /// </summary>
-    public ITaskItem[] ReferencedPackages { get; set; } = Array.Empty<ITaskItem>();
+    public ITaskItem[] ReferencedPackages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the increment location.
@@ -144,9 +144,9 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             ? default
             : NuGet.Versioning.SemanticVersion.Parse(this.Previous);
 
-        var restoreSources = this.RestoreSources ?? Array.Empty<string>();
-        var projectCommmits = this.Commits ?? Array.Empty<string>();
-        var headCommits = this.HeadCommits ?? Array.Empty<string>();
+        var restoreSources = this.RestoreSources ?? [];
+        var projectCommmits = this.Commits ?? [];
+        var headCommits = this.HeadCommits ?? [];
         if (projectCommmits.Length > 0)
         {
             var projectCommit = projectCommmits[0];
