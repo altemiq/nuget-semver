@@ -86,20 +86,13 @@ internal static partial class ConsoleApplication
             return new ConsoleWithOutput(console, outputTypes);
         }
 
-        private sealed class StandardStreamWriterWithOutput : IStandardStreamWriterWithOutput
+        private sealed class StandardStreamWriterWithOutput(System.CommandLine.IConsole console, OutputTypes output, bool isError = false) : IStandardStreamWriterWithOutput
         {
-            private readonly System.CommandLine.IConsole console;
+            private readonly System.CommandLine.IConsole console = console;
 
-            private readonly bool isError;
+            private readonly bool isError = isError;
 
-            public StandardStreamWriterWithOutput(System.CommandLine.IConsole console, OutputTypes output, bool isError = false)
-            {
-                this.console = console;
-                this.Output = output;
-                this.isError = isError;
-            }
-
-            public OutputTypes Output { get; }
+            public OutputTypes Output { get; } = output;
 
             public void Write(string? value)
             {
@@ -115,12 +108,9 @@ internal static partial class ConsoleApplication
         }
     }
 
-    private sealed class TerminalWithOutput : ConsoleWithOutput, System.CommandLine.Rendering.ITerminal
+    private sealed class TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output) : ConsoleWithOutput(terminal, output), System.CommandLine.Rendering.ITerminal
     {
-        private readonly System.CommandLine.Rendering.ITerminal terminal;
-
-        public TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output)
-            : base(terminal, output) => this.terminal = terminal;
+        private readonly System.CommandLine.Rendering.ITerminal terminal = terminal;
 
         public ConsoleColor BackgroundColor
         {
@@ -157,11 +147,9 @@ internal static partial class ConsoleApplication
         public void ShowCursor() => this.terminal.ShowCursor();
     }
 
-    private sealed class NuGetConsole : NuGet.Common.ILogger
+    private sealed class NuGetConsole(System.CommandLine.IConsole console) : NuGet.Common.ILogger
     {
-        private readonly System.CommandLine.IConsole console;
-
-        public NuGetConsole(System.CommandLine.IConsole console) => this.console = console;
+        private readonly System.CommandLine.IConsole console = console;
 
         public void Log(NuGet.Common.LogLevel level, string data)
         {

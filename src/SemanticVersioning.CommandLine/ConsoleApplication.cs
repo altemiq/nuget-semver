@@ -130,7 +130,7 @@ internal static partial class ConsoleApplication
             WriteHeader(console);
         }
 
-        (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, new[] { previous.ToString() }, build: build, increment: increment);
+        (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, [previous.ToString()], build: build, increment: increment);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
         WriteChanges(consoleWithOutput, differences);
@@ -197,12 +197,7 @@ internal static partial class ConsoleApplication
         var instance = RegisterMSBuild(projectOrSolution);
 
         var consoleWithOutput = ConsoleWithOutput.Create(console, output);
-        consoleWithOutput.Out
-#if NET6_0_OR_GREATER
-            .WriteLine(string.Create(System.Globalization.CultureInfo.CurrentCulture, $"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
-#else
-            .WriteLine(FormattableString.CurrentCulture($"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
-#endif
+        consoleWithOutput.Out.WriteLine(string.Create(System.Globalization.CultureInfo.CurrentCulture, $"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
 
         var regex = string.IsNullOrEmpty(packageIdRegex)
             ? null
@@ -234,6 +229,7 @@ internal static partial class ConsoleApplication
         return 0;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed", Justification = "Checked")]
     private static async Task<NuGet.Versioning.SemanticVersion> ProcessProjectOrSolutionCore(
         IConsoleWithOutput console,
         FileSystemInfo? projectOrSolution,
@@ -255,7 +251,7 @@ internal static partial class ConsoleApplication
     {
         var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
-        var packageIds = packageId ?? Enumerable.Empty<string>();
+        var packageIds = packageId ?? [];
         var referenceVersions = new List<PackageCommitIdentity>();
         foreach (var project in GetProjects(projectOrSolution, configuration, platform, exclude))
         {
@@ -429,7 +425,7 @@ internal static partial class ConsoleApplication
         string baseDir = repository.Info.WorkingDirectory;
         var relativePath = path
             .Substring(baseDir.Length)
-            .Replace("\\", "/", StringComparison.Ordinal)
+            .Replace('\\', '/')
             .TrimStart('/');
 
         var logEntries = new FolderHistory(repository, relativePath) as IEnumerable<LibGit2Sharp.LogEntry>;
@@ -541,7 +537,7 @@ internal static partial class ConsoleApplication
                 : default;
 
             IEnumerable<string> projectPaths = solution is null
-                ? new string[] { projectOrSolutionPath.FullName }
+                ? [projectOrSolutionPath.FullName]
                 : solution.ProjectsInOrder
                     .Where(projectInSolution => projectInSolution.ProjectType == Microsoft.Build.Construction.SolutionProjectType.KnownToBeMSBuildFormat)
                     .Select(projectInSolution => projectInSolution.AbsolutePath)

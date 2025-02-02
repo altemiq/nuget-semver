@@ -1,3 +1,0 @@
-[submodule "ext/reactive"]
-	path = ext/reactive
-	url = https://github.com/dotnet/reactive.git

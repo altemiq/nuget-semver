@@ -25,11 +25,4 @@
     <PackageReference Include="System.Text.Json" Version="4.7.0" />
   </ItemGroup>
 
-  <Target Name="RemoveEditorConfig" BeforeTargets="CoreCompile">
-    <ItemGroup>
-      <RemovableEditorConfigFiles Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), Assembly.ChangeDetection.sln))/../ext/reactive/.editorconfig" />
-      <EditorConfigFiles Remove="%(RemovableEditorConfigFiles.FullPath)" />
-    </ItemGroup>
-  </Target>
-
 </Project>

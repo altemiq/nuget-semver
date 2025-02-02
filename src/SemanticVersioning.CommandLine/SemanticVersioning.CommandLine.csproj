@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net7.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
     <RootNamespace>$(Company).$(Title)</RootNamespace>
 
     <NoWarn>$(NoWarn);CA1801;CA1812;MA0051;RCS1096</NoWarn>
@@ -26,12 +26,12 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <SystemVersion>5.0.0</SystemVersion>
+    <SystemVersion>8.0.0</SystemVersion>
     <SystemVersion Condition=" ($([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)')) == '.NETCoreApp' and $([MSBuild]::VersionGreaterThanOrEquals($([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')), '6.0'))) ">8.0.0</SystemVersion>
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>6.10.1</NuGetVersion>
+    <NuGetVersion>6.12.1</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,7 +39,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(SystemVersion)" />
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />

@@ -5,6 +5,8 @@
     <AssemblyName>Original</AssemblyName>
     <PackageId>Original</PackageId>
     <Deterministic>true</Deterministic>
+
+    <NoWarn>$(NoWarn);NETSDK1215</NoWarn>
   </PropertyGroup>
 
 </Project>
