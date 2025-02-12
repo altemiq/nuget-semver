@@ -159,6 +159,18 @@
       <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='module'">.netmodule</SemanticVersion_TargetExt>
       <SemanticVersion_TargetExt Condition=" '$(SemanticVersion_TargetExt)' == '' and '$(OutputType)'=='winmdobj'">.winmdobj</SemanticVersion_TargetExt>
     </PropertyGroup>
+    
+    <!-- Calculate the output path -->
+    <PropertyGroup>
+      <!-- get the output path without the trailing slash -->
+      <SemanticVersion_OutputPath>$(OutputPath.TrimEnd('/').TrimEnd('\'))</SemanticVersion_OutputPath>
+      
+      <!-- if the output path ends with the target framework, then remove it -->
+      <SemanticVersion_OutputPath Condition=" $([System.IO.Path]::GetFileName('$(SemanticVersion_OutputPath)')) == '$(TargetFramework)' ">$([System.IO.Path]::GetDirectoryName('$(SemanticVersion_OutputPath)'))</SemanticVersion_OutputPath>
+      
+      <!-- ensure the trailing slash on the output -->
+      <SemanticVersion_OutputPath>$([MSBuild]::EnsureTrailingSlash('$(SemanticVersion_OutputPath)'))</SemanticVersion_OutputPath>
+    </PropertyGroup>
 
     <!-- Calculate the semantic version -->
     <SemanticVersioningTask
@@ -167,7 +179,7 @@
       PackageId="$(PackageId)"
       TargetExt="$(SemanticVersion_TargetExt)"
       BuildOutputTargetFolder="$(VersionBuildOutputTargetFolder)"
-      OutputPath="$(OutputPath)"
+      OutputPath="$(SemanticVersion_OutputPath)"
       RestoreSources="$(VersionRestoreSources)"
       PackageIdRegex="$(PackageIdRegex)"
       PackageIdReplace="$(PackageIdReplace)"
