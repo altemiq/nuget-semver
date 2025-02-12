@@ -138,6 +138,11 @@ public static class MSBuildApplication
         }
         else
         {
+#if NETSTANDARD2_1_OR_GREATER
+            const char Separator = '|';
+#else
+            const string Separator = "|";
+#endif
             var installedBuildOutputTargetFolder = TrimEndingDirectorySeparator(Path.Combine(installDir, buildOutputTargetFolder));
 
             // Get the package output path
@@ -155,16 +160,23 @@ public static class MSBuildApplication
                 .Select(NuGet.Frameworks.NuGetFramework.Parse)
                 .ToArray();
             var comparer = new NuGetFrameworkComparer();
-            var frameworks = currentFrameworks.Join(previousFrameworks, f => f, f => f, (current, previous) => (Current: current, Previous: previous), comparer);
             IList<NuGet.Versioning.SemanticVersion> previousVersions = [.. previousPackages.Select<NuGet.Packaging.Core.PackageIdentity, NuGet.Versioning.SemanticVersion>(package => package.Version)];
             if (previousFrameworks.Except(currentFrameworks, comparer).Any())
             {
                 // we have removed frameworks, this is a breaking change
+                loggingHelper?.LogMessage(
+                    "Frameworks have been removed; Old:{0} -> new:{1}",
+                    string.Join(Separator, previousFrameworks.Select(x => x.GetShortFolderName())),
+                    string.Join(Separator, currentFrameworks.Select(x => x.GetShortFolderName())));
                 calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Major, previousVersions, getVersionSuffix(default), increment);
             }
             else if (currentFrameworks.Except(previousFrameworks, comparer).Any())
             {
                 // we have added frameworks, this is a feature change
+                loggingHelper?.LogMessage(
+                    "Frameworks have been added; Old:{0} -> new:{1}",
+                    string.Join(Separator, previousFrameworks.Select(x => x.GetShortFolderName())),
+                    string.Join(Separator, currentFrameworks.Select(x => x.GetShortFolderName())));
                 calculatedVersion = NuGetVersion.CalculateVersion(SemanticVersionChange.Minor, previousVersions, getVersionSuffix(default), increment);
             }
 
@@ -174,7 +186,7 @@ public static class MSBuildApplication
 #else
             const SearchOption options = SearchOption.TopDirectoryOnly;
 #endif
-            foreach (var (currentFramework, previousFramework) in frameworks)
+            foreach (var (currentFramework, previousFramework) in currentFrameworks.Join(previousFrameworks, f => f, f => f, (current, previous) => (Current: current, Previous: previous), comparer))
             {
                 foreach (var currentAssembly in Directory.EnumerateFiles(Path.Combine(fullPackageOutputPath, currentFramework.GetShortFolderName()), searchPattern, options))
                 {
@@ -190,12 +202,14 @@ public static class MSBuildApplication
                     var resultsType = File.Exists(previousAssembly)
                         ? LibraryComparison.GetMinimumAcceptableChange(differences)
                         : SemanticVersionChange.Major;
+                    loggingHelper?.LogMessage("Calculated change: {0}", resultsType);
                     var version = NuGetVersion.CalculateVersion(resultsType == SemanticVersionChange.None ? SemanticVersionChange.Patch : resultsType, previousVersions, getVersionSuffix(default), increment);
                     if (version is not null && differences is not null)
                     {
                         results.Add(new(version, differences));
                     }
 
+                    loggingHelper?.LogMessage("Calculated version: {0}", version);
                     calculatedVersion = calculatedVersion.Max(version);
                 }
             }
