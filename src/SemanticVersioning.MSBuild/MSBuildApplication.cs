@@ -34,6 +34,7 @@ public static class MSBuildApplication
     /// <param name="directDownload">Set to <see langword="true"/> to download directly without populating any caches with metadata or binaries.</param>
     /// <param name="increment">The increment location.</param>
     /// <param name="getVersionSuffix">The function to get the version suffix.</param>
+    /// <param name="loggingHelper">The logging helper.</param>
     /// <param name="logger">The logger.</param>
     /// <returns>The task.</returns>
     public static async Task<(PackageCommitIdentity Identity, IEnumerable<ProjectResult> Results, bool Published)> ProcessProject(
@@ -55,6 +56,7 @@ public static class MSBuildApplication
         bool directDownload,
         SemanticVersionIncrement increment,
         Func<string?, string?> getVersionSuffix,
+        TaskLoggingHelper? loggingHelper = default,
         NuGet.Common.ILogger? logger = default)
     {
         // install the NuGet package

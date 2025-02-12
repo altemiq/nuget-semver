@@ -180,6 +180,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             this.DirectDownload,
             this.semanticVersionIncrement,
             GetVersionSuffix,
+            this.Log,
             new MSBuildNuGetLogger(this.Log)).Result;
 
         var version = packageId.Version;

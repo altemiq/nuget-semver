@@ -350,6 +350,7 @@ internal static partial class ConsoleApplication
             directDownload,
             increment,
             getVersionSuffix,
+            loggingHelper: null,
             nugetLogger).ConfigureAwait(false);
 
         foreach (var result in results)
