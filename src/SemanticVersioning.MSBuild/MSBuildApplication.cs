@@ -70,7 +70,7 @@ public static class MSBuildApplication
 
         var packages = IsNullOrEmpty(previous)
             ? await NuGetInstaller.GetPackagesAsync(projectPackageIds, source, log: logger, root: projectDirectory).ToArrayAsync().ConfigureAwait(false)
-            : new[] { new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata)) };
+            : [new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata))];
 
         var folderCommitsList = folderCommits.ToList();
         var headCommitsList = headCommits.ToList();
@@ -154,7 +154,7 @@ public static class MSBuildApplication
                 .ToArray();
             var comparer = new NuGetFrameworkComparer();
             var frameworks = currentFrameworks.Join(previousFrameworks, f => f, f => f, (current, previous) => (Current: current, Previous: previous), comparer);
-            IList<NuGet.Versioning.SemanticVersion> previousVersions = previousPackages.Select<NuGet.Packaging.Core.PackageIdentity, NuGet.Versioning.SemanticVersion>(package => package.Version).ToList();
+            IList<NuGet.Versioning.SemanticVersion> previousVersions = [.. previousPackages.Select<NuGet.Packaging.Core.PackageIdentity, NuGet.Versioning.SemanticVersion>(package => package.Version)];
             if (previousFrameworks.Except(currentFrameworks, comparer).Any())
             {
                 // we have removed frameworks, this is a breaking change

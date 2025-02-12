@@ -315,7 +315,7 @@ internal static partial class ConsoleApplication
                 using var repository = new LibGit2Sharp.Repository(baseDir);
                 try
                 {
-                    folderCommits = GetCommits(repository, project.DirectoryPath, commitCount).ToList();
+                    folderCommits = [.. GetCommits(repository, project.DirectoryPath, commitCount)];
                 }
                 catch (LibGit2Sharp.NotFoundException ex)
                 {
@@ -323,7 +323,7 @@ internal static partial class ConsoleApplication
                     throw new InvalidOperationException("Failed to find GIT commits. This indicates that the clone was too shallow.", ex);
                 }
 
-                headCommits = GetHeadCommits(repository, folderCommits.FirstOrDefault()).ToList();
+                headCommits = [.. GetHeadCommits(repository, folderCommits.FirstOrDefault())];
             }
         }
 
@@ -485,7 +485,7 @@ internal static partial class ConsoleApplication
         {
             var ordered = new List<ProjectWithDependencies>();
             foreach (var project in projects
-                .Select(project => new ProjectWithDependencies(project, GetDependentProjects(project).ToList())))
+                .Select(project => new ProjectWithDependencies(project, [.. GetDependentProjects(project)])))
             {
                 var inserted = false;
                 for (int i = 0; i < ordered.Count; i++)

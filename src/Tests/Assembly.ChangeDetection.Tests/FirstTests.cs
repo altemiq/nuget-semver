@@ -11,7 +11,7 @@ public class FirstTests
     private static readonly string BaseAssembly = GetPath(Path.Combine("Projects", "Original"), "Original.dll");
 
     [Fact]
-    public void BreakingChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(Path.Combine("Projects", "BreakingChange"), "Original.dll"), new[] { "1.0.1-alpha" })
+    public void BreakingChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(Path.Combine("Projects", "BreakingChange"), "Original.dll"), ["1.0.1-alpha"])
         .Should().BeEquivalentTo(new
         {
             ResultsType = SemVer.ResultsType.Major,
@@ -19,7 +19,7 @@ public class FirstTests
         });
 
     [Fact]
-    public void NonBreakingChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(Path.Combine("Projects", "NonBreakingAdditiveChange"), "Original.dll"), new[] { "1.0.1" })
+    public void NonBreakingChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(Path.Combine("Projects", "NonBreakingAdditiveChange"), "Original.dll"), ["1.0.1"])
         .Should().BeEquivalentTo(new
         {
             ResultsType = SemVer.ResultsType.Minor,
@@ -27,7 +27,7 @@ public class FirstTests
         });
 
     [Fact]
-    public void NonChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(System.IO.Path.Combine("Projects", "Original"), "Original.dll"), new[] { "1.0.1-beta" })
+    public void NonChanges() => SemVer.SemanticVersionAnalyzer.Analyze(BaseAssembly, GetPath(System.IO.Path.Combine("Projects", "Original"), "Original.dll"), ["1.0.1-beta"])
         .Should().BeEquivalentTo(new
         {
             ResultsType = SemVer.ResultsType.Patch,
@@ -38,7 +38,7 @@ public class FirstTests
     public void NameChange()
     {
         var testAssembly = GetPath(System.IO.Path.Combine("Projects", "New"), "New.dll");
-        _ = SemVer.SemanticVersionAnalyzer.Analyze(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(BaseAssembly) ?? string.Empty, System.IO.Path.GetFileName(testAssembly)), testAssembly, new[] { "1.0.1" })
+        _ = SemVer.SemanticVersionAnalyzer.Analyze(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(BaseAssembly) ?? string.Empty, System.IO.Path.GetFileName(testAssembly)), testAssembly, ["1.0.1"])
             .Should().BeEquivalentTo(new
             {
                 ResultsType = SemVer.ResultsType.Major,

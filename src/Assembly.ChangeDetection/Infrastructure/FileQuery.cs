@@ -144,16 +144,15 @@ internal class FileQuery
     /// <param name="rootDir">The root directory.</param>
     /// <param name="searchOption">The search options.</param>
     /// <returns>The query list.</returns>
-    public static IList<FileQuery> ParseQueryList(string query, string? rootDir, SearchOption searchOption) => query
-        .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-        .Select(q => new FileQuery(string.IsNullOrEmpty(rootDir) ? q.Trim() : Path.Combine(rootDir, q.Trim()), searchOption))
-        .ToList();
+    public static IList<FileQuery> ParseQueryList(string query, string? rootDir, SearchOption searchOption) => [.. query
+        .Split([';'], StringSplitOptions.RemoveEmptyEntries)
+        .Select(q => new FileQuery(string.IsNullOrEmpty(rootDir) ? q.Trim() : Path.Combine(rootDir, q.Trim()), searchOption))];
 
     /// <summary>
     /// Gets the files.
     /// </summary>
     /// <returns>The files.</returns>
-    public string[] GetFiles() => this.EnumerateFiles.ToArray();
+    public string[] GetFiles() => [.. this.EnumerateFiles];
 
     /// <summary>
     /// Gets the matching file by name.

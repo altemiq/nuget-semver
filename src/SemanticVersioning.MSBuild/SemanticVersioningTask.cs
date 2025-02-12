@@ -150,7 +150,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
         if (projectCommmits.Length > 0)
         {
             var projectCommit = projectCommmits[0];
-            headCommits = headCommits.TakeWhile(commit => !string.Equals(commit, projectCommit, StringComparison.Ordinal)).ToArray();
+            headCommits = [.. headCommits.TakeWhile(commit => !string.Equals(commit, projectCommit, StringComparison.Ordinal))];
         }
 
         var versionSuffix = this.VersionSuffix?
@@ -159,7 +159,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
 
         var referenceVersions = this.ReferencedPackages is null
             ? new List<PackageCommitIdentity>()
-            : this.ReferencedPackages.Select(itemTask => new PackageCommitIdentity(itemTask.ItemSpec, NuGet.Versioning.NuGetVersion.Parse(itemTask.GetMetadata("Version")), itemTask.GetMetadata("Commit"))).ToList();
+            : [.. this.ReferencedPackages.Select(itemTask => new PackageCommitIdentity(itemTask.ItemSpec, NuGet.Versioning.NuGetVersion.Parse(itemTask.GetMetadata("Version")), itemTask.GetMetadata("Commit")))];
 
         var (packageId, _, _) = MSBuildApplication.ProcessProject(
             this.ProjectDir,
@@ -169,7 +169,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             this.BuildOutputTargetFolder,
             this.OutputPath,
             restoreSources,
-            new[] { this.PackageId },
+            [this.PackageId],
             regex,
             this.PackageIdReplace,
             previousVersion,

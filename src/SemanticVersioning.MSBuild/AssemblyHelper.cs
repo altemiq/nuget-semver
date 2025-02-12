@@ -11,7 +11,7 @@ namespace Altemiq.SemanticVersioning;
 /// </summary>
 internal static class AssemblyHelper
 {
-    private static readonly string[] Extensions = { ".dll", ".DLL", ".exe", ".EXE" };
+    private static readonly string[] Extensions = [".dll", ".DLL", ".exe", ".EXE"];
 
     /// <summary>
     /// Resolves assemblies in this assemblies directory.

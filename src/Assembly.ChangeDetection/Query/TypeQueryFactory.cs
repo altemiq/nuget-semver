@@ -41,7 +41,7 @@ internal class TypeQueryFactory
             throw new ArgumentException(string.Format(Properties.Resources.Culture, Properties.Resources.WasAnEmptyString, nameof(typeQueries)), nameof(typeQueries));
         }
 
-        var queries = trimedQuery.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+        var queries = trimedQuery.Split([';'], StringSplitOptions.RemoveEmptyEntries);
 
         return queries.Select(query =>
         {

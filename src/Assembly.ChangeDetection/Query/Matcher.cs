@@ -15,7 +15,7 @@ internal static class Matcher
 {
     private const string EscapedStar = "magic_star";
 
-    private static readonly char[] NsTrimChars = { ' ', '*', '\t' };
+    private static readonly char[] NsTrimChars = [' ', '*', '\t'];
 
     /// <summary>
     /// Gets the cached filter string regular expressions for later reuse.

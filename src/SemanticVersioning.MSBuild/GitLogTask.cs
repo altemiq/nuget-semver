@@ -71,5 +71,5 @@ public abstract class GitLogTask : GitTask
     /// <summary>
     /// Updates the <see cref="Commits"/> from <see cref="GitCommits"/>.
     /// </summary>
-    protected void UpdateCommits() => this.Commits = this.GitCommits.Select(commit => commit.Sha).ToArray();
+    protected void UpdateCommits() => this.Commits = [.. this.GitCommits.Select(commit => commit.Sha)];
 }

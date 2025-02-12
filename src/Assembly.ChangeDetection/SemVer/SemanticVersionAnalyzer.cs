@@ -38,7 +38,7 @@ public static class SemanticVersionAnalyzer
         var previous = new FileQuery(previousAssembly);
         var current = new FileQuery(currentAssembly);
 
-        var differences = DiffAssemblies.Execute(new[] { previous }, new[] { current });
+        var differences = DiffAssemblies.Execute([previous], [current]);
 
         var breakingChanges = new BreakingChangeRule();
         var breakingChange = breakingChanges.Detect(differences);

@@ -18,7 +18,7 @@ internal class MethodQuery : BaseQuery
 {
     private const string All = " * *(*)";
 
-    private static readonly char[] ArgTrimChars = new char[] { '[', ']', ',' };
+    private static readonly char[] ArgTrimChars = ['[', ']', ','];
 
     private readonly IList<(Regex, string)>? argumentFilters;
 

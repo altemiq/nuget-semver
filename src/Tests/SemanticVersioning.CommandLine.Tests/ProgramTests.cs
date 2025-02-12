@@ -28,7 +28,7 @@ public class ProgramTests
         var consoleError = new ConsoleWriter(Console.Error);
         Console.SetError(consoleError);
 
-        var returnObject = MainMethod.Invoke(null, new object[] { args });
+        var returnObject = MainMethod.Invoke(null, [args]);
         var (exitValue, console, error) = returnObject switch
         {
             Task<int> intTask => Return(intTask.Result),

@@ -354,7 +354,7 @@ public static class AsyncEnumerable
                 list.Add(item);
             }
 
-            return list.ToArray();
+            return [.. list];
         }
     }
 
