@@ -101,7 +101,7 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
         CliOption<SemanticVersionIncrement> incrementOption,
         CliOption<bool> noLogoOption)
     {
-        var projectOrSolutionArgument = new CliArgument<FileSystemInfo?>("projectOrSolution") { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.", CustomParser = GetFileSystemInformation, HelpName = "PROJECT | SOLUTION" };
+        var projectOrSolutionArgument = new CliArgument<FileSystemInfo?>("projectOrSolution") { Description = "The project or solution file to operate on. If a file is not specified, the command will search the current directory for one.", CustomParser = GetFileSystemInformation, HelpName = "PROJECT | SOLUTION", Arity = ArgumentArity.ZeroOrOne };
         var configurationOption = new CliOption<string?>("--configuration", "-c") { Description = "The configuration to use for analysing the project. The default for most projects is 'Debug'.", DefaultValueFactory = _ => ConsoleApplication.DefaultConfiguration, HelpName = "CONFIGURATON" };
         var platformOption = new CliOption<string?>("--platform") { Description = "The platform to use for analysing the project. The default for most projects is 'AnyCPU'.", DefaultValueFactory = _ => ConsoleApplication.DefaultPlatform, HelpName = "PLATFORM" };
         var sourceOption = new CliOption<string[]>("--source", "-s") { Description = "Specifies the server URL.", HelpName = "SOURCE" };
