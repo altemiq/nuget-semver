@@ -9,10 +9,10 @@ dotnet pack \
   -property:ContinuousIntegration=true
  
 # MSBuild Tasks
-dotnet pack ^
-  src/SemanticVersioning.CommandLine/SemanticVersioning.MSBuild.csproj \
+dotnet pack \
+  src/SemanticVersioning.MSBuild/SemanticVersioning.MSBuild.csproj \
   --configuration Release \
-  --output .\nupkg \
-  -property:Version=%1 \
+  --output nupkg \
+  -property:Version=$1 \
   -property:ContinuousIntegration=true
   
