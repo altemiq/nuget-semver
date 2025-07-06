@@ -1,4 +1,4 @@
-namespace Altemiq.SemanticVersioning;
+namespace Altemiq.SemanticVersioning.CommandLine;
 
 using System.Reflection;
 

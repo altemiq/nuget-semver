@@ -4,9 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Altemiq.SemanticVersioning.Tests;
+namespace Altemiq.SemanticVersioning;
 
-using FluentAssertions;
 using Xunit;
 
 /// <summary>
@@ -66,5 +65,5 @@ public class NuGetVersionTests
     [InlineData(SemanticVersionChange.Major, new[] { "0.1.2-alpha", "0.1.0-alpha" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"0.1.3-{DevelopmentPrelease}")]
     [InlineData(SemanticVersionChange.Major, new string[0], DevelopmentPrelease, SemanticVersionIncrement.Patch, $"0.1.0-{DevelopmentPrelease}")]
     public void CalculateVersion(SemanticVersionChange change, string[] versions, string? prerelease, SemanticVersionIncrement increment, string expected) =>
-        NuGetVersion.CalculateVersion(change, versions, prerelease, increment).Should().Be(NuGet.Versioning.SemanticVersion.Parse(expected));
+        Assert.Equal(NuGet.Versioning.SemanticVersion.Parse(expected), NuGetVersion.CalculateVersion(change, versions, prerelease, increment));
 }
