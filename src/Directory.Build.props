@@ -5,15 +5,19 @@
     <RootNamespace>$(Company).$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>Ross King</Authors>
     <Deterministic>true</Deterministic>
     <NeutralLanguage>en-AU</NeutralLanguage>
-    <Copyright>Copyright © $(Company) Pty Ltd 2024</Copyright>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);IDE0056;IDE0057</NoWarn>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
     <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  
+  <PropertyGroup Label="Packaging">
+    <Authors>rsking</Authors>
+    <Copyright>Copyright © $(Company) Pty Ltd 2025</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Label="Analyzers">
@@ -34,15 +38,15 @@
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.186">
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.205">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.12.11">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.6.0.109712">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.12.0.118525">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

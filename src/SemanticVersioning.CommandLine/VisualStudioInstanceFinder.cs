@@ -34,7 +34,7 @@ internal class VisualStudioInstanceFinder
     /// <returns>The visual studio instance.</returns>
     public Microsoft.Build.Locator.VisualStudioInstance GetVisualStudioInstance(FileSystemInfo? path)
     {
-        var instance = FindGlobalJson(path) is string globalJson
+        var instance = FindGlobalJson(path) is { } globalJson
             ? this.GetVisualStudioInstance(globalJson)
             : this.instances.Select(instance => instance.Value).FirstOrDefault();
 

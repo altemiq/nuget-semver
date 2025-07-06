@@ -76,7 +76,7 @@ internal class AssemblyDiffer
         var typesV1 = queries.ExeuteAndAggregateTypeQueries(this.myV1);
         var typesV2 = queries.ExeuteAndAggregateTypeQueries(this.myV2);
 
-        var differ = new ListDiffer<TypeDefinition>(this.ShallowTypeComapare);
+        var differ = new ListDiffer<TypeDefinition>(ShallowTypeCompare);
 
         differ.Diff(typesV1, typesV2, this.OnAddedType, this.OnRemovedType);
 
@@ -85,18 +85,18 @@ internal class AssemblyDiffer
         return this.myDiff;
     }
 
-    private static TypeDefinition GetTypeByDefinition(TypeDefinition search, IEnumerable<TypeDefinition> types) => types.FirstOrDefault(type => type.IsEqual(search));
+    private static TypeDefinition? GetTypeByDefinition(TypeDefinition search, IEnumerable<TypeDefinition> types) => types.FirstOrDefault(type => type.IsEqual(search));
+
+    private static bool ShallowTypeCompare(TypeDefinition v1, TypeDefinition v2) => string.Equals(v1.FullName, v2.FullName, StringComparison.Ordinal);
 
     private void OnAddedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded: true)));
 
     private void OnRemovedType(TypeDefinition type) => this.myDiff.AddedRemovedTypes.Add(new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded: false)));
 
-    private bool ShallowTypeComapare(TypeDefinition v1, TypeDefinition v2) => string.Equals(v1.FullName, v2.FullName, StringComparison.Ordinal);
-
     private void DiffTypes(IEnumerable<TypeDefinition> typesV1, IEnumerable<TypeDefinition> typesV2, QueryAggregator queries) =>
         this.myDiff.ChangedTypes.AddRange(typesV1
             .Select(typeV1 => (first: typeV1, second: GetTypeByDefinition(typeV1, typesV2)))
             .Where(types => types.second is not null)
-            .Select(types => TypeDiff.GenerateDiff(types.first, types.second, queries))
+            .Select(types => TypeDiff.GenerateDiff(types.first, types.second!, queries))
             .Where(diffed => TypeDiff.None != diffed));
 }

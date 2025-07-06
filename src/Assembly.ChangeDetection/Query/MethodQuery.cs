@@ -336,29 +336,13 @@ internal class MethodQuery : BaseQuery
         return lret;
     }
 
-    private static string PrependStarToFilter(string filterstr) => string.IsNullOrEmpty(filterstr) || filterstr.StartsWith("*", StringComparison.Ordinal) ? filterstr : "*" + filterstr;
+    private static string PrependStarToFilter(string filter) => string.IsNullOrEmpty(filter) || filter.StartsWith("*", StringComparison.Ordinal) ? filter : "*" + filter;
 
-    private static bool IsNoEventMethod(TypeDefinition type, MethodDefinition method)
-    {
-        if (method.IsSpecialName)
-        {
-            // Is usually either a property or event add/remove method
-            foreach (var ev in type.Events)
-            {
-                if (ev.AddMethod.IsEqual(method)
-                    || ev.RemoveMethod.IsEqual(method))
-                {
-                    return false;
-                }
-            }
-        }
+    private static bool IsNoEventMethod(TypeDefinition type, MethodDefinition method) => !method.IsSpecialName || type.Events.All(ev => !ev.AddMethod.IsEqual(method) && !ev.RemoveMethod.IsEqual(method));
 
-        return true;
-    }
-
-    private static string CreateRegexFilterFromTypeName(string filterstr) => string.IsNullOrEmpty(filterstr) || filterstr.StartsWith(".*", StringComparison.Ordinal) || filterstr.StartsWith("*", StringComparison.Ordinal)
-        ? filterstr
-        : ".*" + filterstr;
+    private static string CreateRegexFilterFromTypeName(string filter) => string.IsNullOrEmpty(filter) || filter.StartsWith(".*", StringComparison.Ordinal) || filter.StartsWith("*", StringComparison.Ordinal)
+        ? filter
+        : ".*" + filter;
 
     private static bool IsArgumentMatch(Regex typeFilter, string argNameFilter, string typeName, string argName) => typeFilter.Match(typeName).Success
             && Matcher.MatchWithWildcards(argNameFilter, argName, StringComparison.OrdinalIgnoreCase);

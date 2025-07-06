@@ -13,7 +13,7 @@ public class ProgramTests
         Lock
 #else
         object
- #endif 
+#endif
         LockObject = new();
 
     private static readonly System.Reflection.MethodInfo MainMethod;
@@ -85,7 +85,7 @@ public class ProgramTests
     {
         var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("OnlyPrerelease"), "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.2']", console);Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='develop']", console);
+        Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='develop']", console);
         Assert.Empty(error);
     }
 
@@ -94,7 +94,7 @@ public class ProgramTests
     {
         var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("OnlyRelease"), "--direct-download", "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.1']", console);Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
+        Assert.Contains("##teamcity[buildNumber '1.0.1']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
         Assert.Empty(error);
     }
 
@@ -103,7 +103,7 @@ public class ProgramTests
     {
         var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("Full"), "--direct-download", "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.2']", console);Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
+        Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
         Assert.Empty(error);
     }
 

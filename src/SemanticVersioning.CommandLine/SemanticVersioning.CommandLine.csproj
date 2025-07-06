@@ -31,7 +31,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>6.12.1</NuGetVersion>
+    <NuGetVersion>6.14.0</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,7 +42,7 @@
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(SystemVersion)" />
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.9.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

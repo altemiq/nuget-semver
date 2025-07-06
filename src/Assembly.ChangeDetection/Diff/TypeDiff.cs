@@ -126,6 +126,12 @@ public sealed class TypeDiff
         }
     }
 
+    private static bool CompareFieldsByTypeAndName(FieldDefinition fieldV1, FieldDefinition fieldV2) => fieldV1.IsEqual(fieldV2);
+
+    private static bool CompareMethodByNameAndTypesIncludingGenericArguments(MethodDefinition m1, MethodDefinition m2) => m1.IsEqual(m2);
+
+    private static bool CompareEvents(EventDefinition evV1, EventDefinition evV2) => evV1.IsEqual(evV2);
+
     private void DoDiff(QueryAggregator diffQueries)
     {
         // Interfaces have no base type
@@ -143,21 +149,17 @@ public sealed class TypeDiff
     private void DiffImplementedInterfaces()
     {
         // search for removed interfaces
-        foreach (var baseV1 in this.TypeV1.Interfaces.Select(i => i.InterfaceType))
+        foreach (var baseV1 in this.TypeV1.Interfaces.Select(i => i.InterfaceType)
+                     .Where(baseV1 => !this.TypeV2.Interfaces.Select(i => i.InterfaceType).Any(baseV2 => baseV2.IsEqual(baseV1))))
         {
-            if (!this.TypeV2.Interfaces.Select(i => i.InterfaceType).Any(baseV2 => baseV2.IsEqual(baseV1)))
-            {
-                this.Interfaces.Add(new DiffResult<TypeReference>(baseV1, new DiffOperation(isAdded: false)));
-            }
+            this.Interfaces.Add(new DiffResult<TypeReference>(baseV1, new DiffOperation(isAdded: false)));
         }
 
         // search for added interfaces
-        foreach (var baseV2 in this.TypeV2.Interfaces.Select(i => i.InterfaceType))
+        foreach (var baseV2 in this.TypeV2.Interfaces.Select(i => i.InterfaceType)
+                     .Where(baseV2 => !this.TypeV1.Interfaces.Select(i => i.InterfaceType).Any(baseV1 => baseV1.IsEqual(baseV2))))
         {
-            if (!this.TypeV1.Interfaces.Select(i => i.InterfaceType).Any(baseV1 => baseV1.IsEqual(baseV2)))
-            {
-                this.Interfaces.Add(new DiffResult<TypeReference>(baseV2, new DiffOperation(isAdded: true)));
-            }
+            this.Interfaces.Add(new DiffResult<TypeReference>(baseV2, new DiffOperation(isAdded: true)));
         }
     }
 
@@ -166,33 +168,27 @@ public sealed class TypeDiff
         var fieldsV1 = diffQueries.ExecuteAndAggregateFieldQueries(this.TypeV1);
         var fieldsV2 = diffQueries.ExecuteAndAggregateFieldQueries(this.TypeV2);
 
-        var fieldDiffer = new ListDiffer<FieldDefinition>(this.CompareFieldsByTypeAndName);
+        var fieldDiffer = new ListDiffer<FieldDefinition>(CompareFieldsByTypeAndName);
         fieldDiffer.Diff(fieldsV1, fieldsV2, addedField => this.Fields.Add(new DiffResult<FieldDefinition>(addedField, new DiffOperation(isAdded: true))), removedField => this.Fields.Add(new DiffResult<FieldDefinition>(removedField, new DiffOperation(isAdded: false))));
     }
-
-    private bool CompareFieldsByTypeAndName(FieldDefinition fieldV1, FieldDefinition fieldV2) => fieldV1.IsEqual(fieldV2);
 
     private void DiffMethods(QueryAggregator diffQueries)
     {
         var methodsV1 = diffQueries.ExecuteAndAggregateMethodQueries(this.TypeV1);
         var methodsV2 = diffQueries.ExecuteAndAggregateMethodQueries(this.TypeV2);
 
-        var differ = new ListDiffer<MethodDefinition>(this.CompareMethodByNameAndTypesIncludingGenericArguments);
+        var differ = new ListDiffer<MethodDefinition>(CompareMethodByNameAndTypesIncludingGenericArguments);
 
         differ.Diff(methodsV1, methodsV2, added => this.Methods.Add(new DiffResult<MethodDefinition>(added, new DiffOperation(isAdded: true))), removed => this.Methods.Add(new DiffResult<MethodDefinition>(removed, new DiffOperation(isAdded: false))));
     }
-
-    private bool CompareMethodByNameAndTypesIncludingGenericArguments(MethodDefinition m1, MethodDefinition m2) => m1.IsEqual(m2);
 
     private void DiffEvents(QueryAggregator diffQueries)
     {
         var eventsV1 = diffQueries.ExecuteAndAggregateEventQueries(this.TypeV1);
         var eventsV2 = diffQueries.ExecuteAndAggregateEventQueries(this.TypeV2);
 
-        var differ = new ListDiffer<EventDefinition>(this.CompareEvents);
+        var differ = new ListDiffer<EventDefinition>(CompareEvents);
 
         differ.Diff(eventsV1, eventsV2, added => this.Events.Add(new DiffResult<EventDefinition>(added, new DiffOperation(isAdded: true))), removed => this.Events.Add(new DiffResult<EventDefinition>(removed, new DiffOperation(isAdded: false))));
     }
-
-    private bool CompareEvents(EventDefinition evV1, EventDefinition evV2) => evV1.IsEqual(evV2);
 }

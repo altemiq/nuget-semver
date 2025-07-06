@@ -35,7 +35,7 @@ internal static class AssemblyLoader
         {
             var readingMode = immediateLoad ? ReadingMode.Immediate : ReadingMode.Deferred;
             var assemblyResolver = new DefaultAssemblyResolver();
-            assemblyResolver.AddSearchDirectory(fileInfo.Directory.FullName);
+            assemblyResolver.AddSearchDirectory(fileInfo.Directory!.FullName);
             var readerParameters = new ReaderParameters { ReadSymbols = tryReadSymbols, ReadingMode = readingMode, AssemblyResolver = assemblyResolver };
             var assemblyDef = AssemblyDefinition.ReadAssembly(fileName, readerParameters);
 
@@ -55,7 +55,9 @@ internal static class AssemblyLoader
         {
             // ignore managed c++ targets
         }
+#pragma warning disable S1696
         catch (NullReferenceException)
+#pragma warning restore S1696
         {
             // ignore managed c++ targets
         }
