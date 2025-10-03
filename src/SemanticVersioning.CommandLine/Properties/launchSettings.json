@@ -38,6 +38,11 @@
       "commandLineArgs": "diff solution NationalInstruments.csproj --source \"https://nuget.pkg.github.com/altemiq/index.json\" --no-version-suffix false --package-id-regex Altemiq.Aims.Field --package-id-replace Capio --commit-count 30",
       "workingDirectory": "$(UserProfile)\\source\\repos\\github\\personal\\altemiq\\Capio\\Capio\\src\\NationalInstruments"
     },
+    "Project - Runtime": {
+      "commandName": "Project",
+      "commandLineArgs": "diff solution src --output BreakingChanges --direct-download --version-suffix personal --force",
+      "workingDirectory": "/home/rsking/source/repos/github/personal/altemiq/runtime"
+    },
     "Help": {
       "commandName": "Project",
       "commandLineArgs": "diff solution --help"

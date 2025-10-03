@@ -6,7 +6,7 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Query;
 
-using Altemiq.Assembly.ChangeDetection.Introspection;
+using Introspection;
 using Mono.Cecil;
 
 /// <summary>

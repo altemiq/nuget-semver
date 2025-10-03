@@ -6,8 +6,8 @@
 
 namespace Altemiq.Assembly.ChangeDetection.SemVer;
 
-using Altemiq.Assembly.ChangeDetection.Infrastructure;
-using Altemiq.Assembly.ChangeDetection.Rules;
+using Infrastructure;
+using Rules;
 
 /// <summary>
 /// The semantic version number.

@@ -172,8 +172,8 @@ static CliCommand CreateDiffCommand(CliOption<bool> noLogoOption)
             {
                 const FileAttributes None = default;
                 return (File.GetAttributes(path) & FileAttributes.Directory) != None
-                    ? new System.IO.DirectoryInfo(path)
-                    : new System.IO.FileInfo(path);
+                    ? new DirectoryInfo(path)
+                    : new FileInfo(path);
             }
 
             argumentResult.AddError($"\"{pathToken}\" is not a valid file or directory");

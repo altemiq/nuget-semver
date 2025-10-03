@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
-    <RootNamespace>$(RootNamespace.Replace('.Core', ''))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,7 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SemanticVersioning.Core\SemanticVersioning.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj" />
+    <ProjectReference Include="..\..\projects\Original\Original.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

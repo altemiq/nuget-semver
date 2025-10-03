@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
+    <ProjectReference Include="..\..\projects\BreakingChange\BreakingChange.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\projects\New\New.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\projects\Original\Original.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

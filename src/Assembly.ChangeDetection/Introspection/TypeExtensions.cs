@@ -6,7 +6,7 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Introspection;
 
-using Altemiq.Assembly.ChangeDetection.Diff;
+using Diff;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 

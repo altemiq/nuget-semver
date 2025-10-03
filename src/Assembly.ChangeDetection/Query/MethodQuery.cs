@@ -8,7 +8,7 @@ namespace Altemiq.Assembly.ChangeDetection.Query;
 
 using System.Text;
 using System.Text.RegularExpressions;
-using Altemiq.Assembly.ChangeDetection.Introspection;
+using Introspection;
 using Mono.Cecil;
 
 /// <summary>

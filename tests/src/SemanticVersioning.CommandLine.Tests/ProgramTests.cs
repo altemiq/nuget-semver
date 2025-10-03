@@ -63,7 +63,7 @@ public class ProgramTests
     [Fact]
     public void NoValidNuget()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("NoPackages"), "--no-cache", "--nologo");
+        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("no-packages"), "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
         Assert.Contains("##teamcity[buildNumber '1.0.0']", console);
         Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='alpha']", console);
@@ -73,7 +73,7 @@ public class ProgramTests
     [Fact]
     public void NameChange()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "New")), "--source", GetSource("OnlyRelease"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original", "--nologo");
+        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "New")), "--source", GetSource("only-release"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original", "--nologo");
         Assert.Equal(0, exitValue);
         Assert.Contains("##teamcity[buildNumber '2.0.0']", console);
         Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
@@ -83,7 +83,7 @@ public class ProgramTests
     [Fact]
     public void NoFullRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("OnlyPrerelease"), "--no-cache", "--nologo");
+        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("only-prerelease"), "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
         Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='develop']", console);
         Assert.Empty(error);
@@ -92,7 +92,7 @@ public class ProgramTests
     [Fact]
     public void NoPreRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("OnlyRelease"), "--direct-download", "--no-cache", "--nologo");
+        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("only-release"), "--direct-download", "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
         Assert.Contains("##teamcity[buildNumber '1.0.1']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
         Assert.Empty(error);
@@ -101,7 +101,7 @@ public class ProgramTests
     [Fact]
     public void PreReleaseAndRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("Projects", "Original")), "--source", GetSource("Full"), "--direct-download", "--no-cache", "--nologo");
+        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("full"), "--direct-download", "--no-cache", "--nologo");
         Assert.Equal(0, exitValue);
         Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
         Assert.Empty(error);
@@ -109,9 +109,10 @@ public class ProgramTests
 
     private static string GetProjectPath(string project) => Path.GetFullPath(Path.Combine(GetProjectDirectory(project), Path.GetFileName(project) + ".csproj"));
 
-    private static string GetProjectDirectory(string project) => Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", project));
+    private static string GetProjectDirectory(string project) => Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", "..", project));
 
-    private static string GetSource(string source) => Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", "NuPkg", source));
+    private static string GetSource(string source) =>
+        Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", "..", "nupkg", source));
 
     private static string GetTestDirectory() => Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(typeof(ProgramTests).Assembly.Location)))) ?? throw new InvalidOperationException("Failed to get test directory");
 

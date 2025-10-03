@@ -6,7 +6,7 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Rules;
 
-using Altemiq.Assembly.ChangeDetection.Diff;
+using Diff;
 
 /// <summary>
 /// Rules for breaking changes.

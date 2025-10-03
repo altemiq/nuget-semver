@@ -145,7 +145,7 @@ internal static partial class ConsoleApplication
                         ForEach(changedType.Interfaces, @interface => PrintDiff(@interface, 4));
                     }
 
-                    static void ForEach<T>(System.Collections.Generic.IEnumerable<T> source, System.Action<T> action)
+                    static void ForEach<T>(IEnumerable<T> source, Action<T> action)
                     {
                         foreach (var item in source)
                         {

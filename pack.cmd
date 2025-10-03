@@ -4,10 +4,10 @@ SET ContinuousIntegration=true
 
 REM dotnet tool
 dotnet pack ^
- .\src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj ^
+ SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj ^
  --output .\nupkg
  
 REM MSBuild Tasks
 dotnet pack ^
- .\src\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj ^
+ SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj ^
  --output .\nupkg

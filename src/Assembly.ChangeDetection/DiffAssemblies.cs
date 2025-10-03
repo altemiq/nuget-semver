@@ -6,7 +6,7 @@
 
 namespace Altemiq.Assembly.ChangeDetection;
 
-using Altemiq.Assembly.ChangeDetection.Infrastructure;
+using Infrastructure;
 
 /// <summary>
 /// Gets the difference between two assemblies.

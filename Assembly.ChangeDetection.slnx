@@ -1,0 +1,40 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
+    <Project Path="src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj" />
+    <Project Path="src\SemanticVersioning.Core\SemanticVersioning.Core.csproj" />
+    <Project Path="src\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests\Directory.Build.props" />
+  </Folder>
+  <Folder Name="/tests/nupkg/" />
+  <Folder Name="/tests/nupkg/full/">
+    <File Path="tests\nupkg\full\Original.1.0.0.nupkg" />
+    <File Path="tests\nupkg\full\Original.1.0.1-develop.nupkg" />
+  </Folder>
+  <Folder Name="/tests/nupkg/no-packages/" />
+  <Folder Name="/tests/nupkg/only-prerelease/">
+    <File Path="tests\nupkg\only-prerelease\Original.1.0.1-develop.nupkg" />
+  </Folder>
+  <Folder Name="/tests/nupkg/only-release/">
+    <File Path="tests\nupkg\only-release\Original.1.0.0.nupkg" />
+  </Folder>
+  <Folder Name="/tests/projects/">
+    <Project Path="tests\projects\BreakingChange\BreakingChange.csproj" Type="Classic C#" />
+    <Project Path="tests\projects\New\New.csproj" Type="Classic C#" />
+    <Project Path="tests\projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj" Type="Classic C#" />
+    <Project Path="tests\projects\Original\Original.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/tests/src/">
+    <Project Path="tests\src\Assembly.ChangeDetection.Tests\Assembly.ChangeDetection.Tests.csproj" Type="Classic C#" />
+    <Project Path="tests\src\SemanticVersioning.CommandLine.Tests\SemanticVersioning.CommandLine.Tests.csproj" Type="Classic C#" />
+    <Project Path="tests\src\SemanticVersionsing.Core.Tests\SemanticVersioning.Core.Tests.csproj" Type="Classic C#" />
+  </Folder>
+</Solution>

@@ -6,9 +6,9 @@
 
 namespace Altemiq.Assembly.ChangeDetection.Diff;
 
-using Altemiq.Assembly.ChangeDetection.Infrastructure;
-using Altemiq.Assembly.ChangeDetection.Introspection;
-using Altemiq.Assembly.ChangeDetection.Query;
+using Infrastructure;
+using Introspection;
+using Query;
 using Mono.Cecil;
 
 /// <summary>

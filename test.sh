@@ -1,5 +1,5 @@
 #!/bin/sh
 
 dotnet test \
-  src/Assembly.ChangeDetection.sln \
+  Assembly.ChangeDetection.sln \
   -property:ContinuousIntegration=true

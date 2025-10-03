@@ -7,7 +7,7 @@
 namespace Altemiq.Assembly.ChangeDetection.Query;
 
 using System.Text;
-using Altemiq.Assembly.ChangeDetection.Introspection;
+using Introspection;
 
 /// <summary>
 /// The generic type mapper.
