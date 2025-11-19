@@ -7,31 +7,31 @@
 namespace Altemiq.SemanticVersioning;
 
 /// <summary>
-/// <see cref="IStandardStreamWriterWithOutput"/> extension methods.
+/// <see cref="IAnsiConsoleWithOutput"/> extension methods.
 /// </summary>
 internal static class ExtensionMethods
 {
     /// <summary>
-    /// Writes the specified string to the stream if <see cref="IStandardStreamWriterWithOutput.Output"/> contains <paramref name="output"/>.
+    /// Writes the specified string to the stream if <see cref="IAnsiConsoleWithOutput.Output"/> contains <paramref name="output"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="value">The value.</param>
     /// <param name="output">The output.</param>
-    public static void Write(this IStandardStreamWriterWithOutput writer, string? value, OutputTypes output)
+    public static void Write(this IAnsiConsoleWithOutput writer, string? value, OutputTypes output)
     {
-        if (writer.Output.HasFlag(output))
+        if (writer.Output.HasFlag(output) && value is not null)
         {
-            writer.Write(value);
+            Spectre.Console.AnsiConsoleExtensions.Write(writer, value);
         }
     }
 
     /// <summary>
-    /// Writes the specified string to the stream, followed by the current environment's line terminator, if <see cref="IStandardStreamWriterWithOutput.Output"/> contains <paramref name="output"/>.
+    /// Writes the specified string to the stream, followed by the current environment's line terminator, if <see cref="IAnsiConsoleWithOutput.Output"/> contains <paramref name="output"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="value">The value.</param>
     /// <param name="output">The output.</param>
-    public static void WriteLine(this IStandardStreamWriterWithOutput writer, string? value, OutputTypes output)
+    public static void WriteLine(this IAnsiConsoleWithOutput writer, string? value, OutputTypes output)
     {
         if (writer.Output.HasFlag(output))
         {
@@ -44,7 +44,7 @@ internal static class ExtensionMethods
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="value">The value.</param>
-    public static void WriteLine(this IStandardStreamWriterWithOutput writer, string? value)
+    public static void WriteLine(this IAnsiConsoleWithOutput writer, string? value)
     {
         if (writer is null)
         {
@@ -53,11 +53,11 @@ internal static class ExtensionMethods
 
         if (value is null)
         {
-            System.CommandLine.IO.StandardStreamWriter.WriteLine(writer);
+            Spectre.Console.AnsiConsoleExtensions.WriteLine(writer);
         }
         else
         {
-            System.CommandLine.IO.StandardStreamWriter.WriteLine(writer, value);
+            Spectre.Console.AnsiConsoleExtensions.WriteLine(writer, value);
         }
     }
 }

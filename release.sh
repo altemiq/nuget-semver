@@ -1,7 +1,7 @@
 #!/bin/sh
 
 dotnet build \
- Assembly.ChangeDetection.sln \
+ Assembly.ChangeDetection.slnx \
  --configuration Release \
  -property:Version=$1 \
  -property:ContinuousIntegration=true

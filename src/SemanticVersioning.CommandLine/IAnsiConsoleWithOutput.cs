@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="IStandardStreamWriterWithOutput.cs" company="Altemiq">
+// <copyright file="IAnsiConsoleWithOutput.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -7,9 +7,9 @@
 namespace Altemiq.SemanticVersioning;
 
 /// <summary>
-/// The <see cref="System.CommandLine.IO.IStandardStreamWriter"/> with <see cref="OutputTypes"/>.
+/// The <see cref="Spectre.Console.IAnsiConsole"/> with <see cref="OutputTypes"/>.
 /// </summary>
-internal interface IStandardStreamWriterWithOutput : System.CommandLine.IO.IStandardStreamWriter
+internal interface IAnsiConsoleWithOutput : Spectre.Console.IAnsiConsole
 {
     /// <summary>
     /// Gets the output.

@@ -78,12 +78,7 @@ public sealed class ReadVersionFromFile : Microsoft.Build.Tasks.ReadLinesFromFil
             static string? GetValue(string input)
             {
                 var trim = input.Trim(NonBreakingSpace);
-                if (string.IsNullOrWhiteSpace(trim))
-                {
-                    return default;
-                }
-
-                return trim;
+                return string.IsNullOrWhiteSpace(trim) ? default : trim;
             }
         }
 

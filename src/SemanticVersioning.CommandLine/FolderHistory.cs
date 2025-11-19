@@ -13,12 +13,12 @@ using LibGit2Sharp;
 /// </summary>
 internal class FolderHistory : IEnumerable<LogEntry>
 {
-    private static readonly List<CommitSortStrategies> AllowedSortStrategies = new()
-    {
+    private static readonly List<CommitSortStrategies> AllowedSortStrategies =
+    [
         CommitSortStrategies.Topological,
         CommitSortStrategies.Time,
         CommitSortStrategies.Topological | CommitSortStrategies.Time,
-    };
+    ];
 
     private static readonly System.Reflection.PropertyInfo PathPropertyInfo = typeof(LogEntry).GetProperty(nameof(LogEntry.Path))!;
 

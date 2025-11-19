@@ -53,7 +53,7 @@ public abstract class GitLogTask : GitTask
     }
 
     /// <inheritdoc/>
-    protected override string? GetWorkingDirectory() => this.GetPath() is ITaskItem taskItem ? GetBaseDirectory(taskItem.ItemSpec) : default;
+    protected override string? GetWorkingDirectory() => this.GetPath() is { } taskItem ? GetBaseDirectory(taskItem.ItemSpec) : default;
 
     /// <summary>
     /// Gets the path to use for the process.

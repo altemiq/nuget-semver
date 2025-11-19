@@ -343,7 +343,7 @@ public static class NuGetInstaller
             .OrderByDescending(p => p.Version, NuGet.Versioning.VersionComparer.Default))
         {
             var manifest = await GetManifest(package, sourceRepositories, cacheContext, log, cancellationToken).ConfigureAwait(false);
-            if (manifest?.Metadata?.Repository is RepositoryMetadata repository)
+            if (manifest?.Metadata?.Repository is { } repository)
             {
                 if (headCommits.Contains(repository.Commit, StringComparer.Ordinal))
                 {
@@ -381,7 +381,7 @@ public static class NuGetInstaller
             static async Task<Manifest?> GetManifestFromSource(SourcePackageDependencyInfo info, SourceCacheContext cacheContext, NuGet.Common.ILogger logger, CancellationToken cancellationToken)
             {
                 var archiveStream = new MemoryStream();
-                if (await info.Source.GetResourceAsync<HttpSourceResource>(cancellationToken).ConfigureAwait(false) is HttpSourceResource httpSourceResource)
+                if (await info.Source.GetResourceAsync<HttpSourceResource>(cancellationToken).ConfigureAwait(false) is { } httpSourceResource)
                 {
                     var downloader = new FindPackagesByIdNupkgDownloader(httpSourceResource.HttpSource);
                     if (!await downloader.CopyNupkgToStreamAsync(info, info.DownloadUri.ToString(), archiveStream, cacheContext, logger, cancellationToken).ConfigureAwait(false))
@@ -389,7 +389,7 @@ public static class NuGetInstaller
                         return default;
                     }
                 }
-                else if (await info.Source.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false) is FindPackageByIdResource findPackagesByIdResource
+                else if (await info.Source.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false) is { } findPackagesByIdResource
                     && !await findPackagesByIdResource.CopyNupkgToStreamAsync(info.Id, info.Version, archiveStream, cacheContext, logger, cancellationToken).ConfigureAwait(false))
                 {
                     return default;
@@ -495,7 +495,7 @@ public static class NuGetInstaller
         foreach (var group in packages
             .GroupBy(info => (info.Version.Version.Major, info.Version.Version.Minor, info.Version.IsPrerelease)))
         {
-            if (MaxVersion(group) is PackageIdentity packageIdentity)
+            if (MaxVersion(group) is { } packageIdentity)
             {
                 yield return packageIdentity;
             }

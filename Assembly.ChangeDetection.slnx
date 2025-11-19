@@ -6,7 +6,6 @@
     <File Path="stylecop.json" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src\Assembly.ChangeDetection\Assembly.ChangeDetection.csproj" />
     <Project Path="src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj" />
     <Project Path="src\SemanticVersioning.Core\SemanticVersioning.Core.csproj" />
     <Project Path="src\SemanticVersioning.MSBuild\SemanticVersioning.MSBuild.csproj" />
@@ -27,14 +26,25 @@
     <File Path="tests\nupkg\only-release\Original.1.0.0.nupkg" />
   </Folder>
   <Folder Name="/tests/projects/">
-    <Project Path="tests\projects\BreakingChange\BreakingChange.csproj" Type="Classic C#" />
-    <Project Path="tests\projects\New\New.csproj" Type="Classic C#" />
-    <Project Path="tests\projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj" Type="Classic C#" />
-    <Project Path="tests\projects\Original\Original.csproj" Type="Classic C#" />
+    <Project Path="tests\projects\BreakingChange\BreakingChange.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests\projects\New\New.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests\projects\NonBreakingAdditiveChange\NonBreakingAdditiveChange.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests\projects\Original\Original.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/tests/src/">
-    <Project Path="tests\src\Assembly.ChangeDetection.Tests\Assembly.ChangeDetection.Tests.csproj" Type="Classic C#" />
-    <Project Path="tests\src\SemanticVersioning.CommandLine.Tests\SemanticVersioning.CommandLine.Tests.csproj" Type="Classic C#" />
-    <Project Path="tests\src\SemanticVersionsing.Core.Tests\SemanticVersioning.Core.Tests.csproj" Type="Classic C#" />
+    <Project Path="tests\src\SemanticVersioning.CommandLine.Tests\SemanticVersioning.CommandLine.Tests.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests\src\SemanticVersioning.Core.Tests\SemanticVersioning.Core.Tests.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
   </Folder>
 </Solution>

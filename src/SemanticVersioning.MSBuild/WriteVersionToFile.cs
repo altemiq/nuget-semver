@@ -41,9 +41,7 @@ public sealed class WriteVersionToFile : Microsoft.Build.Tasks.WriteLinesToFile
     {
         const string NonBreakingSpace = " ";
 
-        this.Lines = GetValues()
-            .Select(s => new TaskItem(s))
-            .ToArray();
+        this.Lines = [.. GetValues().Select(s => new TaskItem(s))];
 
         return base.Execute();
 

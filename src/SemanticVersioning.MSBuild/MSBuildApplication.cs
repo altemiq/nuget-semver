@@ -44,7 +44,7 @@ public static class MSBuildApplication
         string targetExt,
         string buildOutputTargetFolder,
         string outputPath,
-        IEnumerable<string> source,
+        ICollection<string> source,
         IEnumerable<string> packageIds,
         System.Text.RegularExpressions.Regex? packageIdRegex,
         string? packageIdReplace,
@@ -72,7 +72,7 @@ public static class MSBuildApplication
 
         var packages = IsNullOrEmpty(previous)
             ? await NuGetInstaller.GetPackagesAsync(projectPackageIds, source, log: logger, root: projectDirectory).ToArrayAsync().ConfigureAwait(false)
-            : [new NuGet.Packaging.Core.PackageIdentity(projectPackageId, new NuGet.Versioning.NuGetVersion(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata))];
+            : [new(projectPackageId, new(previous.Major, previous.Minor, previous.Patch, previous.ReleaseLabels, previous.Metadata))];
 
         var folderCommitsList = folderCommits.ToList();
         var headCommitsList = headCommits.ToList();
@@ -99,14 +99,14 @@ public static class MSBuildApplication
                         .SelectMany(dg => dg.Packages)
                         .Distinct();
 
-                    if (packageDependencies.All(packageDependency => referenceVersionsList.Find(referenceVersion => string.Equals(packageDependency.Id, referenceVersion.Id, StringComparison.OrdinalIgnoreCase)) is not PackageCommitIdentity referenceVersion || IsInBounds(referenceVersion, packageDependency)))
+                    if (packageDependencies.All(packageDependency => referenceVersionsList.Find(v => string.Equals(packageDependency.Id, v.Id, StringComparison.OrdinalIgnoreCase)) is not { } referenceVersion || IsInBounds(referenceVersion, packageDependency)))
                     {
-                        return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
+                        return (packageCommitId, [], Published: true);
                     }
                 }
                 else
                 {
-                    return (packageCommitId, Enumerable.Empty<ProjectResult>(), Published: true);
+                    return (packageCommitId, [], Published: true);
                 }
             }
 
@@ -133,7 +133,7 @@ public static class MSBuildApplication
                 (not null, SemanticVersionIncrement.ReleaseLabel) => NuGetVersion.IncrementReleaseLabel(previousVersion, getVersionSuffix(previousVersion.Release)),
 
                 // have this as being a 1.0.0 release
-                _ => new NuGet.Versioning.SemanticVersion(1, 0, 0, getVersionSuffix(NuGetVersion.DefaultAlphaRelease)),
+                _ => new(1, 0, 0, getVersionSuffix(NuGetVersion.DefaultAlphaRelease)),
             };
         }
         else
@@ -224,7 +224,7 @@ public static class MSBuildApplication
             calculatedVersion.Release,
             calculatedVersion.Metadata);
         return (
-            new PackageCommitIdentity(projectPackageId, nugetVersion, folderCommitsList.FirstOrDefault()),
+            new(projectPackageId, nugetVersion, folderCommitsList.FirstOrDefault()),
             results,
             Published: false);
 

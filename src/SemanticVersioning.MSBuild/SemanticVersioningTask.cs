@@ -102,7 +102,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
     /// <summary>
     /// Gets or sets the referenced packages.
     /// </summary>
-    public ITaskItem[] ReferencedPackages { get; set; } = [];
+    public ITaskItem[]? ReferencedPackages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the increment location.
@@ -145,11 +145,11 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             : NuGet.Versioning.SemanticVersion.Parse(this.Previous);
 
         var restoreSources = this.RestoreSources ?? [];
-        var projectCommmits = this.Commits ?? [];
+        var projectCommits = this.Commits ?? [];
         var headCommits = this.HeadCommits ?? [];
-        if (projectCommmits.Length > 0)
+        if (projectCommits.Length > 0)
         {
-            var projectCommit = projectCommmits[0];
+            var projectCommit = projectCommits[0];
             headCommits = [.. headCommits.TakeWhile(commit => !string.Equals(commit, projectCommit, StringComparison.Ordinal))];
         }
 
@@ -173,7 +173,7 @@ public class SemanticVersioningTask : Microsoft.Build.Utilities.Task
             regex,
             this.PackageIdReplace,
             previousVersion,
-            projectCommmits,
+            projectCommits,
             headCommits,
             referenceVersions,
             this.NoCache,

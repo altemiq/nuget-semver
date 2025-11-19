@@ -19,23 +19,17 @@ internal static partial class ConsoleApplication
     public static void WriteJsonVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion version)
     {
         // export these as environment variables
-        var versions = new Versions
-        {
-            Version = version,
-            VersionPrefix = version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance),
-            VersionSuffix = version.ToString("R", NuGet.Versioning.VersionFormatter.Instance),
-        };
+        var versions = new Versions(
+            Version: version,
+            VersionPrefix: version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance),
+            VersionSuffix: version.ToString("R", NuGet.Versioning.VersionFormatter.Instance));
 
         var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
         console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options), OutputTypes.Json);
     }
 
-    private sealed class Versions
-    {
-        public NuGet.Versioning.SemanticVersion? Version { get; set; }
-
-        public string? VersionPrefix { get; set; }
-
-        public string? VersionSuffix { get; set; }
-    }
+    private sealed record Versions(
+        NuGet.Versioning.SemanticVersion? Version,
+        string? VersionPrefix,
+        string? VersionSuffix);
 }

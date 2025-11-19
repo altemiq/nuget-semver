@@ -7,9 +7,9 @@
 namespace Altemiq.SemanticVersioning;
 
 /// <summary>
-/// The <see cref="System.CommandLine.IConsole"/> with <see cref="OutputTypes"/>.
+/// The console with <see cref="OutputTypes"/>.
 /// </summary>
-internal interface IConsoleWithOutput : System.CommandLine.IConsole
+internal interface IConsoleWithOutput
 {
     /// <summary>
     /// Gets the output.
@@ -19,10 +19,10 @@ internal interface IConsoleWithOutput : System.CommandLine.IConsole
     /// <summary>
     /// Gets the output stream writer.
     /// </summary>
-    new IStandardStreamWriterWithOutput Out { get; }
+    IAnsiConsoleWithOutput Out { get; }
 
     /// <summary>
     /// Gets the error stream writer.
     /// </summary>
-    new IStandardStreamWriterWithOutput Error { get; }
+    IAnsiConsoleWithOutput Error { get; }
 }

@@ -45,7 +45,7 @@ public sealed class GetReferencedProjectsTask : Microsoft.Build.Utilities.Task
     private static IEnumerable<string> GetProjects(string project)
     {
         var xmlDocument = new System.Xml.XmlDocument();
-        using (var xmlReader = System.Xml.XmlReader.Create(File.OpenRead(project), new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore }))
+        using (var xmlReader = System.Xml.XmlReader.Create(File.OpenRead(project), new() { DtdProcessing = System.Xml.DtdProcessing.Ignore }))
         {
             xmlDocument.Load(xmlReader);
         }

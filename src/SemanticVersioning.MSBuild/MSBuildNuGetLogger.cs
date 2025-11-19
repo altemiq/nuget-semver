@@ -22,25 +22,23 @@ internal sealed class MSBuildNuGetLogger : NuGet.Common.ILogger
     /// <inheritdoc/>
     public void Log(NuGet.Common.LogLevel level, string data)
     {
-        if (level == NuGet.Common.LogLevel.Error)
+        switch (level)
         {
-            this.LogError(data);
-        }
-        else if (level == NuGet.Common.LogLevel.Warning)
-        {
-            this.LogWarning(data);
-        }
-        else
-        {
-            var importance = level switch
-            {
-                NuGet.Common.LogLevel.Debug or NuGet.Common.LogLevel.Verbose or NuGet.Common.LogLevel.Minimal => MessageImportance.Low,
-                NuGet.Common.LogLevel.Information => MessageImportance.Normal,
-                NuGet.Common.LogLevel.Warning or NuGet.Common.LogLevel.Error => MessageImportance.High,
-                _ => default,
-            };
-
-            this.LogMessageCore(importance, data);
+            case NuGet.Common.LogLevel.Error:
+                this.LogError(data);
+                break;
+            case NuGet.Common.LogLevel.Warning:
+                this.LogWarning(data);
+                break;
+            case NuGet.Common.LogLevel.Debug or NuGet.Common.LogLevel.Verbose or NuGet.Common.LogLevel.Minimal:
+                this.LogMessageCore(MessageImportance.Low, data);
+                break;
+            case NuGet.Common.LogLevel.Information:
+                this.LogMessageCore(MessageImportance.Normal, data);
+                break;
+            default:
+                this.LogMessageCore(default, data);
+                break;
         }
     }
 

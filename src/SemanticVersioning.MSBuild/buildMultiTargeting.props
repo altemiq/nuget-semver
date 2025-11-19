@@ -8,6 +8,7 @@
     <SemanticVersion_IsOuterBuild>true</SemanticVersion_IsOuterBuild>
   </PropertyGroup>
 
-  <Import Project="..\build\$(MSBuildThisFileName).props" />
+  <Import Project="build.props" />
+<!--  <Import Project="..\build\$(MSBuildThisFileName).props" />-->
 
 </Project>

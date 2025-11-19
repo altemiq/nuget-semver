@@ -9,9 +9,16 @@ namespace Altemiq.SemanticVersioning;
 /// <summary>
 /// The <see cref="Microsoft.Build.Locator.VisualStudioInstance"/> finder.
 /// </summary>
-internal class VisualStudioInstanceFinder
+/// <param name="instances">The available instances.</param>
+internal class VisualStudioInstanceFinder(IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> instances)
 {
-    private readonly IDictionary<NuGet.Versioning.SemanticVersion, Microsoft.Build.Locator.VisualStudioInstance> instances;
+    private readonly Dictionary<NuGet.Versioning.SemanticVersion, Microsoft.Build.Locator.VisualStudioInstance> instances = instances.ToDictionary(instance => SemanticVersion.Create(instance.Version), NuGet.Versioning.VersionComparer.VersionRelease);
+
+    private readonly System.Text.Json.JsonSerializerOptions options = new()
+    {
+        Converters = { SemanticVersionConverter.Instance, RollForwardPolicyConverter.Instance },
+        PropertyNameCaseInsensitive = true,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="VisualStudioInstanceFinder"/> class.
@@ -22,13 +29,7 @@ internal class VisualStudioInstanceFinder
     }
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="VisualStudioInstanceFinder"/> class.
-    /// </summary>
-    /// <param name="instances">The available instances.</param>
-    public VisualStudioInstanceFinder(IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> instances) => this.instances = instances.ToDictionary(instance => SemanticVersion.Create(instance.Version), NuGet.Versioning.VersionComparer.VersionRelease);
-
-    /// <summary>
-    /// Gets the visual studio instance.
+    /// Gets the Visual Studio instance.
     /// </summary>
     /// <param name="path">The project or solution path.</param>
     /// <returns>The visual studio instance.</returns>
@@ -36,9 +37,11 @@ internal class VisualStudioInstanceFinder
     {
         var instance = FindGlobalJson(path) is { } globalJson
             ? this.GetVisualStudioInstance(globalJson)
-            : this.instances.Select(instance => instance.Value).FirstOrDefault();
+            : default;
 
-        return instance ?? throw new InvalidOperationException("No instances of MSBuild could be detected.");
+        return instance
+               ?? this.instances.Select(static instance => instance.Value).FirstOrDefault()
+               ?? throw new InvalidOperationException("No instances of MSBuild could be detected.");
 
         static string? FindGlobalJson(FileSystemInfo? path)
         {
@@ -65,32 +68,27 @@ internal class VisualStudioInstanceFinder
     }
 
     /// <summary>
-    /// Gets the visual studio instance.
+    /// Gets the Visual Studio instance.
     /// </summary>
     /// <param name="globalJson">The global.json path.</param>
     /// <returns>The visual studio instance.</returns>
-    public Microsoft.Build.Locator.VisualStudioInstance GetVisualStudioInstance(string globalJson)
+    public Microsoft.Build.Locator.VisualStudioInstance? GetVisualStudioInstance(string globalJson)
     {
         var global = System.Text.Json.JsonSerializer.Deserialize<Global>(
             File.ReadAllText(globalJson),
-            new System.Text.Json.JsonSerializerOptions
-            {
-                Converters = { SemanticVersionConverter.Instance, RollForwardPolicyConverter.Instance },
-                PropertyNameCaseInsensitive = true,
-            });
+            this.options);
 
-        if (global?.Sdk is not null)
+        if (global?.Sdk is not { } sdk)
         {
-            var sdk = global.Sdk;
-
-            return this.GetVisualStudioInstance(
-                globalJson,
-                sdk.Version,
-                sdk.AllowPrerelease,
-                sdk.RollForward ?? GetDefaultRollForwardPolicy(sdk.Version));
+            // it's acceptable for a global.json to not have an SDK
+            return default;
         }
 
-        throw new InvalidOperationException("Failed to read SDK object from global.json");
+        return this.GetVisualStudioInstance(
+            globalJson,
+            sdk.Version,
+            sdk.AllowPrerelease,
+            sdk.RollForward ?? GetDefaultRollForwardPolicy(sdk.Version));
 
         static RollForwardPolicy GetDefaultRollForwardPolicy(NuGet.Versioning.SemanticVersion? version)
         {
@@ -101,7 +99,7 @@ internal class VisualStudioInstanceFinder
     }
 
     /// <summary>
-    /// Gets the visual studio instance.
+    /// Gets the Visual Studio instance.
     /// </summary>
     /// <param name="requested">The requested version.</param>
     /// <param name="allowPrerelease">Set to <see langword="true"/> to allow prerelease versions.</param>
@@ -113,8 +111,7 @@ internal class VisualStudioInstanceFinder
     {
         if (ExactMatchPreferred(policy)
             && requested is not null
-            && this.instances.TryGetValue(requested, out var instance)
-            && instance is not null)
+            && this.instances.TryGetValue(requested, out var instance))
         {
             return instance;
         }
@@ -126,7 +123,7 @@ internal class VisualStudioInstanceFinder
 
         // find the patch version
         var validInstances = this.instances.Where(kvp => kvp.Key.MatchesPolicy(requested, allowPrerelease, policy))
-            .OrderByDescending(instance => instance.Key, new RollForwardComparer(policy))
+            .OrderByDescending(static instance => instance.Key, new RollForwardComparer(policy))
             .ToArray();
 
         if (validInstances.Length == 0)
@@ -138,17 +135,12 @@ internal class VisualStudioInstanceFinder
 
         static bool ExactMatchPreferred(RollForwardPolicy rollForward)
         {
-            return rollForward == RollForwardPolicy.Disable ||
-                   rollForward == RollForwardPolicy.Patch;
+            return rollForward is RollForwardPolicy.Disable or RollForwardPolicy.Patch;
         }
     }
 
-    private sealed class RollForwardComparer : IComparer<NuGet.Versioning.SemanticVersion>
+    private sealed class RollForwardComparer(RollForwardPolicy policy) : IComparer<NuGet.Versioning.SemanticVersion>
     {
-        private readonly RollForwardPolicy policy;
-
-        public RollForwardComparer(RollForwardPolicy policy) => this.policy = policy;
-
         public int Compare(NuGet.Versioning.SemanticVersion? x, NuGet.Versioning.SemanticVersion? y)
         {
             if (x is null)
@@ -161,7 +153,7 @@ internal class VisualStudioInstanceFinder
                 return 1;
             }
 
-            return x.IsBetterMatch(y, this.policy) ? 1 : -1;
+            return x.IsBetterMatch(y, policy) ? 1 : -1;
         }
     }
 
@@ -180,7 +172,7 @@ internal class VisualStudioInstanceFinder
         public static readonly System.Text.Json.Serialization.JsonConverter Instance = new RollForwardPolicyConverter();
 
         public override RollForwardPolicy Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>
-            reader.GetString() is string value
+            reader.GetString() is { } value
                 ? Enum.Parse<RollForwardPolicy>(value, ignoreCase: true)
                 : RollForwardPolicy.Unsupported;
 

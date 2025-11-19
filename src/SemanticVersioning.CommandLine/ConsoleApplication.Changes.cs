@@ -6,8 +6,7 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System.CommandLine.IO;
-using System.Linq;
+using Spectre.Console;
 
 /// <content>
 /// Application class for writing the changes.
@@ -27,80 +26,6 @@ internal static partial class ConsoleApplication
             && !functionalChanges)
         {
             return;
-        }
-
-        void PrintBreakingChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
-        {
-            if (breakingChanges && operation.IsRemoved)
-            {
-                WriteLine(ConsoleColor.Red, message, tabs);
-            }
-        }
-
-        void PrintFunctionalChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
-        {
-            if (functionalChanges && operation.IsAdded)
-            {
-                WriteLine(ConsoleColor.Blue, message, tabs);
-            }
-        }
-
-        void PrintDiff<T>(Endjin.ApiChange.Api.Diff.DiffResult<T> diffResult, int tabs = 0)
-        {
-            var message = $"{diffResult}";
-            PrintFunctionalChange(diffResult.Operation, message, tabs);
-            PrintBreakingChange(diffResult.Operation, message, tabs);
-        }
-
-        void WriteLine(ConsoleColor? consoleColor, string value, int tabs = 0)
-        {
-            var message = string.Concat(new string('\t', tabs), value);
-            if (console is System.CommandLine.Rendering.ITerminal terminal)
-            {
-                if (consoleColor.HasValue)
-                {
-                    terminal.ForegroundColor = consoleColor.Value;
-                }
-
-                terminal.Out.WriteLine(message);
-                terminal.ResetColor();
-            }
-            else
-            {
-                console.Out.WriteLine(message);
-            }
-        }
-
-        bool ShouldPrintChangedBaseType(bool changedBaseType)
-        {
-            return breakingChanges && changedBaseType;
-        }
-
-        bool ShouldPrintChangedTypes(IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
-        {
-            return typeDifferences.Any(ShouldPrintChangedType);
-        }
-
-        bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
-        {
-            return (breakingChanges && collection.Exists(method => method.Operation.IsRemoved))
-                || (functionalChanges && collection.Exists(method => method.Operation.IsAdded));
-        }
-
-        bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)
-        {
-            return ShouldPrintChangedBaseType(typeDiff.HasChangedBaseType)
-                || ShouldPrintChanged(typeDiff.Methods)
-                || ShouldPrintChanged(typeDiff.Fields)
-                || ShouldPrintChanged(typeDiff.Events)
-                || ShouldPrintChanged(typeDiff.Interfaces);
-        }
-
-        bool ShouldPrintCollection(Endjin.ApiChange.Api.Diff.AssemblyDiffCollection assemblyDiffCollection)
-        {
-            return (breakingChanges && assemblyDiffCollection.AddedRemovedTypes.RemovedCount != 0)
-                || (functionalChanges && assemblyDiffCollection.AddedRemovedTypes.AddedCount != 0)
-                || ShouldPrintChangedTypes(assemblyDiffCollection.ChangedTypes);
         }
 
         if (ShouldPrintCollection(differences))
@@ -154,6 +79,75 @@ internal static partial class ConsoleApplication
                     }
                 }
             }
+        }
+
+        void PrintBreakingChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
+        {
+            if (breakingChanges && operation.IsRemoved)
+            {
+                WriteLine(ConsoleColor.Red, message, tabs);
+            }
+        }
+
+        void PrintFunctionalChange(Endjin.ApiChange.Api.Diff.DiffOperation operation, string message, int tabs = 0)
+        {
+            if (functionalChanges && operation.IsAdded)
+            {
+                WriteLine(ConsoleColor.Blue, message, tabs);
+            }
+        }
+
+        void PrintDiff<T>(Endjin.ApiChange.Api.Diff.DiffResult<T> diffResult, int tabs = 0)
+        {
+            var message = $"{diffResult}";
+            PrintFunctionalChange(diffResult.Operation, message, tabs);
+            PrintBreakingChange(diffResult.Operation, message, tabs);
+        }
+
+        void WriteLine(ConsoleColor? consoleColor, string value, int tabs = 0)
+        {
+            var message = string.Concat(new('\t', tabs), value);
+
+            if (consoleColor is { } color)
+            {
+                console.Out.Markup($"[{color.ToString().ToLowerInvariant()}]{message}");
+            }
+            else
+            {
+                console.Out.WriteLine(message);
+            }
+        }
+
+        bool ShouldPrintChangedBaseType(bool changedBaseType)
+        {
+            return breakingChanges && changedBaseType;
+        }
+
+        bool ShouldPrintChangedTypes(IList<Endjin.ApiChange.Api.Diff.TypeDiff> typeDifferences)
+        {
+            return typeDifferences.Any(ShouldPrintChangedType);
+        }
+
+        bool ShouldPrintChanged<T>(Endjin.ApiChange.Api.Diff.DiffCollection<T> collection)
+        {
+            return (breakingChanges && collection.Exists(method => method.Operation.IsRemoved))
+                || (functionalChanges && collection.Exists(method => method.Operation.IsAdded));
+        }
+
+        bool ShouldPrintChangedType(Endjin.ApiChange.Api.Diff.TypeDiff typeDiff)
+        {
+            return ShouldPrintChangedBaseType(typeDiff.HasChangedBaseType)
+                || ShouldPrintChanged(typeDiff.Methods)
+                || ShouldPrintChanged(typeDiff.Fields)
+                || ShouldPrintChanged(typeDiff.Events)
+                || ShouldPrintChanged(typeDiff.Interfaces);
+        }
+
+        bool ShouldPrintCollection(Endjin.ApiChange.Api.Diff.AssemblyDiffCollection assemblyDiffCollection)
+        {
+            return (breakingChanges && assemblyDiffCollection.AddedRemovedTypes.RemovedCount != 0)
+                || (functionalChanges && assemblyDiffCollection.AddedRemovedTypes.AddedCount != 0)
+                || ShouldPrintChangedTypes(assemblyDiffCollection.ChangedTypes);
         }
     }
 }

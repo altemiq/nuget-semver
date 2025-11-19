@@ -5,6 +5,8 @@
     <RootNamespace>$(Company).$(MSBuildProjectName.Replace('.Tests', ''))</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
     <LangVersion>latest</LangVersion>
+    
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
 
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -12,15 +14,16 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
 
-    <NoWarn>1701;1702;IDE0052</NoWarn>
+    <NoWarn>$(NoWarn);IDE0052</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TestSdkVersion>18.0.0</TestSdkVersion>
+    <TestSdkVersion>18.0.1</TestSdkVersion>
+    <NuGetVersion>6.5.1</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.v3" Version="3.1.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

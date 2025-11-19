@@ -2,7 +2,7 @@
 
 # dotnet tool
 dotnet pack \
-  SemanticVersioning.CommandLine/SemanticVersioning.CommandLine.csproj \
+  ./src/SemanticVersioning.CommandLine/SemanticVersioning.CommandLine.csproj \
   --configuration Release \
   --output nupkg \
   -property:Version=$1 \
@@ -10,7 +10,7 @@ dotnet pack \
  
 # MSBuild Tasks
 dotnet pack \
-  SemanticVersioning.MSBuild/SemanticVersioning.MSBuild.csproj \
+  ./src/SemanticVersioning.MSBuild/SemanticVersioning.MSBuild.csproj \
   --configuration Release \
   --output nupkg \
   -property:Version=$1 \

@@ -6,7 +6,8 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System.CommandLine.IO;
+using Spectre.Console;
+using Spectre.Console.Rendering;
 
 /// <content>
 /// Application class for writing to the console.
@@ -14,147 +15,75 @@ using System.CommandLine.IO;
 internal static partial class ConsoleApplication
 {
     /// <summary>
-    /// The basic console.
+    /// The console class.
     /// </summary>
-    public sealed class Console : System.CommandLine.IConsole
+    public static class Console
     {
-        private Console(TextWriter output, TextWriter error)
-        {
-            this.Out = StandardStreamWriter.Create(output);
-            this.Error = StandardStreamWriter.Create(error);
-        }
-
-        /// <inheritdoc/>
-        public IStandardStreamWriter Out { get; }
-
-        /// <inheritdoc/>
-        public bool IsOutputRedirected => this.Out != System.Console.Out || System.Console.IsOutputRedirected;
-
-        /// <inheritdoc/>
-        public IStandardStreamWriter Error { get; }
-
-        /// <inheritdoc/>
-        public bool IsErrorRedirected => this.Error != System.Console.Error || System.Console.IsInputRedirected;
-
-        /// <inheritdoc/>
-        public bool IsInputRedirected => true;
-
         /// <summary>
-        /// Creates an instance of the <see cref="System.CommandLine.IConsole"/>.
+        /// Creates a console.
         /// </summary>
-        /// <param name="output">The output.</param>
+        /// <param name="out">The output.</param>
         /// <param name="error">The error.</param>
+        /// <param name="output">The kind of output.</param>
         /// <returns>The console.</returns>
-        public static System.CommandLine.IConsole Create(TextWriter output, TextWriter error) => new Console(output, error);
+        public static IConsoleWithOutput Create(TextWriter @out, TextWriter error, OutputTypes output)
+        {
+            // create the ANSI consoles
+            var ansiOut = AnsiConsole.Create(new() { Out = new AnsiConsoleOutput(@out) });
+            var ansiError = AnsiConsole.Create(new() { Out = new AnsiConsoleOutput(error) });
+
+            return ConsoleWithOutput.Create(ansiOut, ansiError, output);
+        }
     }
 
-    private class ConsoleWithOutput : IConsoleWithOutput
+    private sealed class ConsoleWithOutput : IConsoleWithOutput
     {
-        private readonly System.CommandLine.IConsole console;
-
-        protected ConsoleWithOutput(System.CommandLine.IConsole console, OutputTypes output)
+        private ConsoleWithOutput(IAnsiConsole @out, IAnsiConsole error, OutputTypes output)
         {
-            this.console = console;
             this.Output = output;
-            this.Out = new StandardStreamWriterWithOutput(this.console, this.Output);
-            this.Error = new StandardStreamWriterWithOutput(this.console, this.Output, isError: true);
+            this.Out = new AnsiConsoleWithOutput(@out, this.Output);
+            this.Error = new AnsiConsoleWithOutput(error, this.Output);
         }
 
         public OutputTypes Output { get; }
 
-        public bool IsOutputRedirected => this.console.IsOutputRedirected;
+        public IAnsiConsoleWithOutput Out { get; }
 
-        public bool IsErrorRedirected => this.console.IsErrorRedirected;
+        public IAnsiConsoleWithOutput Error { get; }
 
-        public bool IsInputRedirected => this.console.IsInputRedirected;
+        public static IConsoleWithOutput Create(IAnsiConsole @out, IAnsiConsole error, OutputTypes outputTypes) => new ConsoleWithOutput(@out, error, outputTypes);
 
-        public IStandardStreamWriterWithOutput Out { get; }
-
-        public IStandardStreamWriterWithOutput Error { get; }
-
-        IStandardStreamWriter IStandardOut.Out => this.console.Out;
-
-        IStandardStreamWriter IStandardError.Error => this.console.Error;
-
-        public static IConsoleWithOutput Create(System.CommandLine.IConsole console, OutputTypes outputTypes)
+        private sealed class AnsiConsoleWithOutput(IAnsiConsole console, OutputTypes output) : IAnsiConsoleWithOutput
         {
-            if (console is System.CommandLine.Rendering.ITerminal terminal)
-            {
-                return new TerminalWithOutput(terminal, outputTypes);
-            }
-
-            return new ConsoleWithOutput(console, outputTypes);
-        }
-
-        private sealed class StandardStreamWriterWithOutput(System.CommandLine.IConsole console, OutputTypes output, bool isError = false) : IStandardStreamWriterWithOutput
-        {
-            private readonly System.CommandLine.IConsole console = console;
-
-            private readonly bool isError = isError;
-
             public OutputTypes Output { get; } = output;
 
-            public void Write(string? value)
-            {
-                if (this.isError)
-                {
-                    this.console.Error.Write(value);
-                }
-                else
-                {
-                    this.console.Out.Write(value);
-                }
-            }
+            public Profile Profile => console.Profile;
+
+            public IAnsiConsoleCursor Cursor => console.Cursor;
+
+            public IAnsiConsoleInput Input => console.Input;
+
+            public IExclusivityMode ExclusivityMode => console.ExclusivityMode;
+
+            public RenderPipeline Pipeline => console.Pipeline;
+
+            public void Clear(bool home) => console.Clear(home);
+
+            public void Write(IRenderable renderable) => console.Write(renderable);
         }
     }
 
-    private sealed class TerminalWithOutput(System.CommandLine.Rendering.ITerminal terminal, OutputTypes output) : ConsoleWithOutput(terminal, output), System.CommandLine.Rendering.ITerminal
+    private sealed class NuGetConsole(IConsoleWithOutput console) : NuGet.Common.ILogger
     {
-        private readonly System.CommandLine.Rendering.ITerminal terminal = terminal;
-
-        public ConsoleColor BackgroundColor
-        {
-            get => this.terminal.BackgroundColor;
-            set => this.terminal.BackgroundColor = value;
-        }
-
-        public ConsoleColor ForegroundColor
-        {
-            get => this.terminal.ForegroundColor;
-            set => this.terminal.ForegroundColor = value;
-        }
-
-        public int CursorLeft
-        {
-            get => this.terminal.CursorLeft;
-            set => this.terminal.CursorLeft = value;
-        }
-
-        public int CursorTop
-        {
-            get => this.terminal.CursorTop;
-            set => this.terminal.CursorTop = value;
-        }
-
-        public void Clear() => this.terminal.Clear();
-
-        public void HideCursor() => this.terminal.HideCursor();
-
-        public void ResetColor() => this.terminal.ResetColor();
-
-        public void SetCursorPosition(int left, int top) => this.terminal.SetCursorPosition(left, top);
-
-        public void ShowCursor() => this.terminal.ShowCursor();
-    }
-
-    private sealed class NuGetConsole(System.CommandLine.IConsole console) : NuGet.Common.ILogger
-    {
-        private readonly System.CommandLine.IConsole console = console;
+        private readonly Style debugStyle = new(foreground: ConsoleColor.Blue);
+        private readonly Style minimalStyle = new(foreground: ConsoleColor.DarkGray);
+        private readonly Style verboseStyle = new(foreground: ConsoleColor.Gray);
+        private readonly Style warningStyle = new(foreground: ConsoleColor.DarkYellow);
 
         public void Log(NuGet.Common.LogLevel level, string data)
         {
             // trim off the code
-            data = data.Substring(data.IndexOf('|', StringComparison.Ordinal) + 1);
+            data = data[(data.IndexOf('|', StringComparison.Ordinal) + 1)..];
 
             switch (level)
             {
@@ -185,36 +114,18 @@ internal static partial class ConsoleApplication
 
         public Task LogAsync(NuGet.Common.ILogMessage message) => Task.Factory.StartNew(() => this.Log(message));
 
-        public void LogDebug(string data) => this.WriteLine(ConsoleColor.Blue, data);
+        public void LogDebug(string data) => console.Out.WriteLine(data, this.debugStyle);
 
-        public void LogError(string data) => this.console.Error.WriteLine(data);
+        public void LogError(string data) => console.Error.WriteLine(data);
 
-        public void LogInformation(string data) => this.WriteLine(default, data);
+        public void LogInformation(string data) => console.Out.WriteLine(data);
 
-        public void LogInformationSummary(string data) => this.WriteLine(default, data);
+        public void LogInformationSummary(string data) => console.Out.WriteLine(data);
 
-        public void LogMinimal(string data) => this.WriteLine(ConsoleColor.DarkGray, data);
+        public void LogMinimal(string data) => console.Out.WriteLine(data, this.minimalStyle);
 
-        public void LogVerbose(string data) => this.WriteLine(ConsoleColor.Gray, data);
+        public void LogVerbose(string data) => console.Out.WriteLine(data, this.verboseStyle);
 
-        public void LogWarning(string data) => this.WriteLine(ConsoleColor.DarkYellow, data);
-
-        private void WriteLine(ConsoleColor? consoleColor, string value)
-        {
-            if (this.console is System.CommandLine.Rendering.ITerminal terminal)
-            {
-                if (consoleColor.HasValue)
-                {
-                    terminal.ForegroundColor = consoleColor.Value;
-                }
-
-                terminal.Out.WriteLine(value);
-                terminal.ResetColor();
-            }
-            else
-            {
-                this.console.Out.WriteLine(value);
-            }
-        }
+        public void LogWarning(string data) => console.Out.WriteLine(data, this.warningStyle);
     }
 }

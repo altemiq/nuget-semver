@@ -6,8 +6,6 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using System.CommandLine.IO;
-
 /// <summary>
 /// The console application.
 /// </summary>
@@ -108,18 +106,16 @@ internal static partial class ConsoleApplication
     /// <param name="second">The second assembly.</param>
     /// <param name="build">The build label.</param>
     /// <param name="previous">The previous version.</param>
-    /// <param name="output">The output.</param>
     /// <param name="buildNumberParameter">The build number parameter.</param>
     /// <param name="versionSuffixParameter">The version suffix parameter.</param>
     /// <param name="increment">The increment location.</param>
     /// <param name="noLogo">Set to <see langword="true"/> to not display the startup banner or the copyright message.</param>
     public static void FileFunction(
-        System.CommandLine.IConsole console,
+        IConsoleWithOutput console,
         FileInfo first,
         FileInfo second,
         string? build,
         NuGet.Versioning.SemanticVersion previous,
-        OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
         SemanticVersionIncrement increment = default,
@@ -130,15 +126,16 @@ internal static partial class ConsoleApplication
             WriteHeader(console);
         }
 
-        (var version, _, var differences) = LibraryComparison.Analyze(first.FullName, second.FullName, [previous.ToString()], build: build, increment: increment);
+        var (version, _, differences) = LibraryComparison.Analyze(first.FullName, second.FullName, [previous.ToString()], build: build, increment: increment);
 
-        var consoleWithOutput = ConsoleWithOutput.Create(console, output);
-        WriteChanges(consoleWithOutput, differences);
-        if (version is not null)
+        WriteChanges(console, differences);
+        if (version is null)
         {
-            WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
-            WriteJsonVersion(consoleWithOutput, version);
+            return;
         }
+
+        WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
+        WriteJsonVersion(console, version);
     }
 
     /// <summary>
@@ -159,7 +156,6 @@ internal static partial class ConsoleApplication
     /// <param name="directDownload">Bypass the package cache.</param>
     /// <param name="commitCount">The commit count.</param>
     /// <param name="previous">The previous version.</param>
-    /// <param name="output">The output type.</param>
     /// <param name="buildNumberParameter">The parameter name for the build number.</param>
     /// <param name="versionSuffixParameter">The parameter name for the version suffix.</param>
     /// <param name="increment">The increment location.</param>
@@ -167,7 +163,7 @@ internal static partial class ConsoleApplication
     /// <param name="force">Set to <see langword="true"/> to force the computation of the version.</param>
     /// <returns>The task.</returns>
     public static async Task<int> ProcessProjectOrSolution(
-        System.CommandLine.IConsole console,
+        IConsoleWithOutput console,
         FileSystemInfo? projectOrSolution,
         IEnumerable<string> source,
         IEnumerable<string> packageId,
@@ -182,7 +178,6 @@ internal static partial class ConsoleApplication
         bool directDownload,
         int commitCount,
         NuGet.Versioning.SemanticVersion? previous = DefaultPrevious,
-        OutputTypes output = DefaultOutput,
         string buildNumberParameter = DefaultBuildNumberParameter,
         string versionSuffixParameter = DefaultVersionSuffixParameter,
         SemanticVersionIncrement increment = default,
@@ -196,15 +191,14 @@ internal static partial class ConsoleApplication
 
         var instance = RegisterMSBuild(projectOrSolution);
 
-        var consoleWithOutput = ConsoleWithOutput.Create(console, output);
-        consoleWithOutput.Out.WriteLine(string.Create(System.Globalization.CultureInfo.CurrentCulture, $"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
+        console.Out.WriteLine(string.Create(System.Globalization.CultureInfo.CurrentCulture, $"Using {instance.Name} {instance.Version}"), OutputTypes.Diagnostic);
 
         var regex = string.IsNullOrEmpty(packageIdRegex)
             ? null
             : new System.Text.RegularExpressions.Regex(packageIdRegex, System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(3));
 
         var version = await ProcessProjectOrSolutionCore(
-            consoleWithOutput,
+            console,
             projectOrSolution,
             configuration,
             platform,
@@ -223,8 +217,8 @@ internal static partial class ConsoleApplication
             force).ConfigureAwait(false);
 
         // write out the version and the suffix
-        WriteTeamCityVersion(consoleWithOutput, version, buildNumberParameter, versionSuffixParameter);
-        WriteJsonVersion(consoleWithOutput, version);
+        WriteTeamCityVersion(console, version, buildNumberParameter, versionSuffixParameter);
+        WriteJsonVersion(console, version);
 
         return 0;
     }
@@ -236,7 +230,7 @@ internal static partial class ConsoleApplication
         string? configuration,
         string? platform,
         IEnumerable<string> source,
-        IEnumerable<string> packageId,
+        IEnumerable<string>? packageId,
         IEnumerable<string> exclude,
         System.Text.RegularExpressions.Regex? packageIdRegex,
         string? packageIdReplace,
@@ -251,15 +245,16 @@ internal static partial class ConsoleApplication
     {
         var globalVersion = new NuGet.Versioning.SemanticVersion(0, 0, 0);
 
-        var packageIds = packageId ?? [];
         var referenceVersions = new List<PackageCommitIdentity>();
+        IList<string> sourceList = [..source];
+        IList<string> packageIdList = packageId is null ? [] : [..packageId];
         foreach (var project in GetProjects(projectOrSolution, configuration, platform, exclude))
         {
             var calculatedVersion = await ProcessProject(
                 console,
                 project,
-                source,
-                packageIds,
+                sourceList,
+                packageIdList,
                 packageIdRegex,
                 packageIdReplace,
                 previous,
@@ -271,11 +266,8 @@ internal static partial class ConsoleApplication
                 force,
                 GetVersionSuffix).ConfigureAwait(false);
 
-            if (calculatedVersion?.HasVersion == true)
-            {
-                globalVersion = globalVersion.Max(calculatedVersion.Version);
-                referenceVersions.Add(calculatedVersion);
-            }
+            globalVersion = globalVersion.Max(calculatedVersion.Version);
+            referenceVersions.Add(calculatedVersion);
         }
 
         return globalVersion;
@@ -289,7 +281,7 @@ internal static partial class ConsoleApplication
     private static async Task<PackageCommitIdentity> ProcessProject(
         IConsoleWithOutput console,
         Microsoft.Build.Evaluation.Project project,
-        IEnumerable<string> source,
+        ICollection<string> source,
         IEnumerable<string> packageIds,
         System.Text.RegularExpressions.Regex? packageIdRegex,
         string? packageIdReplace,
@@ -331,7 +323,7 @@ internal static partial class ConsoleApplication
             ? new NuGetConsole(console)
             : NuGet.Common.NullLogger.Instance;
 
-        (var referenceVersion, var results, _) = await MSBuildApplication.ProcessProject(
+        var (referenceVersion, results, _) = await MSBuildApplication.ProcessProject(
             project.DirectoryPath,
             project.GetPropertyValue(AssemblyNamePropertyName),
             project.GetPropertyValue(PackageIdPropertyName),
@@ -394,7 +386,7 @@ internal static partial class ConsoleApplication
         }
     }
 
-    private static void WriteHeader(System.CommandLine.IConsole console)
+    private static void WriteHeader(IConsoleWithOutput console)
     {
         console.Out.WriteLine(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Logo, VersionUtils.GetVersion()));
         console.Out.WriteLine(Properties.Resources.Copyright);
@@ -417,14 +409,8 @@ internal static partial class ConsoleApplication
 
     private static IEnumerable<string> GetCommits(LibGit2Sharp.Repository repository, string projectDir, int count)
     {
-        var path = Path.GetFullPath(projectDir);
-        if (path is null)
-        {
-            yield break;
-        }
-
         string baseDir = repository.Info.WorkingDirectory;
-        var relativePath = path
+        var relativePath = Path.GetFullPath(projectDir)
             .Substring(baseDir.Length)
             .Replace('\\', '/')
             .TrimStart('/');
@@ -472,7 +458,7 @@ internal static partial class ConsoleApplication
         string? platform,
         IEnumerable<string> exclude)
     {
-        var ordered = OrderByDependencies(GetProjects(projectOrSolution, configuration, platform).LoadedProjects);
+        var ordered = OrderByDependencies(GetProjectsImpl(projectOrSolution, configuration, platform).LoadedProjects);
 
         foreach (var project in ordered.Where(project =>
             IsPackable(project)
@@ -526,14 +512,14 @@ internal static partial class ConsoleApplication
 
         static bool ShouldExclude(Microsoft.Build.Evaluation.Project project, IEnumerable<string> excludes)
         {
-            return excludes?.Contains(project.GetPropertyValue(PackageIdPropertyName), StringComparer.Ordinal) == true;
+            return excludes.Contains(project.GetPropertyValue(PackageIdPropertyName), StringComparer.Ordinal);
         }
 
-        static Microsoft.Build.Evaluation.ProjectCollection GetProjects(FileSystemInfo? projectOrSolution, string? configuration, string? platform)
+        static Microsoft.Build.Evaluation.ProjectCollection GetProjectsImpl(FileSystemInfo? projectOrSolution, string? configuration, string? platform)
         {
             var projectCollection = new Microsoft.Build.Evaluation.ProjectCollection();
             var projectOrSolutionPath = GetPath(projectOrSolution ?? new DirectoryInfo(Directory.GetCurrentDirectory()), projectOrSolution is null);
-            var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase)
+            var solution = string.Equals(projectOrSolutionPath.Extension, ".sln", StringComparison.OrdinalIgnoreCase) || string.Equals(projectOrSolutionPath.Extension, ".slnx", StringComparison.OrdinalIgnoreCase)
                 ? Microsoft.Build.Construction.SolutionFile.Parse(projectOrSolutionPath.FullName)
                 : default;
 
@@ -559,45 +545,33 @@ internal static partial class ConsoleApplication
                     throw new FileNotFoundException(Properties.Resources.ProjectFileDoesNotExist);
                 }
 
-                // If a directory was passed in, search for a .sln or .csproj file
+                // If a directory was passed in, search for a .sln, .slnx, .csproj, .vbproj, or .fsproj file
                 switch (path)
                 {
                     case DirectoryInfo directoryInfo:
                         // Search for solution(s)
-                        var solutionFiles = directoryInfo.GetFiles("*.sln");
-                        if (solutionFiles.Length == 1)
+                        switch (directoryInfo.GetFiles("*.sln").Concat(directoryInfo.GetFiles("*.slnx")).ToArray())
                         {
-                            return solutionFiles[0];
-                        }
-
-                        if (solutionFiles.Length > 1)
-                        {
-                            if (currentDirectory)
-                            {
+                            case [var solutionFile]:
+                                return solutionFile;
+                            case { Length: > 1 } when currentDirectory:
                                 throw new FileLoadException(Properties.Resources.MultipleInCurrentFolder);
-                            }
-
-                            throw new FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                            case { Length: > 1 }:
+                                throw new FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                         }
 
                         // We did not find any solutions, so try and find individual projects
-                        var projectFiles = directoryInfo.EnumerateFiles("*.csproj")
-                            .Concat(directoryInfo.EnumerateFiles("*.fsproj"))
-                            .Concat(directoryInfo.EnumerateFiles("*.vbproj"))
-                            .ToArray();
-                        if (projectFiles.Length == 1)
+                        switch (directoryInfo.EnumerateFiles("*.csproj")
+                                    .Concat(directoryInfo.EnumerateFiles("*.fsproj"))
+                                    .Concat(directoryInfo.EnumerateFiles("*.vbproj"))
+                                    .ToArray())
                         {
-                            return projectFiles[0];
-                        }
-
-                        if (projectFiles.Length > 1)
-                        {
-                            if (currentDirectory)
-                            {
+                            case [var profileFile]:
+                                return profileFile;
+                            case { Length: > 1 } when currentDirectory:
                                 throw new FileLoadException(Properties.Resources.MultipleInCurrentFolder);
-                            }
-
-                            throw new FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
+                            case { Length: > 1 }:
+                                throw new FileLoadException(string.Format(Properties.Resources.Culture, Properties.Resources.MultipleInSpecifiedFolder, path));
                         }
 
                         // At this point the path contains no solutions or projects, so throw an exception
@@ -664,10 +638,10 @@ internal static partial class ConsoleApplication
 
             // get the project in solution
             var projectInSolution = solution.ProjectsInOrder.First(p => string.Equals(p.AbsolutePath, path, StringComparison.OrdinalIgnoreCase));
-            var configurationName = configuration ?? solution.GetDefaultConfigurationName();
-            var platformName = platform ?? solution.GetDefaultPlatformName();
+            var requiredConfigurationName = configuration ?? solution.GetDefaultConfigurationName();
+            var requiredPlatformName = platform ?? solution.GetDefaultPlatformName();
 
-            var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, configurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, platformName, StringComparison.OrdinalIgnoreCase));
+            var solutionConfiguration = solution.SolutionConfigurations.First(c => string.Equals(c.ConfigurationName, requiredConfigurationName, StringComparison.OrdinalIgnoreCase) && string.Equals(c.PlatformName, requiredPlatformName, StringComparison.OrdinalIgnoreCase));
 
             var projectConfiguration = projectInSolution.ProjectConfigurations[solutionConfiguration.FullName];
 
@@ -675,7 +649,7 @@ internal static partial class ConsoleApplication
         }
     }
 
-    private sealed record class ProjectWithDependencies(Microsoft.Build.Evaluation.Project Project, IList<Microsoft.Build.Evaluation.Project> Dependencies);
+    private sealed record ProjectWithDependencies(Microsoft.Build.Evaluation.Project Project, IList<Microsoft.Build.Evaluation.Project> Dependencies);
 
     private sealed class ProjectWithDependenciesComparer : IComparer<ProjectWithDependencies>
     {
@@ -686,12 +660,7 @@ internal static partial class ConsoleApplication
         {
             if (x is null)
             {
-                if (y is null)
-                {
-                    return 0;
-                }
-
-                return 1;
+                return y is null ? 0 : 1;
             }
 
             if (y is null)
