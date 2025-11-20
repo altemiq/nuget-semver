@@ -18,24 +18,29 @@ internal static partial class ConsoleApplication
     /// <param name="version">The version to write.</param>
     public static void WriteJsonVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion? version)
     {
-        var memoryStream = new MemoryStream();
-        var writer = new System.Text.Json.Utf8JsonWriter(memoryStream);
-
-        writer.WriteStartObject();
-        if (version is not null)
+        using var memoryStream = new MemoryStream();
+        using (var writer = new System.Text.Json.Utf8JsonWriter(memoryStream))
         {
-            writer.WriteString("Version", version.ToFullString());
-            if (version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance) is { } versionPrefix)
+            writer.WriteStartObject();
+            if (version is not null)
             {
-                writer.WriteString("VersionPrefix", versionPrefix);
+                writer.WriteString("Version", version.ToFullString());
+                if (version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance) is { } versionPrefix)
+                {
+                    writer.WriteString("VersionPrefix", versionPrefix);
+                }
+
+                if (version.ToString("R", NuGet.Versioning.VersionFormatter.Instance) is { } versionSuffix)
+                {
+                    writer.WriteString("VersionSuffix", versionSuffix);
+                }
             }
 
-            if (version.ToString("R", NuGet.Versioning.VersionFormatter.Instance) is { } versionSuffix)
-            {
-                writer.WriteString("VersionSuffix", versionSuffix);
-            }
+            writer.WriteEndObject();
         }
 
-        console.Out.WriteLine(System.Text.Encoding.UTF8.GetString(memoryStream.GetBuffer()), OutputTypes.Json);
+        console.Out.WriteLine(
+            System.Text.Encoding.UTF8.GetString(memoryStream.GetBuffer(), 0, (int)memoryStream.Length),
+            OutputTypes.Json);
     }
 }
