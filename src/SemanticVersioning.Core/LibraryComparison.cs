@@ -59,7 +59,7 @@ public static class LibraryComparison
             (true, true) => DetectChangesCore(),
             (true, false) => GetAll(pathToOldAssembly, isAdded: false),
             (false, true) => GetAll(pathToNewAssembly, isAdded: true),
-            (false, false) => new AssemblyDiffCollection(),
+            (false, false) => new(),
         };
 
         static AssemblyDiffCollection GetAll(string path, bool isAdded)
@@ -69,7 +69,7 @@ public static class LibraryComparison
 
             var typeQuery = new TypeQuery(TypeQueryMode.ApiRelevant);
             var results = typeQuery.GetTypes(assembly)
-                .Select(type => new DiffResult<TypeDefinition>(type, new DiffOperation(isAdded)));
+                .Select(type => new DiffResult<TypeDefinition>(type, new(isAdded)));
             difference.AddedRemovedTypes.AddRange(results);
 
             return difference;
@@ -82,7 +82,7 @@ public static class LibraryComparison
             var ad = new AssemblyDiffer(oldAssembly, newAssembly);
 
             var qa = new QueryAggregator();
-            qa.TypeQueries.Add(new TypeQuery(TypeQueryMode.ApiRelevant));
+            qa.TypeQueries.Add(new(TypeQueryMode.ApiRelevant));
 
             qa.MethodQueries.Add(MethodQuery.PublicMethods);
             qa.MethodQueries.Add(MethodQuery.ProtectedMethods);

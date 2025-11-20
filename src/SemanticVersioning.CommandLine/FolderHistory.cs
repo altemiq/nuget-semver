@@ -38,7 +38,7 @@ internal class FolderHistory : IEnumerable<LogEntry>
     /// <param name="path">The file's path relative to the repository's root.</param>
     /// <exception cref="ArgumentNullException">If any of the parameters is null.</exception>
     internal FolderHistory(Repository repo, string path)
-        : this(repo, path, new CommitFilter())
+        : this(repo, path, new())
     {
     }
 

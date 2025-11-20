@@ -91,7 +91,7 @@ public static class NuGetVersion
     private static NuGet.Versioning.SemanticVersion CalculateVersion(SemanticVersionChange semanticVersionChange, IList<NuGet.Versioning.SemanticVersion> previousVersions, NuGet.Versioning.SemanticVersion? previousVersion, string? prerelease, SemanticVersionIncrement increment)
     {
         var nextVersion = previousVersion is null
-            ? new NuGet.Versioning.SemanticVersion(0, 1, 0)
+            ? new(0, 1, 0)
             : CalculateNextVersion(previousVersion, semanticVersionChange);
         var latestVersion = GetLatestVersion(previousVersions, nextVersion);
         if (latestVersion is null && previousVersions.Count > 0)

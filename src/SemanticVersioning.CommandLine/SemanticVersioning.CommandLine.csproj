@@ -6,19 +6,15 @@
     <RootNamespace>$(Company).$(Title)</RootNamespace>
 
     <NoWarn>$(NoWarn);CA1801;CA1812;MA0051;RCS1096</NoWarn>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
-
+    
+    <!-- Tool packaging --> 
+    <CreateRidSpecificToolPackages>false</CreateRidSpecificToolPackages>
+    <UseAppHost>false</UseAppHost>
     <PackageId>$(RootNamespace)</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-semver</ToolCommandName>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(PublishDir)' != '' ">
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishTrimmed>true</PublishTrimmed>
-    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -65,7 +61,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" Version="6.0.6" />
+    <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" Version="$(NuGetVersion)" />
+    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />
   </ItemGroup>
 
   <ItemGroup>

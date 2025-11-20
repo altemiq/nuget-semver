@@ -603,7 +603,7 @@ internal static partial class ConsoleApplication
 
         static IEnumerable<Microsoft.Build.Locator.VisualStudioInstance> GetInstances()
         {
-            return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new Microsoft.Build.Locator.VisualStudioInstanceQueryOptions
+            return Microsoft.Build.Locator.MSBuildLocator.QueryVisualStudioInstances(new()
             {
                 DiscoveryTypes = Microsoft.Build.Locator.DiscoveryType.DotNetSdk,
             });

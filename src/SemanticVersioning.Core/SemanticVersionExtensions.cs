@@ -12,7 +12,7 @@ namespace Altemiq.SemanticVersioning;
 public static class SemanticVersionExtensions
 {
     /// <summary>
-    /// Gets a value as to whether the specified version matches the policy.
+    /// Gets a value whether the specified version matches the policy.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="requested">The requested version.</param>
@@ -22,10 +22,10 @@ public static class SemanticVersionExtensions
     public static bool MatchesPolicy(this NuGet.Versioning.SemanticVersion? version, NuGet.Versioning.SemanticVersion? requested, bool allowPrerelease, RollForwardPolicy rollForwardPolicy)
     {
         var versionIsNull = version is null;
-        var versionIsPrerelease = version?.IsPrerelease == true;
+        var versionIsPrerelease = version?.IsPrerelease is true;
         if (versionIsNull
             || (!allowPrerelease && versionIsPrerelease)
-            || rollForwardPolicy == RollForwardPolicy.Disable)
+            || rollForwardPolicy is RollForwardPolicy.Disable)
         {
             return false;
         }
@@ -46,16 +46,14 @@ public static class SemanticVersionExtensions
         bool TestPatchVersion()
         {
             return version is not null
-                && requested is not null
                 && version.Major == requested.Major
                 && version.Minor == requested.Minor
-                && version.GetFeature() == requested.GetFeature();
+                && GetFeature(version) == GetFeature(requested);
         }
 
         bool TestFeatureVersion()
         {
             return version is not null
-                && requested is not null
                 && version.Major == requested.Major
                 && version.Minor == requested.Minor;
         }
@@ -63,7 +61,6 @@ public static class SemanticVersionExtensions
         bool TestMinorVersion()
         {
             return version is not null
-                && requested is not null
                 && version.Major == requested.Major;
         }
     }
@@ -83,23 +80,23 @@ public static class SemanticVersionExtensions
             return true;
         }
 
-        // Use the later of the two if there is no requested version, the policy requires it,
+        // Use the latter of the two if there is no requested version, the policy requires it,
         // or if everything is equal up to the feature level (latest patch always wins)
         if (IsPolicyUseLatest(rollForwardPolicy) ||
             (current.Major == previous.Major &&
              current.Minor == previous.Minor &&
-             current.GetPatch() == previous.GetPatch()))
+             GetPatch(current) == GetPatch(previous)))
         {
-            // Accept the later of the versions
+            // Accept the latter of the versions
             // This will also handle stable and prerelease comparisons
             return current > previous;
         }
 
         return current < previous;
 
-        static bool IsPolicyUseLatest(RollForwardPolicy rollFowardPolicy)
+        static bool IsPolicyUseLatest(RollForwardPolicy rollForwardPolicy)
         {
-            return rollFowardPolicy switch
+            return rollForwardPolicy switch
             {
                 RollForwardPolicy.LatestFeature or RollForwardPolicy.LatestMajor or RollForwardPolicy.LatestMinor or RollForwardPolicy.LatestPatch => true,
                 _ => false,
@@ -137,17 +134,7 @@ public static class SemanticVersionExtensions
     /// <returns>A new instance of <see cref="NuGet.Versioning.SemanticVersion"/> with the specific changes.</returns>
     internal static NuGet.Versioning.SemanticVersion With(this NuGet.Versioning.SemanticVersion version, int? major = default, int? minor = default, int? patch = default, string? releaseLabel = default, string? metadata = default) => new(major ?? version.Major, minor ?? version.Minor, patch ?? version.Patch, releaseLabel ?? version.Release, metadata ?? version.Metadata);
 
-    /// <summary>
-    /// Gets the feature version.
-    /// </summary>
-    /// <param name="version">The version.</param>
-    /// <returns>The feature version.</returns>
-    internal static int GetFeature(this NuGet.Versioning.SemanticVersion version) => version.Patch / 100;
+    private static int GetFeature(NuGet.Versioning.SemanticVersion version) => version.Patch / 100;
 
-    /// <summary>
-    /// Gets the patch version.
-    /// </summary>
-    /// <param name="version">The version.</param>
-    /// <returns>The patch version.</returns>
-    internal static int GetPatch(this NuGet.Versioning.SemanticVersion version) => version.Patch % 100;
+    private static int GetPatch(NuGet.Versioning.SemanticVersion version) => version.Patch % 100;
 }

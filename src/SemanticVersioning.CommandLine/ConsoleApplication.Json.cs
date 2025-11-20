@@ -16,20 +16,26 @@ internal static partial class ConsoleApplication
     /// </summary>
     /// <param name="console">The console.</param>
     /// <param name="version">The version to write.</param>
-    public static void WriteJsonVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion version)
+    public static void WriteJsonVersion(IConsoleWithOutput console, NuGet.Versioning.SemanticVersion? version)
     {
-        // export these as environment variables
-        var versions = new Versions(
-            Version: version,
-            VersionPrefix: version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance),
-            VersionSuffix: version.ToString("R", NuGet.Versioning.VersionFormatter.Instance));
+        var memoryStream = new MemoryStream();
+        var writer = new System.Text.Json.Utf8JsonWriter(memoryStream);
 
-        var options = new System.Text.Json.JsonSerializerOptions { Converters = { new SemanticVersionConverter() } };
-        console.Out.WriteLine(System.Text.Json.JsonSerializer.Serialize(versions, typeof(Versions), options), OutputTypes.Json);
+        writer.WriteStartObject();
+        if (version is not null)
+        {
+            writer.WriteString("Version", version.ToFullString());
+            if (version.ToString("x.y.z", NuGet.Versioning.VersionFormatter.Instance) is { } versionPrefix)
+            {
+                writer.WriteString("VersionPrefix", versionPrefix);
+            }
+
+            if (version.ToString("R", NuGet.Versioning.VersionFormatter.Instance) is { } versionSuffix)
+            {
+                writer.WriteString("VersionSuffix", versionSuffix);
+            }
+        }
+
+        console.Out.WriteLine(System.Text.Encoding.UTF8.GetString(memoryStream.GetBuffer()), OutputTypes.Json);
     }
-
-    private sealed record Versions(
-        NuGet.Versioning.SemanticVersion? Version,
-        string? VersionPrefix,
-        string? VersionSuffix);
 }

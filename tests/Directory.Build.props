@@ -19,7 +19,7 @@
 
   <PropertyGroup>
     <TestSdkVersion>18.0.1</TestSdkVersion>
-    <NuGetVersion>6.5.1</NuGetVersion>
+    <NuGetVersion>7.0.0</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>

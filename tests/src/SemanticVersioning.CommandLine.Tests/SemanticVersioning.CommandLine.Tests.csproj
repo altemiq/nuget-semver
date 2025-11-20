@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" Version="6.0.6" />
+    <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" Version="$(NuGetVersion)" />
   </ItemGroup>
 
 </Project>

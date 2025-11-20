@@ -734,7 +734,7 @@ public static class NuGetInstaller
                     return false;
                 }
 
-                return FilesContentsAreEqual(new FileInfo(sourceFile), new FileInfo(destinationFile));
+                return FilesContentsAreEqual(new(sourceFile), new(destinationFile));
 
                 static bool FilesContentsAreEqual(FileInfo first, FileInfo second)
                 {
