@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version=10.0.2
+version=10.0.3
 
 ./test.sh
 ./release.sh $version

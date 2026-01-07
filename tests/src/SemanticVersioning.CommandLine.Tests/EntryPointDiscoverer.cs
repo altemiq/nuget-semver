@@ -2,7 +2,7 @@ namespace Altemiq.SemanticVersioning.CommandLine;
 
 using System.Reflection;
 
-public class EntryPointDiscoverer
+public static class EntryPointDiscoverer
 {
     public static MethodInfo FindStaticEntryMethod(Assembly assembly, string? entryPointFullTypeName = default)
     {

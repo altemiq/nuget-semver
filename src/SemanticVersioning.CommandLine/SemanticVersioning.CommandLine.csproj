@@ -40,7 +40,7 @@
   </Choose>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>7.0.0</NuGetVersion>
+    <NuGetVersion>7.0.1</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,12 +51,12 @@
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(SystemVersion)" />
     <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.11.1" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.CommandLine" Version="2.0.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.1" />
     <PackageReference Include="Spectre.Console" Version="0.54.0" />
   </ItemGroup>
   

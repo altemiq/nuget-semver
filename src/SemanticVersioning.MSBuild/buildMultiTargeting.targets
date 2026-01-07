@@ -1,5 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-<!--  <Import Project="..\build\$(MSBuildThisFileName).targets" />-->
-  <Import Project="build.targets" />
+  <Import Project="..\build\$(MSBuildThisFileName).targets" />
 </Project>
