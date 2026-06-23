@@ -235,7 +235,8 @@
   <Target
     Name="SetSemanticVersion"
     BeforeTargets="GetAssemblyVersion"
-    Condition=" '$(Version)' != '$(SemanticVersion)'
+    Condition=" ('$(IsPackTarget)' != 'true' and '$(Version)' != '$(SemanticVersion)')
+             or ('$(IsPackTarget)' == 'true' and '$(Version)' != '$(SemanticVersionPrefix)')
              or '$(VersionPrefix)' != '$(SemanticVersionPrefix)'
              or '$(VersionSuffix)' != '$(SemanticVersionSuffix)'
              or '$(PackageVersion)' != '$(SemanticPackageVersion)'
@@ -243,12 +244,15 @@
              or '$(NuGetVersion)' != '$(SemanticPackageVersion)' ">
 
     <PropertyGroup>
-      <Version Condition=" '$(SemanticVersion)' != '' ">$(SemanticVersion)</Version>
+      <!-- Set the version with no suffix if we're packing -->
+      <Version Condition=" '$(IsPackTarget)' == 'true' and '$(SemanticVersionPrefix)' != '' ">$(SemanticVersionPrefix)</Version>
+      <Version Condition=" '$(IsPackTarget)' != 'true' and '$(SemanticVersion)' != '' ">$(SemanticVersion)</Version>
+
       <VersionPrefix Condition=" '$(SemanticVersionPrefix)' != '' ">$(SemanticVersionPrefix)</VersionPrefix>
       <VersionSuffix Condition=" '$(SemanticVersionSuffix)' != '' ">$(SemanticVersionSuffix)</VersionSuffix>
       <PackageVersion Condition=" '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</PackageVersion>
       <RepositoryCommit Condition=" '$(SemanticRepositoryCommit)' != '' ">$(SemanticRepositoryCommit)</RepositoryCommit>
-      
+
       <NuGetVersion Condition=" '$(SemanticPackageVersion)' != '' ">$(SemanticPackageVersion)</NuGetVersion>
     </PropertyGroup>
 
