@@ -6,64 +6,57 @@
 
 namespace Altemiq.SemanticVersioning;
 
-using Xunit;
-
 /// <summary>
 /// <see cref="NuGetVersion"/> tests.
 /// </summary>
 public class NuGetVersionTests
 {
-    private const string AlphaPrelease = "alpha";
+    [Test]
+    [MethodDataSource(nameof(GetVersionsToCalculate))]
+    public async Task CalculateVersion(SemanticVersionChange change, string[] versions, string? prerelease, SemanticVersionIncrement increment, NuGet.Versioning.SemanticVersion expected) => await Assert.That(NuGetVersion.CalculateVersion(change, versions, prerelease, increment)).IsEqualTo(expected);
 
-    private const string DevelopmentPrelease = "develop";
+    public static IEnumerable<Func<(SemanticVersionChange, string[], string?, SemanticVersionIncrement, NuGet.Versioning.SemanticVersion)>> GetVersionsToCalculate()
+    {
+        const string AlphaPrelease = "alpha";
+        const string DevelopmentPrelease = "develop";
 
-    /// <summary>
-    /// Calculates the version.
-    /// </summary>
-    /// <param name="change">The desired change.</param>
-    /// <param name="versions">The versions.</param>
-    /// <param name="prerelease">The release.</param>
-    /// <param name="increment">The increment value.</param>
-    /// <param name="expected">The expected version.</param>
-    [Theory]
-    [InlineData(SemanticVersionChange.Major, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, "3.0.0")]
-    [InlineData(SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, "3.0.6")]
-    [InlineData(SemanticVersionChange.Major, new[] { "2.0.5", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"3.0.0-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"3.0.6-{DevelopmentPrelease}")]
+        yield return () => (SemanticVersionChange.Major, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("3.0.0"));
+        yield return () => (SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("3.0.6"));
+        yield return () => (SemanticVersionChange.Major, new[] { "2.0.5", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"3.0.0-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"3.0.6-{DevelopmentPrelease}"));
 
-    [InlineData(SemanticVersionChange.Major, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "3.0.0")]
-    [InlineData(SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"3.0.5-{DevelopmentPrelease}.0")]
-    [InlineData(SemanticVersionChange.Major, new[] { "2.0.5", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"3.0.0-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Major, new[] { "3.0.1-develop.45", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"3.0.1-{DevelopmentPrelease}.46")]
+        yield return () => (SemanticVersionChange.Major, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("3.0.0"));
+        yield return () => (SemanticVersionChange.Major, new[] { "3.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"3.0.5-{DevelopmentPrelease}.0"));
+        yield return () => (SemanticVersionChange.Major, new[] { "2.0.5", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"3.0.0-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Major, new[] { "3.0.1-develop.45", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"3.0.1-{DevelopmentPrelease}.46"));
 
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, "2.1.0")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, "2.1.6")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"2.2.0-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"2.1.6-{DevelopmentPrelease}")]
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("2.1.0"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("2.1.6"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"2.2.0-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"2.1.6-{DevelopmentPrelease}"));
 
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "2.1.0")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "2.1.5")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"2.2.0-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"2.1.5-{DevelopmentPrelease}.0")]
-    [InlineData(SemanticVersionChange.Minor, new[] { "2.1.5-develop.15", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"2.1.5-{DevelopmentPrelease}.16")]
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("2.1.0"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("2.1.5"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"2.2.0-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"2.1.5-{DevelopmentPrelease}.0"));
+        yield return () => (SemanticVersionChange.Minor, new[] { "2.1.5-develop.15", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"2.1.5-{DevelopmentPrelease}.16"));
 
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, "2.0.1")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.0-develop", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, "1.1.1")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, "2.0.6")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"2.0.6-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"1.1.1-{DevelopmentPrelease}")]
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("2.0.1"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.0-develop", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("1.1.1"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse("2.0.6"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"2.0.6-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"1.1.1-{DevelopmentPrelease}"));
 
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "2.0.1")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.0-develop", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "1.1.1")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, "2.0.5")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"2.0.5-{DevelopmentPrelease}.0")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"1.1.1-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.1-develop.21", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, $"1.1.1-{DevelopmentPrelease}.22")]
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.0", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("2.0.1"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.0-develop", "1.1.0", "1.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("1.1.1"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, default, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse("2.0.5"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "2.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"2.0.5-{DevelopmentPrelease}.0"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"1.1.1-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Patch, new[] { "2.0.5-develop", "1.1.1-develop.21", "1.1.0", "1.0.0" }, DevelopmentPrelease, SemanticVersionIncrement.ReleaseLabel, NuGet.Versioning.SemanticVersion.Parse($"1.1.1-{DevelopmentPrelease}.22"));
 
-    [InlineData(SemanticVersionChange.Major, new[] { "0.1.2-alpha", "0.1.0-alpha" }, default, SemanticVersionIncrement.Patch, $"0.1.3-{AlphaPrelease}")]
-    [InlineData(SemanticVersionChange.Major, new string[0], default, SemanticVersionIncrement.Patch, $"0.1.0-{AlphaPrelease}")]
-    [InlineData(SemanticVersionChange.Major, new[] { "0.1.2-alpha", "0.1.0-alpha" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, $"0.1.3-{DevelopmentPrelease}")]
-    [InlineData(SemanticVersionChange.Major, new string[0], DevelopmentPrelease, SemanticVersionIncrement.Patch, $"0.1.0-{DevelopmentPrelease}")]
-    public void CalculateVersion(SemanticVersionChange change, string[] versions, string? prerelease, SemanticVersionIncrement increment, string expected) =>
-        Assert.Equal(NuGet.Versioning.SemanticVersion.Parse(expected), NuGetVersion.CalculateVersion(change, versions, prerelease, increment));
+        yield return () => (SemanticVersionChange.Major, new[] { "0.1.2-alpha", "0.1.0-alpha" }, default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"0.1.3-{AlphaPrelease}"));
+        yield return () => (SemanticVersionChange.Major, Array.Empty<string>(), default, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"0.1.0-{AlphaPrelease}"));
+        yield return () => (SemanticVersionChange.Major, new[] { "0.1.2-alpha", "0.1.0-alpha" }, DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"0.1.3-{DevelopmentPrelease}"));
+        yield return () => (SemanticVersionChange.Major, Array.Empty<string>(), DevelopmentPrelease, SemanticVersionIncrement.Patch, NuGet.Versioning.SemanticVersion.Parse($"0.1.0-{DevelopmentPrelease}"));
+    }
 }

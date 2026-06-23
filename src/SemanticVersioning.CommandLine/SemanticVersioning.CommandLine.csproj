@@ -40,7 +40,7 @@
   </Choose>
 
   <PropertyGroup Label="Versions">
-    <NuGetVersion>7.0.1</NuGetVersion>
+    <NuGetVersion>7.0.3</NuGetVersion>
   </PropertyGroup>
 
   <ItemGroup>

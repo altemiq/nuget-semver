@@ -8,114 +8,105 @@ namespace Altemiq.SemanticVersioning.CommandLine;
 
 public class ProgramTests
 {
-    private static readonly
-#if NET9_0_OR_GREATER
-        Lock
-#else
-        object
-#endif
-        LockObject = new();
-
-    private static readonly System.Reflection.MethodInfo MainMethod;
-
-    static ProgramTests()
+    private async static Task<(int, IEnumerable<string>, IEnumerable<string>)> InvokeAsync(params string[] args)
     {
-        lock (LockObject)
-        {
-            MainMethod ??= EntryPointDiscoverer.FindStaticEntryMethod(typeof(ConsoleApplication).Assembly);
-        }
+        var rootCommand = Program.CreateRootCommand();
+        var configuration = new System.CommandLine.ParserConfiguration();
+
+        var parsed = rootCommand.Parse(args, configuration);
+        var output = new ConsoleWriter(parsed.InvocationConfiguration.Output);
+        parsed.InvocationConfiguration.Output = output;
+
+        var error = new ConsoleWriter(parsed.InvocationConfiguration.Error);
+        parsed.InvocationConfiguration.Error = error;
+
+        // get the current out/error
+        var exitValue = await parsed.InvokeAsync();
+
+        return (exitValue, output.CapturedOutput, error.CapturedOutput);
     }
 
-    private static (int Return, ICollection<string> Output, ICollection<string> Error) Invoke(params string[] args)
+    [Test]
+    public async Task NoValidNuget()
     {
-        var consoleOut = new ConsoleWriter(Console.Out);
-        Console.SetOut(consoleOut);
-
-        var consoleError = new ConsoleWriter(Console.Error);
-        Console.SetError(consoleError);
-
-        var returnObject = MainMethod.Invoke(null, [args]);
-        var (exitValue, console, error) = returnObject switch
-        {
-            Task<int> intTask => Return(intTask.Result),
-            Task task => WaitThenReturn(task),
-            int intValue => Return(intValue),
-            _ => Return(),
-        };
-
-        Console.SetOut(consoleOut.Original);
-        Console.SetError(consoleError.Original);
-
-        return (exitValue, console, error);
-
-        (int Return, ICollection<string> Output, ICollection<string> Error) WaitThenReturn(Task task, int value = 0)
-        {
-            task.Wait();
-            return Return(value);
-        }
-
-        (int Return, ICollection<string> Output, ICollection<string> Error) Return(int value = 0)
-        {
-            return (value, consoleOut.CapturedOutput, consoleError.CapturedOutput);
-        }
+        var (exitValue, console, error) = await InvokeAsync("diff", "solution", GetProjectPath("Original"), "--source", GetSource("no-packages"), "--no-cache", "--nologo");
+        await Assert.That(error).IsEmpty();
+        await Assert.That(exitValue).IsDefault();
+        await Assert.That(console).Contains("##teamcity[buildNumber '1.0.0']");
+        await Assert.That(console).Contains("##teamcity[setParameter name='system.build.suffix' value='alpha']");
     }
 
-    [Fact]
-    public void NoValidNuget()
+    [Test]
+    public async Task NameChange()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("no-packages"), "--no-cache", "--nologo");
-        Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.0']", console);
-        Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='alpha']", console);
-        Assert.Empty(error);
+        var (exitValue, console, error) = await InvokeAsync("diff", "solution", GetProjectPath("New"), "--source", GetSource("only-release"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original", "--nologo");
+        await Assert.That(error).IsEmpty();
+        await Assert.That(exitValue).IsDefault();
+        await Assert.That(console).Contains("##teamcity[buildNumber '2.0.0']");
+        await Assert.That(console).Contains("##teamcity[setParameter name='system.build.suffix' value='']");
     }
 
-    [Fact]
-    public void NameChange()
+    [Test]
+    public async Task NoFullRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "New")), "--source", GetSource("only-release"), "--no-cache", "--package-id-regex", "New", "--package-id-replace", "Original", "--nologo");
-        Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '2.0.0']", console);
-        Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
-        Assert.Empty(error);
+        var (exitValue, console, error) = await InvokeAsync("diff", "solution", GetProjectPath("Original"), "--source", GetSource("only-prerelease"), "--no-cache", "--nologo");
+        await Assert.That(error).IsEmpty();
+        await Assert.That(exitValue).IsDefault();
+        await Assert.That(console).Contains("##teamcity[buildNumber '1.0.2']");
+        await Assert.That(console).Contains("##teamcity[setParameter name='system.build.suffix' value='develop']");
     }
 
-    [Fact]
-    public void NoFullRelease()
+    [Test]
+    public async Task NoPreRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("only-prerelease"), "--no-cache", "--nologo");
-        Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='develop']", console);
-        Assert.Empty(error);
+        var (exitValue, console, error) = await InvokeAsync("diff", "solution", GetProjectPath("Original"), "--source", GetSource("only-release"), "--direct-download", "--no-cache", "--nologo");
+        await Assert.That(error).IsEmpty();
+        await Assert.That(exitValue).IsDefault();
+        await Assert.That(console).Contains("##teamcity[buildNumber '1.0.1']");
+        await Assert.That(console).Contains("##teamcity[setParameter name='system.build.suffix' value='']");
     }
 
-    [Fact]
-    public void NoPreRelease()
+    [Test]
+    public async Task PreReleaseAndRelease()
     {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("only-release"), "--direct-download", "--no-cache", "--nologo");
-        Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.1']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
-        Assert.Empty(error);
-    }
-
-    [Fact]
-    public void PreReleaseAndRelease()
-    {
-        var (exitValue, console, error) = Invoke("diff", "solution", GetProjectPath(Path.Combine("projects", "Original")), "--source", GetSource("full"), "--direct-download", "--no-cache", "--nologo");
-        Assert.Equal(0, exitValue);
-        Assert.Contains("##teamcity[buildNumber '1.0.2']", console); Assert.Contains("##teamcity[setParameter name='system.build.suffix' value='']", console);
-        Assert.Empty(error);
+        var (exitValue, console, error) = await InvokeAsync("diff", "solution", GetProjectPath("Original"), "--source", GetSource("full"), "--direct-download", "--no-cache", "--nologo");
+        await Assert.That(error).IsEmpty();
+        await Assert.That(exitValue).IsDefault();
+        await Assert.That(console).Contains("##teamcity[buildNumber '1.0.2']");
+        await Assert.That(console).Contains("##teamcity[setParameter name='system.build.suffix' value='']");
     }
 
     private static string GetProjectPath(string project) => Path.GetFullPath(Path.Combine(GetProjectDirectory(project), Path.GetFileName(project) + ".csproj"));
 
-    private static string GetProjectDirectory(string project) => Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", "..", project));
+    private static string GetProjectDirectory(string project)
+    {
+        var projectFolder = GetFolderAbove(GetTestDirectory(), "projects") ?? throw new DirectoryNotFoundException("projects");
+        return Path.GetFullPath(Path.Combine(projectFolder, project));
+    }
 
-    private static string GetSource(string source) =>
-        Path.GetFullPath(Path.Combine(GetTestDirectory(), "..", "..", "nupkg", source));
+    private static string GetSource(string source)
+    {
+        var nupkgFolder = GetFolderAbove(GetTestDirectory(), "nupkg") ?? throw new DirectoryNotFoundException("nupkg");
+        return Path.GetFullPath(Path.Combine(nupkgFolder!, source));
+    }
 
     private static string GetTestDirectory() => Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(typeof(ProgramTests).Assembly.Location)))) ?? throw new InvalidOperationException("Failed to get test directory");
 
+    private static string? GetFolderAbove(string? current, string name)
+    {
+        while (current is not null)
+        {
+            var test = Path.Combine(current, name);
+            if (Directory.Exists(test))
+            {
+                return test;
+            }
+
+            current = Path.GetDirectoryName(current);
+        }
+
+        return default;
+    }
 
     private class ConsoleWriter(TextWriter original) : TextWriter
     {

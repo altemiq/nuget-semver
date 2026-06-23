@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\src\SemanticVersioning.CommandLine\SemanticVersioning.CommandLine.csproj" />
     <ProjectReference Include="..\..\projects\Original\Original.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
