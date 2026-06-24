@@ -75,7 +75,7 @@
       <Output TaskParameter="Commit" PropertyName="_RepositoryCommit" />
     </GetProjectCommitsTask>
 
-    <PropertyGroup Condition=" '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)' ">
+    <PropertyGroup Condition=" '$(_RepositoryCommit)' != '' and '$(_RepositoryCommit)' == '$(_RepositoryCommitFromFile)' ">
       <_VersionsFromFile>true</_VersionsFromFile>
       <_ComputedVersion>$(_VersionFromFile)</_ComputedVersion>
       <_ComputedVersionPrefix>$(_VersionPrefixFromFile)</_ComputedVersionPrefix>
@@ -85,9 +85,11 @@
 
     <Message
       Text="$(SemanticVersion_ProjectName) -> Commits: $(_RepositoryCommits)"
+      Condition=" '$(_RepositoryCommits)' != '' "
       Importance="Normal" />
     <Message
       Text="$(SemanticVersion_ProjectName) -> Commit: $(_RepositoryCommit)"
+      Condition=" '$(_RepositoryCommit)' != '' "
       Importance="Normal" />
 
     <!-- Get the versions from referenced projects -->

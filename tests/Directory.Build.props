@@ -19,10 +19,7 @@
 
   <PropertyGroup>
     <NuGetVersion>7.0.3</NuGetVersion>
+    <TUnitVersion>1.56.25</TUnitVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="TUnit" Version="1.56.25" />
-  </ItemGroup>
 
 </Project>

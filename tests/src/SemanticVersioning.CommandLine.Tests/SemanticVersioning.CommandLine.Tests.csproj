@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="TUnit" Version="$(TUnitVersion)" />
     <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" Version="$(NuGetVersion)" />
   </ItemGroup>
 

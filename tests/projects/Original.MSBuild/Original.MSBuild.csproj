@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(MSBuildThisDirectory)..\..\..\src\SemanticVersioning.MSBuild\build.props"/>
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.0</TargetFrameworks>
+    <AssemblyName>$(AssemblyName.Replace('.MSBuild',''))</AssemblyName>
+    <RootNamespace>$(RootNamespace.Replace('.MSBuild',''))</RootNamespace>
+  </PropertyGroup>
+
+  <Target Name="_OutputProperties"
+          AfterTargets="SetSemanticVersion">
+    <Message Text="TEST-PROPERTY-CAPTURE:Version=$(Version)" Importance="low" />
+    <Message Text="TEST-PROPERTY-CAPTURE:VersionPrefix=$(VersionPrefix)" Importance="low" />
+    <Message Text="TEST-PROPERTY-CAPTURE:VersionSuffix=$(VersionSuffix)" Importance="low" />
+    <Message Text="TEST-PROPERTY-CAPTURE:PackageVersion=$(PackageVersion)" Importance="low" />
+    <Message Text="TEST-PROPERTY-CAPTURE:NuGetVersion=$(NuGetVersion)" Importance="low" />
+  </Target>
+
+  <Import Project="$(MSBuildThisDirectory)..\..\..\src\SemanticVersioning.MSBuild\build.targets"/>  
+</Project>

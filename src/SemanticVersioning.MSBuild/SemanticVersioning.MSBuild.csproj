@@ -64,12 +64,14 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Label="Upgrades">
-    <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />
-  </ItemGroup>
-
-  <ItemGroup Label="Downgrades">
-    <PackageReference Include="System.IO.FileSystem" Version="$(SystemVersion)" />
+  <ItemGroup Label="Exclusions">
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Frameworks" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Common" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Configuration" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Versioning" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Packaging" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Protocol" Version="5.11.7" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>
@@ -91,8 +93,6 @@
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Endjin.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Microsoft.Bcl.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Mono.Cecil*.dll</_PackageFilesToInclude>
-      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)Newtonsoft.*.dll</_PackageFilesToInclude>
-      <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)NuGet.*.dll</_PackageFilesToInclude>
       <_PackageFilesToInclude>$(_PackageFilesToInclude);$(_PackageFilesSearchPath)System.Threading.Tasks.Extensions.dll</_PackageFilesToInclude>
     </PropertyGroup>
 

@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-g4vj-cjjj-v7hg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Endjin.ApiChange" Version="0.1.0" />
     <PackageReference Include="IsExternalInit" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>

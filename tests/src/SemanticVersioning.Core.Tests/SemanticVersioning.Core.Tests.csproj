@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="TUnit" Version="$(TUnitVersion)" />
     <PackageReference Include="NuGet.Protocol" Version="$(NuGetVersion)" />
   </ItemGroup>
 
