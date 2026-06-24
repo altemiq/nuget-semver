@@ -1,4 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Condition=" '$(SemanticVersioningProjectDirectory)' == '' ">
+    <SemanticVersioningProjectDirectory>$(MSBuildThisDirectory)..\..\..\src\SemanticVersioning.MSBuild\</SemanticVersioningProjectDirectory>
+  </PropertyGroup>
+
   <Import Project="$(SemanticVersioningProjectDirectory)build.props"/>
 
   <PropertyGroup>

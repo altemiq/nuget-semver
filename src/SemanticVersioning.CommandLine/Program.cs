@@ -15,19 +15,24 @@ return await root
     .InvokeAsync()
     .ConfigureAwait(false);
 
+/// <content>
+/// The program class.
+/// </content>
 internal static partial class Program
 {
+    /// <summary>
+    /// Creates the root command.
+    /// </summary>
+    /// <returns>The root command.</returns>
     public static RootCommand CreateRootCommand()
     {
         var noLogoOption = new Option<bool>("/nologo", "--nologo") { Description = "Do not display the startup banner or the copyright message.", DefaultValueFactory = _ => ConsoleApplication.DefaultNoLogo, Recursive = true };
 
-        var root = new RootCommand(description: "Semantic Version generator")
+        return new RootCommand(description: "Semantic Version generator")
         {
             CreateDiffCommand(noLogoOption),
             noLogoOption,
         };
-
-        return root;
 
         static Command CreateDiffCommand(Option<bool> noLogoOption)
         {
@@ -37,18 +42,16 @@ internal static partial class Program
             var versionSuffixParameterOption = new Option<string>("--version-suffix-parameter") { Description = "The parameter name for the version suffix", DefaultValueFactory = _ => ConsoleApplication.DefaultVersionSuffixParameter, Recursive = true };
             var incrementOption = new Option<SemanticVersionIncrement>("--increment") { Description = "The location to increment the version", DefaultValueFactory = _ => default, Recursive = true };
 
-            var command = new Command("diff", "Calculates the differences")
-    {
-        CreateFileCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
-        CreateSolutionCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
-        previousOption,
-        buildNumberParameterOption,
-        versionSuffixParameterOption,
-        outputTypesOption,
-        incrementOption,
-    };
-
-            return command;
+            return new Command("diff", "Calculates the differences")
+            {
+                CreateFileCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
+                CreateSolutionCommand(previousOption, outputTypesOption, buildNumberParameterOption, versionSuffixParameterOption, incrementOption, noLogoOption),
+                previousOption,
+                buildNumberParameterOption,
+                versionSuffixParameterOption,
+                outputTypesOption,
+                incrementOption,
+            };
 
             static NuGet.Versioning.SemanticVersion? ParseVersion(ArgumentResult argumentResult)
             {
@@ -77,11 +80,11 @@ internal static partial class Program
                 var buildOption = new Option<string>("-b", "--build") { Description = "Ths build label" };
 
                 var command = new Command("file", "Calculated the differences between two assemblies")
-        {
-            firstArgument,
-            secondArgument,
-            buildOption,
-        };
+                {
+                    firstArgument,
+                    secondArgument,
+                    buildOption,
+                };
 
                 command.SetAction(parseResult => ConsoleApplication.FileFunction(
                     ConsoleApplication.Console.Create(parseResult.InvocationConfiguration.Output, parseResult.InvocationConfiguration.Error, parseResult.GetValue(outputTypesOption)),
@@ -121,22 +124,22 @@ internal static partial class Program
                 var forceOption = new Option<bool>("--force", "-f") { Description = "Force the computation of the version", DefaultValueFactory = _ => ConsoleApplication.DefaultForce };
 
                 var command = new Command("solution", "Calculates the version based on a solution file")
-        {
-            projectOrSolutionArgument,
-            configurationOption,
-            platformOption,
-            sourceOption,
-            packageIdRegexOption,
-            packageIdReplaceOption,
-            packageIdOption,
-            excludeOption,
-            noVersionSuffixOption,
-            versionSuffixOption,
-            noCacheOption,
-            directDownloadOption,
-            commitCountOption,
-            forceOption,
-        };
+                {
+                    projectOrSolutionArgument,
+                    configurationOption,
+                    platformOption,
+                    sourceOption,
+                    packageIdRegexOption,
+                    packageIdReplaceOption,
+                    packageIdOption,
+                    excludeOption,
+                    noVersionSuffixOption,
+                    versionSuffixOption,
+                    noCacheOption,
+                    directDownloadOption,
+                    commitCountOption,
+                    forceOption,
+                };
 
                 command.SetAction((parseResult, _) => ConsoleApplication.ProcessProjectOrSolution(
                     ConsoleApplication.Console.Create(parseResult.InvocationConfiguration.Output, parseResult.InvocationConfiguration.Error, parseResult.GetValue(outputTypesOption)),
