@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(MSBuildThisDirectory)..\..\..\src\SemanticVersioning.MSBuild\build.props"/>
+  <Import Project="$(SemanticVersioningProjectDirectory)build.props"/>
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.0</TargetFrameworks>
@@ -16,5 +16,5 @@
     <Message Text="TEST-PROPERTY-CAPTURE:NuGetVersion=$(NuGetVersion)" Importance="low" />
   </Target>
 
-  <Import Project="$(MSBuildThisDirectory)..\..\..\src\SemanticVersioning.MSBuild\build.targets"/>  
+  <Import Project="$(SemanticVersioningProjectDirectory)build.targets"/>  
 </Project>

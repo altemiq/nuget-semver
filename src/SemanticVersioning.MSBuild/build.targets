@@ -8,7 +8,15 @@
     <SemanticVersion_BeforeTargets>PrepareForBuild</SemanticVersion_BeforeTargets>
     <SemanticVersion_BeforeTargets Condition="$(SemanticVersion_IsOuterBuild)">DispatchToInnerBuilds</SemanticVersion_BeforeTargets>
     
-    <GetPackageVersionDependsOn>GetSemanticVersion;SetSemanticVersion;$(GetPackageVersionDependsOn)</GetPackageVersionDependsOn>
+    <GetPackageVersionDependsOn>
+      GetSemanticVersion;
+      SetSemanticVersion;
+      $(GetPackageVersionDependsOn)
+    </GetPackageVersionDependsOn>
+    <PackDependsOn>
+      _SetIsPackTarget;
+      $(PackDependsOn)
+    </PackDependsOn>
   </PropertyGroup>
 
   <!-- Get the semantic version from the latest package and commit -->
@@ -233,17 +241,56 @@
     </ItemGroup>
 
   </Target>
-  
+
+  <!--
+  Set the IsPackTarget property to true when part of a Pack
+  -->
+  <Target
+    Name="_SetIsPackTarget"
+    BeforeTargets="_IntermediatePack">
+
+    <PropertyGroup>
+      <IsPackTarget>true</IsPackTarget>
+    </PropertyGroup>
+
+  </Target>
+
+  <!--
+  Write the IsPackTarget to a file when this is an inner build
+  -->
+  <Target
+    Name="_WriteIsPackTarget"
+    BeforeTargets="DispatchToInnerBuilds"
+    Condition=" '$(IsInnerBuild)' != 'true' ">
+
+    <WriteLinesToFile
+      File="$(BaseIntermediateOutputPath)packaging.txt"
+      Lines="$(IsPackTarget)"
+      Overwrite="true" />
+
+  </Target>
+
+  <!--
+  In the inner build, check to see if this is part of a pack
+  -->
+  <Target
+    Name="_ReadIsPackTarget"
+    BeforeTargets="SetSemanticVersion"
+    Condition=" '$(IsInnerBuild)' == 'true' ">
+
+    <ReadLinesFromFile File="$(BaseIntermediateOutputPath)packaging.txt">
+      <Output TaskParameter="Lines" PropertyName="IsPackTarget" />
+    </ReadLinesFromFile>
+
+  </Target>
+
+  <!--
+  Set the version values
+  -->
   <Target
     Name="SetSemanticVersion"
     BeforeTargets="GetAssemblyVersion"
-    Condition=" ('$(IsPackTarget)' != 'true' and '$(Version)' != '$(SemanticVersion)')
-             or ('$(IsPackTarget)' == 'true' and '$(Version)' != '$(SemanticVersionPrefix)')
-             or '$(VersionPrefix)' != '$(SemanticVersionPrefix)'
-             or '$(VersionSuffix)' != '$(SemanticVersionSuffix)'
-             or '$(PackageVersion)' != '$(SemanticPackageVersion)'
-             or '$(RepositoryCommit)' != '$(SemanticRepositoryCommit)'
-             or '$(NuGetVersion)' != '$(SemanticPackageVersion)' ">
+    Condition=" '$(ComputeSemanticVersion)' == 'true' ">
 
     <PropertyGroup>
       <!-- Set the version with no suffix if we're packing -->

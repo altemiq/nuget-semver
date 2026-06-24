@@ -28,11 +28,6 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
-  <PropertyGroup Label="Versions">
-    <SystemVersion>4.3.0</SystemVersion>
-    <NuGetVersion>6.0.6</NuGetVersion>
-  </PropertyGroup>
-
   <Target Name="_ExcludeTargetFramework" AfterTargets="_GetTargetFrameworksOutput" BeforeTargets="_WalkEachTargetPerFramework">
     <ItemGroup>
       <_TargetFrameworks Remove="netstandard2.1" />
@@ -65,13 +60,20 @@
   </ItemGroup>
 
   <ItemGroup Label="Exclusions">
+    <!-- these are not used directly -->
+    <NuGetAuditSuppress Include="
+      https://github.com/advisories/GHSA-5crp-9r3c-p9vr;
+      https://github.com/advisories/GHSA-g4vj-cjjj-v7hg;
+      https://github.com/advisories/GHSA-68w7-72jg-6qpp" />
+    
+    <!-- do not copy MSBuild supplied values -->
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Frameworks" Version="5.11.7" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Common" Version="5.11.7" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Configuration" Version="5.11.7" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Versioning" Version="5.11.7" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Packaging" Version="5.11.7" ExcludeAssets="runtime" />
-    <PackageReference Include="NuGet.Protocol" Version="5.11.7" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Frameworks" Version="5.11.5" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Common" Version="5.11.5" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Configuration" Version="5.11.5" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Versioning" Version="5.11.5" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Packaging" Version="5.11.5" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Protocol" Version="5.11.5" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="TUnit.Assertions" Version="$(TUnitVersion)" />
     <PackageReference Include="TUnit.Engine" Version="$(TUnitVersion)" />
     <PackageReference Include="Microsoft.Build" Version="16.3.0" ExcludeAssets="runtime" />

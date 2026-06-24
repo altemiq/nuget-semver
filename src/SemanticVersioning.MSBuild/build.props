@@ -22,6 +22,7 @@
     <ForceSemanticVersion>true</ForceSemanticVersion>
     <OnlyComputeSemanticVersionForPackable>true</OnlyComputeSemanticVersionForPackable>
     <SemanticVersionIncrement>Patch</SemanticVersionIncrement>
+    <IsPackTarget>false</IsPackTarget>
   </PropertyGroup>
 
 </Project>
